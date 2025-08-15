@@ -9,6 +9,9 @@
 
 #include <stdio.h>
 #include "telaPrincipal.c"
+#include "moduloMatriculas.c"
+
+
 
 int main(void) {
     char op;
@@ -20,7 +23,7 @@ int main(void) {
                         break;
             case '2':   //moduloPlanos();
                         break;
-            case '3':   //moduloMatrículas();
+            case '3':   moduloMatriculas();
                         break;
             case '4':   //moduloCheck-ins();
                         break;
