@@ -11,11 +11,23 @@
 #include "telaPrincipal.c"
 
 int main(void) {
-    char opcao;
+    char op;
 
     do {
-        opcao = telaPrincipal();
-    } while (opcao != '0');
+        op = telaPrincipal();
+        switch(op) {
+            case '1':   //moduloAluno();
+                        break;
+            case '2':   //moduloPlanos();
+                        break;
+            case '3':   //moduloMatrículas();
+                        break;
+            case '4':   //moduloCheck-ins();
+                        break;
+            case '5':   //moduloSobre();
+                        break;
+        }
+    } while (op != '0');
 
     return 0;
 }
