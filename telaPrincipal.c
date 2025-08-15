@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 char telaPrincipal(void) {
 
     char op;
@@ -8,12 +10,12 @@ char telaPrincipal(void) {
     printf("=================\n");
     printf("(1) Alunos \n");
     printf("(2) Planos \n");
-    printf("(3) Matrículas \n");
+    printf("(3) Matriculas \n");
     printf("(4) Check-ins \n");
     printf("(5) Sobre \n");
     printf("\n");
 
-    scanf("%d", &op);
+    scanf(" %c", &op);
 
     return op;
     }
