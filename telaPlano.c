@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 char moduloPlanos(void) {
 
     printf("=================================\n");

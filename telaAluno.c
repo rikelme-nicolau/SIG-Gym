@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 char moduloAluno(void) {
 
     printf("=================================\n");
