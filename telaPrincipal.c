@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 char telaPrincipal(void) {
 
     char op;
@@ -19,3 +17,7 @@ char telaPrincipal(void) {
 
     return op;
     }
+
+
+
+
