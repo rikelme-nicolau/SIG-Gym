@@ -4,12 +4,15 @@
 ///               Departamento de Computação e Tecnologia                   ///
 ///                  Disciplina DCT1106 -- Programação                      ///
 ///                  Projeto Sistema de Gestão Escolar                      ///
-///                  Developed by  - 2025.2                                 ///
+///         Developed by Rikelme Nicolau & Flávia Juliana- 2025.2           ///
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include "telaPrincipal.c"
 #include "moduloMatriculas.c"
+#include "telaAluno.c"
+#include "telaPlano.c"
+#include "telaSobre.c"
 
 
 
@@ -19,15 +22,15 @@ int main(void) {
     do {
         op = telaPrincipal();
         switch(op) {
-            case '1':   //moduloAluno();
+            case '1':   moduloAluno();
                         break;
-            case '2':   //moduloPlanos();
+            case '2':   moduloPlanos();
                         break;
             case '3':   moduloMatriculas();
                         break;
             case '4':   //moduloCheck-ins();
                         break;
-            case '5':   //moduloSobre();
+            case '5':   telaSobre();
                         break;
         }
     } while (op != '0');

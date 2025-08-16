@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 char telaPrincipal(void) {
 
     char op;
