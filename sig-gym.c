@@ -13,6 +13,7 @@
 #include "telaAluno.c"
 #include "telaPlano.c"
 #include "telaSobre.c"
+#include "moduloCheckin.c"
 
 
 
@@ -28,7 +29,7 @@ int main(void) {
                         break;
             case '3':   moduloMatriculas();
                         break;
-            case '4':   //moduloCheck-ins();
+            case '4':   moduloCheckin();
                         break;
             case '5':   telaSobre();
                         break;
