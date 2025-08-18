@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "ui/telaPrincipal.c"
-#include "ui/telaAluno.c"
-#include "ui/telaPlano.c"
-#include "ui/telaCheckin.c"
-#include "ui/telaMatriculas.c"
+#include "ui/aluno/telaAluno.c"
+#include "ui/plano/telaPlano.c"
+#include "ui/checkin/telaCheckin.c"
+#include "ui/matricula/telaMatriculas.c"
 #include "ui/telaSobre.c"
 
 
