@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include "header.h"
 
-char moduloPlanos(void) {
+char telaPlano(void) {
 
 char op;
 
