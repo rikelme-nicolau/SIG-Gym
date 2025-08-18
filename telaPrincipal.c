@@ -6,7 +6,7 @@ char telaPrincipal(void) {
 
     printf("\n");
     printf("=================\n");
-    printf("=====SIG-GYM=====\n");
+    printf("    SIG-GYM\n");
     printf("=================\n");
     printf("(1) Alunos \n");
     printf("(2) Planos \n");
