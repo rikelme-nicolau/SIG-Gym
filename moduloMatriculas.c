@@ -9,7 +9,7 @@ char moduloMatriculas(void)
 
     printf("\n");
     printf("=================\n");
-    printf("=====Matriculas=====\n");
+    printf("    Matriculas\n");
     printf("=================\n");
     printf("(1) Cadastrar \n");
     printf("(2) Visualizar matriculas \n");
