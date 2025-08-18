@@ -1,11 +1,10 @@
 #include <stdio.h>
-#include "telaPrincipal.c"
-#include "moduloMatriculas.c"
-#include "telaAluno.c"
-#include "telaPlano.c"
-#include "telaSobre.c"
-#include "moduloCheckin.c"
-
+#include "ui/telaPrincipal.c"
+#include "ui/telaAluno.c"
+#include "ui/telaPlano.c"
+#include "ui/telaCheckin.c"
+#include "ui/telaMatriculas.c"
+#include "ui/telaSobre.c"
 
 
 int main(void) {
@@ -14,13 +13,13 @@ int main(void) {
     do {
         op = telaPrincipal();
         switch(op) {
-            case '1':   moduloAluno();
+            case '1':   telaAluno();
                         break;
-            case '2':   moduloPlanos();
+            case '2':   telaPlano();
                         break;
-            case '3':   moduloMatriculas();
+            case '3':   telaMatriculas();
                         break;
-            case '4':   moduloCheckin();
+            case '4':   telaCheckin();
                         break;
             case '5':   telaSobre();
                         break;

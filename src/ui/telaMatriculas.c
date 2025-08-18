@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include "header.h"
 
 
-
-char moduloMatriculas(void)
+char telaMatriculas(void)
 {
 
     char op;

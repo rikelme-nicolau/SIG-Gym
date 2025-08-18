@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include "header.h"
 
-char moduloAluno(void) {
+char telaAluno(void) {
 
 char op;
 

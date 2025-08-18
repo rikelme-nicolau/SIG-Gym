@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include "header.h"
 
 
-
-char moduloCheckin(void)
+char telaCheckin(void)
 {
 
     char op;
