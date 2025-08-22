@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include "matricula_h.h"
-
 
 char telaMatriculas(void)
 {

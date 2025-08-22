@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "plano_h.h"
 
 char telaPlano(void) {
 

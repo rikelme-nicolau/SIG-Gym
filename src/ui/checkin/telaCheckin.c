@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include "checkin_h.h"
-
 
 char telaCheckin(void)
 {

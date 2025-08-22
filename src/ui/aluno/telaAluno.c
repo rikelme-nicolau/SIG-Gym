@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include "aluno_h.h"
 
-char telaAluno(void) {
+#include <stdio.h>
+#include "C:\Users\conta\Documents\vs_sig_gym\SIG-Gym\src\header_tela.h"
+
+void telaAluno(void) {
 
 char op;
 
@@ -14,11 +15,9 @@ char op;
     printf("(2) Visualizar\n");
     printf("(3) Atualizar\n");
     printf("(4) Excluir\n");
-    
     printf("\n");
 
     scanf(" %c", &op);
-
-    return op;
-
+    modulo_aluno p = moduloAluno;
+    p(op);
 }
