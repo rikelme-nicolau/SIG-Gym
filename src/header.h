@@ -6,4 +6,6 @@ char telaAluno(void);
 char telaPlano(void);
 char telaCheckin(void);
 char telaMatriculas(void);
+void cadastrarAluno(void);
+void inserirDados(char *str, int tamanho);
 #endif
