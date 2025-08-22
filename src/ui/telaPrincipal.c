@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "header.h"
 
 char telaPrincipal(void) {
 

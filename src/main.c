@@ -1,10 +1,5 @@
 #include <stdio.h>
-#include "ui/telaPrincipal.c"
-#include "ui/aluno/telaAluno.c"
-#include "ui/plano/telaPlano.c"
-#include "ui/checkin/telaCheckin.c"
-#include "ui/matricula/telaMatriculas.c"
-#include "ui/telaSobre.c"
+#include "header.h"
 
 
 int main(void) {
