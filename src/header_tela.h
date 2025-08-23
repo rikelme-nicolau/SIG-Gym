@@ -1,21 +1,17 @@
 #ifndef HEADER_H
 #define HEADER_H
-void telaSobre(void);   
+char telaSobre(void);   
 char telaPrincipal(void);   
 char telaPlano(void);
 char telaCheckin(void);
 char telaMatriculas(void);
 
-void moduloAluno(char);
+char moduloAluno(void);
 
 
-void telaAluno(void);
-
-typedef void (*modulo_aluno)(char);
-typedef void (*modulo_aluno_return)(void);
-
-void telaCadastrarAluno(void);
-void telaVisualizarAluno(void); 
-void telaAtualizarAluno(void);
-void telaExcluirAluno(void);
+char telaAluno(void);
+char telaCadastrarAluno(void);
+char telaVisualizarAluno(void); 
+char telaAtualizarAluno(void);
+char telaExcluirAluno(void);
 #endif
