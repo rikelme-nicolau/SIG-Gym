@@ -1,22 +1,34 @@
 #include <stdio.h>
-#include "C:\Users\conta\Documents\vs_sig_gym\SIG-Gym\src\header_tela.h"
+#include "header_tela.h"
 
-void moduloAluno(char op) {
+char moduloAluno(void) {
 
+    char opAluno;
+    
+    
 
-    do {
-        switch(op) {
-            case '1':   telaCadastrarAluno();
+    do 
+    {
+        opAluno = telaAluno();
+        switch(opAluno) 
+        {    
+        case '1':                                                                               telaCadastrarAluno();
                         break;
-            case '2':   telaVisualizarAluno();
+                        
+        case
+        '2':            telaVisualizarAluno();
                         break;
-            case '3':   telaAtualizarAluno();
+            
+        case 
+        '3':            telaAtualizarAluno();
                         break;
-            case '4':   telaExcluirAluno();
+            
+        case 
+        '4':            telaExcluirAluno();
                         break;
-
         }
-    } while (op != '0');
+    } 
+    while (opAluno != '0');
+ 
+    return opAluno;
 }
-
-

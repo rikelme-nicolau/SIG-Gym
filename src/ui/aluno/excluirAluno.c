@@ -1,7 +1,9 @@
 #include <stdio.h>
-#include "C:\Users\conta\Documents\vs_sig_gym\SIG-Gym\src\header_tela.h"
+#include "header_tela.h"
 
-void telaExcluirAluno(void) {
+char telaExcluirAluno(void) {
+
+    char op;    
 
     printf("\n");
     printf("=================\n");
@@ -9,8 +11,8 @@ void telaExcluirAluno(void) {
     printf("=================\n");
     printf("  ...EM BREVE... \n");
     printf("\n");
-    
-    modulo_aluno_return p = telaAluno;
-    p();
+    printf("<Aperte 0 para sair!>\n");
+    scanf(" %c", &op);
 
+    return op;
 }
