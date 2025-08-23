@@ -8,10 +8,18 @@ char telaMatriculas(void);
 
 char moduloAluno(void);
 
-
 char telaAluno(void);
 char telaCadastrarAluno(void);
 char telaVisualizarAluno(void); 
 char telaAtualizarAluno(void);
 char telaExcluirAluno(void);
+
+char moduloCheckin(void);
+char telaCadastrarCheckin(void);
+char telaVisualizarCheckin(void);
+char telaAtualizarCheckin(void);
+char telaExcluirCheckin(void);
+
+
+
 #endif

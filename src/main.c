@@ -9,29 +9,28 @@ int main(void) {
         op = telaPrincipal();
         switch(op) {
             
-                                    case '1':  
-                                                moduloAluno();
+        case '1':  
+                        moduloAluno();
+                        break;
             
-                                                break;
+        case '2': 
             
-                                    case '2': 
-            
-                                        telaPlano();
-                                        break;
+                        telaPlano();
+                        break;
                                     
-                                    case '3':  
+        case '3':  
             
-                                    telaMatriculas();
-                                    break;
+                        telaMatriculas();
+                        break;
 
-                                    case '4':
+        case '4':
+                                    
+                        moduloCheckin();                            
+                        break;
             
-                                    telaCheckin();                                    
-                                    break;
-            
-                                    case '5':
-                                     telaSobre();
-                                    break;
+        case '5':
+                        telaSobre();
+                        break;
                 
     }
      }while (op != '0');
