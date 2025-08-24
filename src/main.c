@@ -15,7 +15,7 @@ int main(void) {
             
         case '2': 
             
-                        telaPlano();
+                        moduloPlano();
                         break;
                                     
         case '3':  

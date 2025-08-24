@@ -27,5 +27,11 @@ char telaVisualizarMatricula(void);
 char telaAtualizarMatricula(void);
 char telaExcluirMatricula(void);
 
+char moduloPlano(void);
+char telaCadastrarPlano(void);
+char telaVisualizarPlano(void);
+char telaAtualizarPlano(void);
+char telaExcluirPlano(void);
+
 
 #endif
