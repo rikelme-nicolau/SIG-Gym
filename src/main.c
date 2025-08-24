@@ -20,7 +20,7 @@ int main(void) {
                                     
         case '3':  
             
-                        telaMatriculas();
+                        moduloMatricula();
                         break;
 
         case '4':

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-char telaMatriculas(void)
+char telaMatricula(void)
 {
 
     char op;

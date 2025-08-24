@@ -4,7 +4,7 @@ char telaSobre(void);
 char telaPrincipal(void);   
 char telaPlano(void);
 char telaCheckin(void);
-char telaMatriculas(void);
+char telaMatricula(void);
 
 char moduloAluno(void);
 
@@ -20,6 +20,12 @@ char telaVisualizarCheckin(void);
 char telaAtualizarCheckin(void);
 char telaExcluirCheckin(void);
 
+
+char moduloMatricula(void);
+char telaCadastrarMatricula(void);
+char telaVisualizarMatricula(void);
+char telaAtualizarMatricula(void);
+char telaExcluirMatricula(void);
 
 
 #endif
