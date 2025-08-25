@@ -9,9 +9,23 @@ char telaCadastrarPlano(void){
     printf("=================\n");
     printf(" CADASTRAR PLANO\n");
     printf("=================\n");
-    printf("  ...EM BREVE... \n");
+
+    printf("Nome do plano:\n");
     printf("\n");
-    printf("<Aperte 0 para sair!>\n");
+    getchar();
+    printf("<pressione enter para simular!>\n");
+    getchar();
+    printf("Duração do plano:\n");
+    printf("\n");
+    printf("<pressione enter para simular!>\n");
+    getchar();
+    printf("Valor do plano:\n");
+    printf("\n");
+    printf("<pressione enter para simular!>\n");
+    getchar();
+    printf("\n");
+    printf("<Ou pressione 0 para retornar!>\n");
+
 
     scanf(" %c", &op);
 
