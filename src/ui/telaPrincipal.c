@@ -13,6 +13,7 @@ char telaPrincipal(void) {
     printf("(3) Matriculas \n");
     printf("(4) Check-ins \n");
     printf("(5) Sobre \n");
+    printf("(0) Sair \n");
     printf("\n");
 
     scanf(" %c", &op);
