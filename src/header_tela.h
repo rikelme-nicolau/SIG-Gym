@@ -1,7 +1,8 @@
 #ifndef HEADER_H
 #define HEADER_H
 char telaSobre(void);   
-char telaPrincipal(void);   
+char telaPrincipal(void);
+void telaFinalizacao(void);   
 char telaPlano(void);
 char telaCheckin(void);
 char telaMatricula(void);

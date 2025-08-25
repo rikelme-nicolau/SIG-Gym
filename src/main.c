@@ -35,5 +35,7 @@ int main(void) {
     }
      }while (op != '0');
 
+    telaFinalizacao();
+
     return 0;
 }
