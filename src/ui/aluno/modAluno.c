@@ -12,7 +12,7 @@ char moduloAluno(void) {
         opAluno = telaAluno();
         switch(opAluno) 
         {    
-        case '1':                                                                               telaCadastrarAluno();
+        case '1':       telaCadastrarAluno();
                         break;
                         
         case
