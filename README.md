@@ -37,6 +37,7 @@ Executar:
 
 ## 2. Estrutura de pastas
 
+```bash
 SIG-Gym/
 ├─ src/
 │  ├─ main.c             
@@ -53,4 +54,4 @@ SIG-Gym/
 │         ├─ atualizar.c
 │         ├─ visualizar.c
 │         └─ excluir.c
-
+```
