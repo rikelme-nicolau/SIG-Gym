@@ -18,18 +18,15 @@ Sistema acadêmico de **gestão de academia** desenvolvido em **C99** sem a util
 No diretório `src/` do projeto, execute:
 
 ```bash
-gcc -std=c99 -Wall -Wextra -I. \
-  *.c \
-  ui/aluno/*.c \
-  ui/checkin/*.c \
-  ui/matricula/*.c \
-  ui/plano/*.c \
-  ui/*.c \
-  -o sig_gym
+Compilar:
+
+gcc -std=c99 -Wall -Wextra -I. -c *.c ui\aluno\*.c .\header_tela.h ui\checkin\*.c ui\matricula\*.c ui\plano\*.c ui\*.c
+
+gcc *.o -o main
 
 Executar:
-./sig_gym    # Linux/Mac
-.\sig_gym    # Windows (PowerShell ou CMD) 
+./main    # Linux/Mac
+.\main    # Windows (PowerShell ou CMD) 
 
 ```
 
