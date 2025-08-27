@@ -29,8 +29,9 @@ gcc -std=c99 -Wall -Wextra -I. \
 
 Executar:
 ./sig_gym    # Linux/Mac
-.\sig_gym    # Windows (PowerShell ou CMD)
+.\sig_gym    # Windows (PowerShell ou CMD) 
 
+```
 
 ---
 
