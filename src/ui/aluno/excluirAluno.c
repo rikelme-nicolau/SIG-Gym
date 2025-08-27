@@ -1,28 +1,32 @@
 #include <stdio.h>
 #include "header_tela.h"
+#include "cores.h"
 
 char telaExcluirAluno(void) {
 
     char op;    
 
     printf("\n");
-    printf("=================\n");
-    printf(" EXCLUIR ALUNO\n");
-    printf("=================\n");
-    printf("Ids:\n");
-    printf("001\n");
-    printf("002\n");
-    printf("003\n");
-    printf("004\n");
+    printf(RED"_________________________________________________\n"RESET);
+    printf(RED"|                                               |\n"RESET);
+    printf(RED"|"YELLOW"                 EXCLUIR ALUNO                 "RED"|\n"RESET);
+    printf(RED"|_______________________________________________|\n"RESET);
+    printf(RED"|"YELLOW"  Listados abaixo estão os alunos atualmente   "RED"|\n"RESET);
+    printf(RED"|"YELLOW"             cadastrados e ativos:             "RED"|\n"RESET);
+    printf(RED"|-----------------------------------------------|\n"RESET);
+    printf(RED"|"YELLOW"  IDs:"RED"|"YELLOW" NOMES:                                 "RED"|\n"RESET);//posteriormente add função que realiza esses prints de forma automática com nomes realmente cadastrados
+    printf(RED"|"YELLOW"  001 "RED"|"YELLOW" Enzo Primeiro                          "RED"|\n"RESET);
+    printf(RED"|"YELLOW"  002 "RED"|"YELLOW" Valentina Primeira                     "RED"|\n"RESET);
+    printf(RED"|"YELLOW"  003 "RED"|"YELLOW" Enzo Segundo                           "RED"|\n"RESET);
+    printf(RED"|"YELLOW"  004 "RED"|"YELLOW" Valentina Segunda                      "RED"|\n"RESET);
+    printf(RED"|-----------------------------------------------|\n"RESET);
+    printf(RED"|"YELLOW"                   "SUBLINHADO"!ATENÇÃO!"RESET"                   "RED"|\n"RESET);
+    printf(RED"|"YELLOW"    A seguir digite [APENAS] o ID do aluno:    "RED"|\n"RESET);
+    printf(RED"|_______________________________________________|\n"RESET);
     printf("\n");
-    printf("Digite o id do aluno que deseja excluir:\n");
-    printf("\n");
+    printf("<operação de exclusão ainda não está pronta, pressione 0 para sair!>\n");
+    scanf("%c", &op);
     getchar();
-    printf("<pressione enter para simular!>\n");
-    getchar();
-    printf("\n");
-    printf("<Aperte 0 para sair!>\n");
-    scanf(" %c", &op);
 
     return op;
 }
