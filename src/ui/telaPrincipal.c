@@ -16,7 +16,8 @@ char telaPrincipal(void) {
     printf("(0) Sair \n");
     printf("\n");
 
-    scanf(" %c", &op);
+    scanf("%c", &op);
+    getchar();
 
     return op;
     }
