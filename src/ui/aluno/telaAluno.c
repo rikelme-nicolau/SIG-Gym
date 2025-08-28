@@ -8,19 +8,18 @@ char op;
 
     printf("\n");
     
-    printf(RED"________________________________________________\n"RESET);
-    printf(RED"|                                              |\n"RESET);
-    printf(RED"|                 "YELLOW"MÓDULO ALUNO                 "RED"|\n"RESET);
-    printf(RED"|______________________________________________|\n"RESET);
-    printf(RED"|"YELLOW" 1. CADASTRAR                                 "RED"|\n"RESET);
-    printf(RED"|"YELLOW" 2. VISUALIZAR                                "RED"|\n"RESET);
-    printf(RED"|"YELLOW" 3. ATUALIZAR                                 "RED"|\n"RESET);
-    printf(RED"|"YELLOW" 4. EXCLUIR                                   "RED"|\n"RESET);
-    printf(RED"|"YELLOW" 0. SAIR                                      "RED"|\n"RESET);
-    printf(RED"|----------------------------------------------|\n"RESET);
-    printf(RED"|                   "YELLOW SUBLINHADO"!ATENÇÃO!"RESET"                  "RED"|\n"RESET);
-    printf(RED"|"YELLOW"  A seguir digite [APENAS] o número da ação:  "RED"|\n"RESET);
-    printf(RED"|______________________________________________|\n"RESET);
+    printf("╔══════════════════════════════════════════════╗\n");
+    printf("║                     ALUNO                    ║\n");
+    printf("╠══════════════════════════════════════════════╣\n");
+    printf("║ 1. CADASTRAR                                 ║\n");
+    printf("║ 2. VISUALIZAR                                ║\n");
+    printf("║ 3. ATUALIZAR                                 ║\n");
+    printf("║ 4. EXCLUIR                                   ║\n");
+    printf("║ 0. SAIR                                      ║\n");
+    printf("╠══════════════════════════════════════════════╣\n");
+    printf("║                   "SUBLINHADO"!ATENÇÃO!"RESET"                  ║\n");
+    printf("║  A seguir digite [APENAS] o número da ação:  ║\n");
+    printf("╚══════════════════════════════════════════════╝\n");
     printf("\n");
 
     scanf("%c", &op);
