@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include "header_tela.h"
+#include "ui\animacao.h"
 
 
 int main(void) {
     char op;
+
+    animacao();
 
     do {
         op = telaPrincipal();
