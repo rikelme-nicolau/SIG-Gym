@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "header_tela.h"
-#include "ui\animacao.h"
+#include "animacao.h"
 
 
 int main(void) {
