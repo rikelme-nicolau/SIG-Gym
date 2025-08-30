@@ -1,5 +1,5 @@
-#ifndef ATUALIZAR_CHECKIN_H
-#define ATUALIZAR_CHECKIN_H
+#ifndef CADASTRAR_CHECKIN_H
+#define CADASTRAR_CHECKIN_H
 
 char telaCadastrarCheckin(void);
 
