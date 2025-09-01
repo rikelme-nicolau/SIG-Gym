@@ -9,7 +9,7 @@ void telaSobre(void) {
     printf("apresentar funcioalidades básicas que\n");
     printf("permitam o gerenciamento simples de\n");
     printf("uma academia.\n");
-    printf("==================");
+    printf("==================\n");
     printf("Desenvolvido por Rikelme Nicolau & Flávia Juliana\n");
    
     getchar();
