@@ -1,32 +1,44 @@
-# Makefile — SIG-Gym (C99) — Linux/WSL/Git Bash/MSYS2/MinGW/PowerShell
+# Makefile — SIG-Gym (C99) — Linux / WSL / Git Bash / MSYS2 / MinGW / PowerShell
 
 # --- toolchain ---
 CC       := gcc
 CFLAGS   := -std=c99 -Wall -Wextra -Wpedantic -O2
 CPPFLAGS := -I. -Isrc
+LDFLAGS  :=
+LDLIBS   :=
 
 # --- dirs & bin ---
 SRC_DIR  := src
 BUILD    := build
 NAME     := sig-gym
+BIN      := $(BUILD)/$(NAME)$(EXEEXT)
 
-# Plataforma
+# --- detecção de plataforma e shell ---
+# Em Windows, GNU make pode rodar via cmd.exe OU via bash (Git Bash/MSYS2).
+# Usamos comandos adequados para cada caso.
 ifeq ($(OS),Windows_NT)
   EXEEXT := .exe
-  # funções cross-platform (usadas com $(call ...))
-  MKDIR_P = if not exist "$(1)" mkdir "$(1)"
-  RM_RF   = if exist "$(1)" rmdir /S /Q "$(1)"
-  RM_F    = if exist "$(1)" del /Q "$(1)"
-  RUNBIN  = $(BIN)
+  ifneq (,$(findstring sh,$(SHELL)))
+    # Windows + shell tipo bash (Git Bash/MSYS2)
+    MKDIR_P = mkdir -p "$(1)"
+    RM_RF   = rm -rf "$(1)"
+    RM_F    = rm -f "$(1)"
+    RUNBIN  = "$(BIN)"
+  else
+    # Windows + cmd.exe / PowerShell
+    MKDIR_P = if not exist "$(1)" mkdir "$(1)"
+    RM_RF   = if exist "$(1)" rmdir /S /Q "$(1)"
+    RM_F    = if exist "$(1)" del /Q "$(1)"
+    RUNBIN  = "$(BIN)"
+  endif
 else
+  # Linux/macOS
   EXEEXT :=
   MKDIR_P = mkdir -p "$(1)"
   RM_RF   = rm -rf "$(1)"
   RM_F    = rm -f "$(1)"
-  RUNBIN  = ./$(BIN)
+  RUNBIN  = "$(BIN)"
 endif
-
-BIN := $(BUILD)/$(NAME)$(EXEEXT)
 
 # --- recursive wildcard (sem 'find') ---
 rwildcard = $(strip $(wildcard $1$2) \
@@ -44,7 +56,7 @@ all: $(BIN)
 
 # link
 $(BIN): $(OBJS) | $(BUILD)
-	$(CC) $(OBJS) -o $@
+	$(CC) $(OBJS) $(LDFLAGS) $(LDLIBS) -o $@
 
 # compila e gera dependências .d espelhadas em build/
 $(BUILD)/%.o: $(SRC_DIR)/%.c | $(BUILD)
@@ -59,7 +71,7 @@ $(BUILD):
 run: all
 	$(RUNBIN)
 
-# limpeza (sem 'true' e tolerante a ausência dos arquivos)
+# limpeza (tolerante a ausência dos arquivos)
 clean:
 	-@$(call RM_RF,$(BUILD))
 	-@$(call RM_F,*.exe)
@@ -69,12 +81,15 @@ rebuild: clean all
 
 # debug
 tree:
-	@echo "SRCs: $(words $(SRCS)) | OBJs: $(words $(OBJS))"
+	@echo SRCs: $(words $(SRCS)) | OBJs: $(words $(OBJS))
 	@$(foreach f,$(SRCS),echo SRC  $(f);)
 	@$(foreach o,$(OBJS),echo OBJ  $(o);)
 
 check:
-	@echo "gcc:" && gcc --version | head -n 1 || true
-	@echo "make:" && (make --version || mingw32-make --version) | head -n 1
+	@echo gcc:
+	@gcc --version
+	@echo make:
+	@$(MAKE) --version || true
+
 # inclui dependências de headers
 -include $(DEPS)
