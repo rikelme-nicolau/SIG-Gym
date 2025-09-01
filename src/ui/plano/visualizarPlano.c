@@ -8,7 +8,9 @@ char telaVisualizarPlano(void) {
     printf("VISUALIZAR PLANO\n");
     printf("====================\n");
     printf("<Aperte 0 para sair!>\n");
-    
+    printf("  ...EM BREVE... \n");
+    printf("\n");
+    printf("<Aperte 0 para sair!>\n");
     scanf("%c", &op);
     getchar();
 

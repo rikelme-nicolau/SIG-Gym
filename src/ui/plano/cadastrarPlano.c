@@ -8,7 +8,9 @@ char telaCadastrarPlano(void) {
     printf("CADASTRAR PLANO\n");
     printf("====================\n");
   
-    printf("< pressione 0 para retornar!>\n");
+    printf("  ...EM BREVE... \n");
+    printf("\n");
+    printf("<Aperte 0 para sair!>\n");
 
     scanf("%c", &op);
     getchar();

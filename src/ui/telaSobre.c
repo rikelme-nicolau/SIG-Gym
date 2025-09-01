@@ -1,8 +1,6 @@
 #include <stdio.h>
 
 void telaSobre(void) {
-
-    char sair;
     
     printf("==================\n");
     printf("SOBRE SIG-GYM\n");
@@ -11,7 +9,7 @@ void telaSobre(void) {
     printf("apresentar funcioalidades básicas que\n");
     printf("permitam o gerenciamento simples de\n");
     printf("uma academia.\n");
-    printf("==================");
+    printf("==================\n");
     printf("Desenvolvido por Rikelme Nicolau & Flávia Juliana\n");
    
     getchar();

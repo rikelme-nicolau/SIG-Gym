@@ -7,7 +7,6 @@ Sistema acadêmico de **gestão de academia** desenvolvido em **C99** sem a util
 
 ## Índice
 - [1. Como compilar e executar](#1-como-compilar-e-executar)
-- [2. Estrutura de pastas](#2-estrutura-de-pastas)
 
 ---
 
@@ -15,40 +14,11 @@ Sistema acadêmico de **gestão de academia** desenvolvido em **C99** sem a util
 > Requer GCC com suporte a C99.
 
 ### Comando direto
-No diretório `src/` do projeto, execute:
+Na raiz do projeto, execute:
 
 ```bash
-Compilar:
 
-gcc -std=c99 -Wall -Wextra -I. -c *.c ui\aluno\*.c .\header_tela.h ui\checkin\*.c ui\matricula\*.c ui\plano\*.c ui\*.c
+make run          # Linux/Mac
+mingw32-make run  # Windows (PowerShell ou CMD) 
 
-gcc *.o -o main
-
-Executar:
-./main    # Linux/Mac
-.\main    # Windows (PowerShell ou CMD) 
-
-```
-
----
-
-## 2. Estrutura de pastas
-
-```bash
-SIG-Gym/
-├─ src/
-│  ├─ main.c             
-│  └─ ui/
-│     ├─ telaPrincipal.c
-│     ├─ telaSobre.c
-│     ├─ aluno/          
-│     │   ├─ cadastrar.c
-│     │   ├─ atualizar.c
-│     │   ├─ visualizar.c
-│     │   └─ excluir.c
-│     └─ plano/          
-│         ├─ cadastrar.c
-│         ├─ atualizar.c
-│         ├─ visualizar.c
-│         └─ excluir.c
 ```
