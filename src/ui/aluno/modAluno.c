@@ -1,5 +1,15 @@
 #include <stdio.h>
-#include "header_tela.h"
+
+#include "telaAluno.h"
+#include "cadastrarAluno.h"
+#include "visualizarAluno.h"
+#include "atualizarAluno.h"
+#include "excluirAluno.h"
+
+#include "opInvalida.h"
+
+
+
 
 char moduloAluno(void) {
 

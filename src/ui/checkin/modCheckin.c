@@ -1,5 +1,14 @@
 #include <stdio.h>
-#include "header_tela.h"
+
+#include "telaCheckin.h"
+#include "cadastrarCheckin.h"
+#include "visualizarCheckin.h"
+#include "atualizarCheckin.h"
+#include "excluirCheckin.h"
+
+#include "opInvalida.h"
+
+
 
 char moduloCheckin(void) {
 
