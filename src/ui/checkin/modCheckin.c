@@ -8,17 +8,13 @@
 
 #include "opInvalida.h"
 
-
-
 char moduloCheckin(void) {
 
     char opCheckin;
 
-    do 
-    {
+    do {
         opCheckin = telaCheckin();
-        switch(opCheckin) 
-        {    
+        switch(opCheckin) {    
         case '1':       telaCadastrarCheckin();
                         break;
                         

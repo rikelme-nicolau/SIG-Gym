@@ -13,11 +13,9 @@ char moduloMatricula(void) {
 
     char opMatricula;
 
-    do 
-    {
+    do {
         opMatricula = telaMatricula();
-        switch(opMatricula) 
-        {    
+        switch(opMatricula) {    
         case '1':       telaCadastrarMatricula();
                         break;
                         
