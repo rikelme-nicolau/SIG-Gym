@@ -23,6 +23,13 @@ char moduloCheckin(void) {
         case 
         '4':            telaExcluirCheckin();
                         break;
+
+        case '0':
+                        break;
+                        
+        default:
+                        opInvalida();
+                        break;
         }
     
     } 
