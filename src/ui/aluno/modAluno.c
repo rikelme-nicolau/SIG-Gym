@@ -26,6 +26,13 @@ char moduloAluno(void) {
         case 
         '4':            telaExcluirAluno();
                         break;
+
+        case '0':
+                        break;
+                        
+        default:
+                        opInvalida();
+                        break;
         }
     } 
     while (opAluno != '0');
