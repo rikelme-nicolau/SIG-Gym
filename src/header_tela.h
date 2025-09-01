@@ -34,5 +34,7 @@ char telaVisualizarPlano(void);
 char telaAtualizarPlano(void);
 char telaExcluirPlano(void);
 
+void opInvalida(void);
+
 
 #endif

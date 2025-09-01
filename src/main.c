@@ -34,11 +34,16 @@ int main(void) {
         case '5':
                         telaSobre();
                         break;
+        case '0':
+                        telaFinalizacao();
+                        break;
+
+        default:
+                        opInvalida();
+                        break;
                 
     }
      }while (op != '0');
-
-    telaFinalizacao();
 
     return 0;
 }
