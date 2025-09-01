@@ -8,9 +8,6 @@
 
 #include "opInvalida.h"
 
-
-
-
 char moduloAluno(void) {
 
     char opAluno;

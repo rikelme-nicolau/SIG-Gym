@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include "cores.h"
-
 char telaVisualizarAluno(void) {
 
     char op;

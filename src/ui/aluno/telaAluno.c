@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include "cores.h"
-
 char telaAluno(void) {
 
 char op;
