@@ -23,6 +23,14 @@ char moduloMatricula(void) {
         case 
         '4':            telaExcluirMatricula();
                         break;
+                        
+        case '0':
+                        break;
+
+        default:
+                        opInvalida();
+                        break;
+
         }
     
     } 
