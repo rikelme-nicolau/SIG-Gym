@@ -11,7 +11,7 @@ char telaMatricula(void) {
     printf("(2) VISUALIZAR\n");
     printf("(3) ATUALIZAR\n");
     printf("(4) EXCLUIR\n");
-    printf("(0)SAIR\n");
+    printf("(0) SAIR\n");
 
     scanf("%c", &op);
     getchar();

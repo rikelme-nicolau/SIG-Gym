@@ -1,8 +1,6 @@
 #include <stdio.h>
 
 void telaSobre(void) {
-
-    char sair;
     
     printf("==================\n");
     printf("SOBRE SIG-GYM\n");
