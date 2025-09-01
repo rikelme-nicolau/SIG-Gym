@@ -1,6 +1,17 @@
 #include <stdio.h>
-#include "header_tela.h"
+
 #include "animacao.h"
+#include "telaPrincipal.h"
+#include "modAluno.h"
+#include "modPlano.h"
+#include "modMatricula.h"
+#include "modCheckin.h"
+#include "telaSobre.h"
+#include "telaFinalizacao.h"
+#include "opInvalida.h"
+
+
+
 
 
 int main(void) {
