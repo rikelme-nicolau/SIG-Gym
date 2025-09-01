@@ -1,5 +1,13 @@
 #include <stdio.h>
-#include "header_tela.h"
+
+#include "telaMatricula.h"
+#include "cadastrarMatricula.h"
+#include "visualizarMatricula.h"
+#include "atualizarMatricula.h"
+#include "excluirMatricula.h"
+
+#include "opInvalida.h"
+
 
 char moduloMatricula(void) {
 

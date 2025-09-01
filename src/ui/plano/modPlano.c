@@ -1,5 +1,12 @@
 #include <stdio.h>
-#include "header_tela.h"
+
+#include "telaPlano.h"
+#include "cadastrarPlano.h"
+#include "visualizarPlano.h"
+#include "atualizarPlano.h"
+#include "excluirPlano.h"
+
+#include "opInvalida.h"
 
 char moduloPlano(void) {
 
