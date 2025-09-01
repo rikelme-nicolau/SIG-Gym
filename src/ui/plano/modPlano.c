@@ -23,6 +23,13 @@ char moduloPlano(void) {
         case 
         '4':            telaExcluirPlano();
                         break;
+                        
+        case '0':
+                        break;
+
+        default:
+                        opInvalida();
+                        break;
         }
     
     } 
