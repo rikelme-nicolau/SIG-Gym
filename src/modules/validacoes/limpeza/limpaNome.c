@@ -1,3 +1,4 @@
+#include <string.h>
 void limpaNome(char *nome){
     int tam;
     int inicio = 0;
