@@ -3,7 +3,7 @@
 # --- toolchain ---
 CC       := gcc
 CFLAGS   := -std=c99 -Wall -Wextra -Wpedantic -O2
-CPPFLAGS := -I. -Isrc
+CPPFLAGS := -I. -Isrc -Isrc/ui -Isrc/modules
 
 # --- dirs & bin ---
 SRC_DIR  := src
