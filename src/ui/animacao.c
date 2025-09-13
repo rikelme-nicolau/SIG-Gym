@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "animacao.h"
 
 /* Delay em milissegundos sem libs externas (busy-wait) */
 static void delay_ms(int ms) {
