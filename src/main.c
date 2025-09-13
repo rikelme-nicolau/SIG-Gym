@@ -1,14 +1,12 @@
 #include <stdio.h>
 
 #include "animacao.h"
-#include "telaPrincipal.h"
-#include "modAluno.h"
-#include "modPlano.h"
-#include "modMatricula.h"
-#include "modCheckin.h"
-#include "telaSobre.h"
-#include "telaFinalizacao.h"
-#include "opInvalida.h"
+#include "outrasTelas.h"
+#include "telasAluno.h"
+#include "telasPlano.h"
+#include "telasMatricula.h"
+#include "telasCheckin.h"
+#include "telasErros.h"
 
 
 
