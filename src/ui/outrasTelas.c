@@ -1,4 +1,28 @@
 #include <stdio.h>
+#include "outrasTelas.h"
+
+char telaPrincipal(void) {
+
+    char op;
+
+    printf("===================\n");
+    printf("SIG-GYM\n");
+    printf("===================\n");
+    printf("(1) ALUNOS\n");
+    printf("(2) PLANOS\n");
+    printf("(3) MATRICULAS\n");
+    printf("(4) CHECK-INS\n");
+    printf("(5) SOBRE\n");
+    printf("(0) SAIR\n");
+
+    scanf("%c", &op);
+    getchar();
+
+    return op;
+    
+}
+
+
 
 void telaFinalizacao(void) {
     printf("\n");
@@ -20,3 +44,24 @@ void telaFinalizacao(void) {
     getchar();
 
 }
+
+
+
+void telaSobre(void) {
+    
+    printf("==================\n");
+    printf("SOBRE SIG-GYM\n");
+    printf("==================\n");
+    printf("O sistema, quando finalizado, deve\n");
+    printf("apresentar funcioalidades básicas que\n");
+    printf("permitam o gerenciamento simples de\n");
+    printf("uma academia.\n");
+    printf("==================\n");
+    printf("Desenvolvido por Rikelme Nicolau & Flávia Juliana\n");
+   
+    getchar();
+}
+
+
+
+
