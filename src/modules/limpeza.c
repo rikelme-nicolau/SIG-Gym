@@ -1,4 +1,20 @@
+#include <ctype.h>
 #include <string.h>
+#include "limpeza.h"
+
+void ApenasDigitos(char *str){
+    int j = 0;
+    for(int i = 0; str[i] != '\0'; i += 1){
+        if(isdigit((unsigned char)str[i])){
+            str[j] = str[i];
+            j += 1;
+        }
+    }
+    str[j] = '\0';//necessário para encerrar a string, se não fica errado
+}
+
+
+
 void limpaNome(char *nome){
     int tam;
     int inicio = 0;
