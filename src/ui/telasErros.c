@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "telasErros.h"
 
 void opInvalida(void){
     
