@@ -8,6 +8,8 @@
 
 #include "opInvalida.h"
 
+#include "limparTela.h"
+
 char moduloPlano(void) {
 
     char opPlano;
@@ -18,17 +20,21 @@ char moduloPlano(void) {
         switch(opPlano) 
         {    
         case '1':       telaCadastrarPlano();
+                        limparTela();
                         break;
                         
         case '2':       telaVisualizarPlano();
+                        limparTela();
                         break;
             
         case 
         '3':            telaAtualizarPlano();
+                        limparTela();
                         break;
             
         case 
         '4':            telaExcluirPlano();
+                        limparTela();
                         break;
                         
         case '0':
@@ -36,6 +42,7 @@ char moduloPlano(void) {
 
         default:
                         opInvalida();
+                        limparTela();
                         break;
         }
     

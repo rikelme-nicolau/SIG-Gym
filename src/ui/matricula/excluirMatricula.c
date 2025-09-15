@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 char telaExcluirMatricula(void) {
 
@@ -14,5 +15,6 @@ char telaExcluirMatricula(void) {
     scanf("%c", &op);
     getchar();
 
+    limparTela();
     return op;
 }

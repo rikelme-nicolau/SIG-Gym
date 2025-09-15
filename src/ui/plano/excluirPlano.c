@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 char telaExcluirPlano(void) {
 
@@ -12,6 +13,7 @@ char telaExcluirPlano(void) {
     printf("<Aperte 0 para sair!>\n");
     scanf("%c", &op);
     getchar();
-
+    
+    limparTela();
     return op;
 }
