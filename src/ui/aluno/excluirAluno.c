@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "cores.h"
+
 
 char telaExcluirAluno(void) {
 
