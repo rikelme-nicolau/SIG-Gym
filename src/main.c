@@ -9,6 +9,7 @@
 #include "telaSobre.h"
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
+#include "limparTela.h"
 
 
 
@@ -25,32 +26,38 @@ int main(void) {
             
         case '1':  
                         moduloAluno();
+                        limparTela();
                         break;
             
         case '2': 
             
                         moduloPlano();
+                        limparTela();
                         break;
                                     
         case '3':  
             
                         moduloMatricula();
+                        limparTela();
                         break;
 
         case '4':
                                     
-                        moduloCheckin();                            
+                        moduloCheckin();             limparTela();               
                         break;
             
         case '5':
                         telaSobre();
+                        limparTela();
                         break;
         case '0':
                         telaFinalizacao();
+                        limparTela();
                         break;
 
         default:
                         opInvalida();
+                        limparTela();
                         break;
                 
     }
