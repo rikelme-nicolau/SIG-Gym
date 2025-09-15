@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include "cores.h"
-
 char telaCadastrarAluno() {
     
     char op;
