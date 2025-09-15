@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 char telaAtualizarAluno(void) {
 
@@ -15,7 +16,7 @@ char telaAtualizarAluno(void) {
     getchar();
 
     
-
+    limparTela();
     return op;
 
     }
