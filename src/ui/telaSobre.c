@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 void telaSobre(void) {
     
@@ -13,5 +14,7 @@ void telaSobre(void) {
     printf("Desenvolvido por Rikelme Nicolau & Flávia Juliana\n");
    
     getchar();
+
+    limparTela();
 }
 
