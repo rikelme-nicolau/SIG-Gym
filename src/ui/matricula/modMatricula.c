@@ -8,6 +8,7 @@
 
 #include "opInvalida.h"
 
+#include "limparTela.h"
 
 char moduloMatricula(void) {
 
@@ -17,17 +18,21 @@ char moduloMatricula(void) {
         opMatricula = telaMatricula();
         switch(opMatricula) {    
         case '1':       telaCadastrarMatricula();
+                        limparTela();
                         break;
                         
         case '2':       telaVisualizarMatricula();
+                        limparTela();
                         break;
             
         case 
         '3':            telaAtualizarMatricula();
+                        limparTela();
                         break;
             
         case 
         '4':            telaExcluirMatricula();
+                        limparTela();
                         break;
                         
         case '0':
