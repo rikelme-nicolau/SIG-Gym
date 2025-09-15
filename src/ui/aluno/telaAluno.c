@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 char telaAluno(void) {
 
@@ -16,5 +17,7 @@ char op;
     printf("(0) SAIR\n");
     scanf("%c", &op);
     getchar();
+    
+    limparTela();
     return op;
     }
