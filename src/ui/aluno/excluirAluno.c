@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include "limparTela.h"
 
 
 char telaExcluirAluno(void) {
@@ -16,5 +16,6 @@ char telaExcluirAluno(void) {
     scanf("%c", &op);
     getchar();
 
+    limparTela();
     return op;
 }
