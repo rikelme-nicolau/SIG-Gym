@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 char telaAtualizarPlano(void) {
 
@@ -13,6 +14,6 @@ char telaAtualizarPlano(void) {
     scanf("%c", &op);
     getchar();
 
+    limparTela();
     return op;
-
     }
