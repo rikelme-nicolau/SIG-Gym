@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 void telaFinalizacao(void) {
     printf("\n");
@@ -19,4 +20,5 @@ void telaFinalizacao(void) {
     printf("\n");
     getchar();
 
+    limparTela();
 }
