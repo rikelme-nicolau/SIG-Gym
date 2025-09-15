@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "limparTela.h"
 
 void opInvalida(void){
     
@@ -9,4 +10,5 @@ void opInvalida(void){
     printf("< pressione <enter> >\n");
    
     getchar();
+    limparTela();
 }
