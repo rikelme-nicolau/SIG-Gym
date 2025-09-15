@@ -8,6 +8,8 @@
 
 #include "opInvalida.h"
 
+#include "limparTela.h"
+
 char moduloCheckin(void) {
 
     char opCheckin;
@@ -16,17 +18,21 @@ char moduloCheckin(void) {
         opCheckin = telaCheckin();
         switch(opCheckin) {    
         case '1':       telaCadastrarCheckin();
+        limparTela();
                         break;
                         
         case '2':       telaVisualizarCheckin();
+        limparTela();
                         break;
             
         case 
         '3':            telaAtualizarCheckin();
+        limparTela();
                         break;
             
         case 
         '4':            telaExcluirCheckin();
+        limparTela();
                         break;
 
         case '0':
