@@ -1,21 +1,22 @@
 #include <stdio.h>
 #include "limparTela.h"
+#include "atualizarFuncionario.h"
+char telaAtualizarFuncionario(void)
+{
 
-char telaCadastrarCheckin(void) {
-    
     char op;
-    
+
     printf("\n");
-    
+
     printf("=========================================================================\n");
-    printf("===                        CADASTRAR CHECKIN                          ===\n");
+    printf("===                        ATUALIZAR FUNCIONÁRIO                      ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
-    printf("===  [1]                                                              ===\n");
-    printf("===  [2]                                                              ===\n");
-    printf("===  [3]                                                              ===\n");
-    printf("===  [4]                                                              ===\n");
-    printf("===  [5]                                                              ===\n");
+    printf("===                                                                   ===\n");
+    printf("===                                                                   ===\n");
+    printf("===                                                                   ===\n");
+    printf("===                                                                   ===\n");
+    printf("===                                                                   ===\n");
     printf("===                                                                   ===\n");
     printf("=========================================================================\n");
     printf("=========================================================================\n");
@@ -25,4 +26,4 @@ char telaCadastrarCheckin(void) {
 
     limparTela();
     return op;
-    }
+}

@@ -1,27 +1,29 @@
 #include <stdio.h>
 #include "limparTela.h"
-
-char telaVisualizarCheckin(void) {
+#include "telaFuncionario.h"
+char telaFuncionario(void)
+{
 
     char op;
+
     printf("\n");
-   
+
     printf("=========================================================================\n");
-    printf("===                        VISUALIZAR CHECKIN                         ===\n");
+    printf("===                              FUNCIONARIO                          ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
-    printf("===  [1]                                                              ===\n");
-    printf("===  [2]                                                              ===\n");
-    printf("===  [3]                                                              ===\n");
-    printf("===  [4]                                                              ===\n");
-    printf("===  [5]                                                              ===\n");
+    printf("===  [1]  CADASTRAR                                                   ===\n");
+    printf("===  [2]  VISUALIZAR                                                  ===\n");
+    printf("===  [3]  ATUALIZAR                                                   ===\n");
+    printf("===  [4]  EXCLUIR                                                     ===\n");
+    printf("===  [0]  SAIR                                                        ===\n");
     printf("===                                                                   ===\n");
     printf("=========================================================================\n");
     printf("=========================================================================\n");
-    
+
     scanf("%c", &op);
     getchar();
 
     limparTela();
     return op;
-    }
+}
