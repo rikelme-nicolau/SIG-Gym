@@ -13,7 +13,7 @@ char telaPrincipal(void) {
     printf("===                                                                   ===\n");
     printf("===  [1]  ALUNOS                                                      ===\n");
     printf("===  [2]  PLANOS                                                      ===\n");
-    printf("===  [3]  MATRICULAS                                                  ===\n");
+    printf("===  [3]  ##########                                                  ===\n");
     printf("===  [4]  CHECK-INS                                                   ===\n");
     printf("===  [5]  SOBRE                                                       ===\n");
     printf("===  [0]  SAIR                                                        ===\n");
