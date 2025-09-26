@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include "limparTela.h"
+#include "visualizarFuncionario.h"
 
-char telaExcluirCheckin(void) {
-    
-    char op;    
+char telaVisualizarFuncionario(void)
+{
 
+    char op;
     printf("\n");
-    
+
     printf("=========================================================================\n");
-    printf("===                        EXCLUIR CHECKIN                            ===\n");
+    printf("===                        VISUALIZAR FUNCIONARIO                     ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
     printf("===  [1]                                                              ===\n");
