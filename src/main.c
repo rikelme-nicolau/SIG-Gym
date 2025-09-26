@@ -41,7 +41,8 @@ int main(void) {
 
         case '4':
                                     
-                        moduloCheckin();             limparTela();               
+                        moduloCheckin();           
+                        limparTela();               
                         break;
             
         case '5':
