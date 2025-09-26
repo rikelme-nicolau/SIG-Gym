@@ -4,7 +4,6 @@
 #include "telaPrincipal.h"
 #include "modAluno.h"
 #include "modPlano.h"
-#include "modMatricula.h"
 #include "modCheckin.h"
 #include "telaSobre.h"
 #include "telaFinalizacao.h"
@@ -37,13 +36,13 @@ int main(void) {
                                     
         case '3':  
             
-                        moduloMatricula();
                         limparTela();
                         break;
 
         case '4':
                                     
-                        moduloCheckin();             limparTela();               
+                        moduloCheckin();           
+                        limparTela();               
                         break;
             
         case '5':

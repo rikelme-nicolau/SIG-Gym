@@ -6,16 +6,23 @@ char telaAtualizarAluno(void) {
     char op;
 
     printf("\n");
-    printf("====================\n");
-    printf(" ATUALIZAR ALUNO\n");
-    printf("====================\n");
-    printf("  ...EM BREVE... \n");
-    printf("\n");
-    printf("<Aperte 0 para sair!>\n");
+    
+    printf("=========================================================================\n");
+    printf("===                        ATUALIZAR ALUNO                            ===\n");
+    printf("=========================================================================\n");
+    printf("===                                                                   ===\n");
+    printf("===  [1]                                                              ===\n");
+    printf("===  [2]                                                              ===\n");
+    printf("===  [3]                                                              ===\n");
+    printf("===  [4]                                                              ===\n");
+    printf("===  [5]                                                              ===\n");
+    printf("===                                                                   ===\n");
+    printf("=========================================================================\n");
+    printf("=========================================================================\n");
+     
     scanf("%c", &op);
     getchar();
 
-    
     limparTela();
     return op;
 
