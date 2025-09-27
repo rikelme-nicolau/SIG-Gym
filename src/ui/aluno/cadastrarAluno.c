@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "limparTela.h"
 
-char telaCadastrarAluno() {
+char* telaCadastrarAluno(void) {
     
-    char op;
+    char buffer[1024];
 
     printf("\n");
     
@@ -11,18 +13,20 @@ char telaCadastrarAluno() {
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
-    printf("===  [1]                                                              ===\n");
-    printf("===  [2]                                                              ===\n");
-    printf("===  [3]                                                              ===\n");
-    printf("===  [4]                                                              ===\n");
-    printf("===  [5]                                                              ===\n");
+    printf("===                                                                   ===\n");
+    printf("===                                                                   ===\n");
+    printf("=== Por favor, digite o nome:                                         ===\n");
+    printf("===                                                                   ===\n");
+    printf("===                                                                   ===\n");
     printf("===                                                                   ===\n");
     printf("=========================================================================\n");
     printf("=========================================================================\n");
     
-    scanf("%c", &op);
-    getchar();
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    char *nome = malloc(strlen(buffer) + 1);
+    strcpy(nome, buffer);
 
     limparTela();
-    return op;
+    return nome;
     }
