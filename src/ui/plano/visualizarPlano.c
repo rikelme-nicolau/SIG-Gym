@@ -10,7 +10,7 @@ void telaVisualizarPlano(void) {
         printf("=========================================================================\n");
         printf("===                        VISUALIZAR PLANO                           ===\n");
         printf("=========================================================================\n");
-        printf("===                      NENHUM PLANO CADASTRADO                       ===\n");
+        printf("===                      NENHUM PLANO CADASTRADO                      ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -33,7 +33,7 @@ void telaVisualizarPlano(void) {
 
     if(!algum_ativo) {
         printf("=========================================================================\n");
-        printf("===                      NENHUM PLANO ATIVO                            ===\n");
+        printf("===                      NENHUM PLANO ATIVO                           ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
