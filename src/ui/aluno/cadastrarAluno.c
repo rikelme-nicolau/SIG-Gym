@@ -98,7 +98,7 @@ void telaCadastrarAluno(void) {
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
-        printf("===                     NENHUM PLANO DISPONIVEL                        ===\n");
+        printf("===                     NENHUM PLANO DISPONIVEL                       ===\n");
         printf("=========================================================================\n");
         strcpy(novo_aluno.plano_id, "0");
         printf(">>>press <ENTER>");
@@ -109,7 +109,7 @@ void telaCadastrarAluno(void) {
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
-        printf("===                     PLANOS DISPONIVEIS                             ===\n");
+        printf("===                     PLANOS DISPONIVEIS                            ===\n");
         printf("=========================================================================\n");
         for(int i = 0; i < total_planos; i++) {
             if(lista_planos[i].ativo) {
@@ -120,7 +120,7 @@ void telaCadastrarAluno(void) {
 
         if(algum_ativo) {
             printf("=========================================================================\n");
-            printf("=== Digite o ID do plano que deseja associar ao aluno:                  ===\n");
+            printf("=== Digite o ID do plano que deseja associar ao aluno:                ===\n");
             printf("=========================================================================\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
