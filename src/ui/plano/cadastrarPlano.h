@@ -1,7 +1,9 @@
-#ifndef CADASTRAR_PLANO_H
-#define CADASTRAR_PLANO_H
+#ifndef CADASTRARPLANO_H
+#define CADASTRARPLANO_H
 
 #include <stdbool.h>
+
+void telaCadastrarPlano(void);
 
 #define MAX_PLANOS 50
 #define MAX_BUFFER 1024
