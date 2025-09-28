@@ -1,3 +1,5 @@
+#include <stdbool.h> 
+
 #ifndef CADASTRAR_ALUNO_H
 #define CADASTRAR_ALUNO_H
 
@@ -14,6 +16,7 @@ struct aluno {
     char telefone[22];
     char endereco[MAX_BUFFER];
     char email[MAX_BUFFER];
+    bool ativo;
 };
 
 extern struct aluno lista_alunos[MAX_ALUNOS];

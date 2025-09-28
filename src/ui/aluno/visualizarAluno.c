@@ -22,18 +22,33 @@ void telaVisualizarAluno(void) {
     printf("===                        VISUALIZAR ALUNO                           ===\n");
     printf("=========================================================================\n");
 
+    // Listar apenas alunos ativos
+    int algum_ativo = 0;
     for(int i = 0; i < total_alunos; i++) {
-        printf("[%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
+        if(lista_alunos[i].ativo) {
+            printf("[%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
+            algum_ativo = 1;
+        }
     }
 
-    printf("\nDigite o ID do aluno que deseja visualizar: ");
+    if(!algum_ativo) {
+        printf("=========================================================================\n");
+        printf("===                      NENHUM ALUNO ATIVO                           ===\n");
+        printf("=========================================================================\n");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    printf("\n>>>digite o ID do aluno que deseja visualizar: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0'; 
 
     int encontrado = 0;
     for(int i = 0; i < total_alunos; i++) {
-        if(strcmp(lista_alunos[i].id, id_busca) == 0) {
+        // Só considerar ativo na busca
+        if(strcmp(lista_alunos[i].id, id_busca) == 0 && lista_alunos[i].ativo) {
             limparTela();
             printf("=========================================================================\n");
             printf("===                        INFORMAÇÕES DO ALUNO                       ===\n");

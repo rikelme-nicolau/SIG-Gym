@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h> 
 #include "limparTela.h"
 
 #define MAX_BUFFER 1024
@@ -14,6 +15,7 @@ struct aluno {
     char telefone[22];
     char endereco[MAX_BUFFER];
     char email[MAX_BUFFER];
+    bool ativo;          
 };
 
 struct aluno lista_alunos[MAX_ALUNOS];
@@ -89,6 +91,8 @@ void telaCadastrarAluno(void) {
     strcpy(novo_aluno.email, buffer);
 
     snprintf(novo_aluno.id, sizeof(novo_aluno.id), "%d", total_alunos + 1);
+
+    novo_aluno.ativo = true;
 
     lista_alunos[total_alunos++] = novo_aluno;
     limparTela();
