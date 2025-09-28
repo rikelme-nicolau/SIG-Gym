@@ -3,136 +3,93 @@
 #include <string.h>
 #include "limparTela.h"
 
-char* telaCadastrarAluno(void) {
-    
-    char buffer_nome[1024];
-    char buffer_idade[1024];
-    char buffer_cpf[1024];
-    char buffer_telefone[1024];
-    char buffer_endereco[1024];
-    char buffer_email[1024];
+#define MAX_BUFFER 1024
+#define MAX_ALUNOS 1024
 
-    printf("\n");
-    
+struct aluno {
+    char id[12];
+    char nome[MAX_BUFFER];
+    char idade[12];
+    char cpf[22];
+    char telefone[22];
+    char endereco[MAX_BUFFER];
+    char email[MAX_BUFFER];
+};
+
+struct aluno lista_alunos[MAX_ALUNOS];
+int total_alunos = 0; 
+
+void telaCadastrarAluno(void) {
+    if(total_alunos >= MAX_ALUNOS) {
+        printf("Limite de alunos atingido!\n");
+        return;
+    }
+
+    struct aluno novo_aluno;
+    char buffer[MAX_BUFFER];
+
+    limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=== Por favor, digite o nome:                                         ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=========================================================================\n");
-    printf("=========================================================================\n");
-    
-    fgets(buffer_nome, sizeof(buffer_nome), stdin);
-    buffer_nome[strcspn(buffer_nome, "\n")] = '\0';
-    char *nome = malloc(strlen(buffer_nome) + 1);
-    strcpy(nome, buffer_nome);
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_aluno.nome, buffer);
 
     limparTela();
-    
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=== Por favor, digite a data de nascimento:                           ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=========================================================================\n");
-    printf("=========================================================================\n");
-    
-    fgets(buffer_idade, sizeof(buffer_idade), stdin);
-    buffer_idade[strcspn(buffer_idade, "\n")] = '\0';
-    char *idade =  malloc(strlen(buffer_idade) + 1); 
-    strcpy(idade, buffer_idade);
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_aluno.idade, buffer);
 
     limparTela();
-
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("=== Por favor, digite o cpf:                                          ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
+    printf("=== Por favor, digite o CPF:                                          ===\n");
     printf("=========================================================================\n");
-    printf("=========================================================================\n");
-    
-    fgets(buffer_cpf, sizeof(buffer_cpf), stdin);
-    buffer_cpf[strcspn(buffer_cpf, "\n")] = '\0';
-    char *cpf =  malloc(strlen(buffer_cpf) + 1); 
-    strcpy(cpf, buffer_cpf);
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_aluno.cpf, buffer);
 
     limparTela();
-
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=== Por favor, digite o telefone:                                     ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=========================================================================\n");
-    printf("=========================================================================\n");
-    
-    fgets(buffer_telefone, sizeof(buffer_telefone), stdin);
-    buffer_telefone[strcspn(buffer_telefone, "\n")] = '\0';
-    char *telefone =  malloc(strlen(buffer_telefone) + 1); 
-    strcpy(telefone, buffer_telefone);
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_aluno.telefone, buffer);
 
     limparTela();
+    printf("=========================================================================\n");
+    printf("===                        CADASTRAR ALUNO                            ===\n");   
+    printf("=========================================================================\n");
+    printf("=== Por favor, digite o endereco:                                     ===\n");
+    printf("=========================================================================\n");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_aluno.endereco, buffer);
 
+    limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("=== Por favor, digite o endereço:                                     ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("=========================================================================\n");
-    printf("=========================================================================\n");
-    
-    fgets(buffer_endereco, sizeof(buffer_endereco), stdin);
-    buffer_endereco[strcspn(buffer_endereco, "\n")] = '\0';
-    char *endereco =  malloc(strlen(buffer_endereco) + 1); 
-    strcpy(endereco, buffer_endereco);
-
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=== Por favor, digite o email:                                        ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
-    printf("===                                                                   ===\n");
     printf("=========================================================================\n");
-    printf("=========================================================================\n");
-    
-    fgets(buffer_email, sizeof(buffer_email), stdin);
-    buffer_email[strcspn(buffer_email, "\n")] = '\0';
-    char *email =  malloc(strlen(buffer_email) + 1); 
-    strcpy(email, buffer_email);
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_aluno.email, buffer);
 
+    snprintf(novo_aluno.id, sizeof(novo_aluno.id), "%d", total_alunos + 1);
+
+    lista_alunos[total_alunos++] = novo_aluno;
     limparTela();
-
-    return nome, idade, cpf, telefone, endereco, email;
 }
