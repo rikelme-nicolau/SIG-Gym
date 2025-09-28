@@ -3,6 +3,7 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarAluno.h"
+#include "src\ui\plano\cadastrarPlano.h"  // Para acessar lista_planos e total_planos
 
 void telaVisualizarAluno(void) {
     if(total_alunos == 0) {
@@ -40,14 +41,13 @@ void telaVisualizarAluno(void) {
         return;
     }
 
-    printf("\n>>>digite o ID do aluno que deseja visualizar: ");
+    printf("\n>>> Digite o ID do aluno que deseja visualizar: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0'; 
 
     int encontrado = 0;
     for(int i = 0; i < total_alunos; i++) {
-        // Só considerar ativo na busca
         if(strcmp(lista_alunos[i].id, id_busca) == 0 && lista_alunos[i].ativo) {
             limparTela();
             printf("=========================================================================\n");
@@ -60,6 +60,19 @@ void telaVisualizarAluno(void) {
             printf("Telefone: %s\n", lista_alunos[i].telefone);
             printf("Endereco: %s\n", lista_alunos[i].endereco);
             printf("Email: %s\n", lista_alunos[i].email);
+
+            // Mostrar nome do plano associado
+            char nome_plano[MAX_BUFFER] = "Nenhum";
+            if(strcmp(lista_alunos[i].plano_id, "0") != 0) {
+                for(int j = 0; j < total_planos; j++) {
+                    if(lista_planos[j].ativo && strcmp(lista_planos[j].id, lista_alunos[i].plano_id) == 0) {
+                        strcpy(nome_plano, lista_planos[j].nome);
+                        break;
+                    }
+                }
+            }
+            printf("Plano associado: %s\n", nome_plano);
+
             printf("=========================================================================\n");
             printf("=========================================================================\n");
             encontrado = 1;
@@ -74,7 +87,7 @@ void telaVisualizarAluno(void) {
         printf("===                      NENHUM ALUNO ENCONTRADO                      ===\n");
         printf("=========================================================================\n");
     }
-    
+
     getchar();
     limparTela();
 }

@@ -17,6 +17,7 @@ struct aluno {
     char endereco[MAX_BUFFER];
     char email[MAX_BUFFER];
     bool ativo;
+    char plano_id[12];
 };
 
 extern struct aluno lista_alunos[MAX_ALUNOS];
