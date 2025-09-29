@@ -5,6 +5,7 @@
 #include "modAluno.h"
 #include "modPlano.h"
 #include "modFuncionario.h"
+#include "modEquipamento.h"
 #include "telaSobre.h"
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
@@ -35,7 +36,7 @@ int main(void)
 
         case '3':
 
-            limparTela();
+            moduloEquipamento();
             break;
 
         case '4':

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "limparTela.h"
 
-char telaAluno(void)
+char telaEquipamento(void)
 {
 
     char op;
@@ -9,7 +9,7 @@ char telaAluno(void)
     printf("\n");
 
     printf("=========================================================================\n");
-    printf("===                              ALUNO                                ===\n");
+    printf("===                          EQUIPAMENTO                              ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
     printf("===  [1]  CADASTRAR                                                   ===\n");
