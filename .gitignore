@@ -25,6 +25,7 @@
 *.a
 *.la
 *.lo
+./build
 
 # Shared objects (inc. Windows DLLs)
 *.dll

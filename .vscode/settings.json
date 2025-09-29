@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "cadastraraluno.h": "c",
+        "stdio.h": "c"
+    }
+}

@@ -8,36 +8,30 @@
 
 #include "opInvalida.h"
 
-#include "limparTela.h"
-
 char moduloFuncionario(void)
 {
 
-    char opCheckin;
+    char opFuncionario;
 
     do
     {
-        opCheckin = telaFuncionario();
-        switch (opCheckin)
+        opFuncionario = telaFuncionario();
+        switch (opFuncionario)
         {
         case '1':
             telaCadastrarFuncionario();
-            limparTela();
             break;
 
         case '2':
             telaVisualizarFuncionario();
-            limparTela();
             break;
 
         case '3':
             telaAtualizarFuncionario();
-            limparTela();
             break;
 
         case '4':
             telaExcluirFuncionario();
-            limparTela();
             break;
 
         case '0':
@@ -47,8 +41,7 @@ char moduloFuncionario(void)
             opInvalida();
             break;
         }
+    } while (opFuncionario != '0');
 
-    } while (opCheckin != '0');
-
-    return opCheckin;
+    return opFuncionario;
 }
