@@ -3,8 +3,25 @@
 #include <string.h>
 #include <stdbool.h>
 #include "limparTela.h"
+
 #include "cadastrarPlano.h"
 #include "arquivoPlano.h" // persistência
+
+
+#define MAX_PLANOS 50
+#define MAX_BUFFER 1024
+#define MAX_ATIVIDADES 5
+
+struct plano {
+    char id[12];
+    char nome[MAX_BUFFER];
+    char horario_inicio[12];   // horário inicial
+    char horario_fim[12];      // horário final
+    char atividades[MAX_ATIVIDADES][MAX_BUFFER];
+    int total_atividades;
+    bool ativo;
+};
+
 
 struct plano lista_planos[MAX_PLANOS];
 int total_planos = 0;
@@ -29,6 +46,7 @@ void telaCadastrarPlano(void) {
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_plano.nome, buffer);
 
+
     // Horário início
     limparTela();
     printf("=========================================================================\n");
@@ -40,6 +58,26 @@ void telaCadastrarPlano(void) {
     strcpy(novo_plano.horario_inicio, buffer);
 
     // Horário fim
+
+    // Horário inicial
+
+    limparTela();
+    printf("=========================================================================\n");
+    printf("===                        CADASTRAR PLANO                            ===\n");
+    printf("=========================================================================\n");
+
+    printf(">>> Digite o horário de FIM (ex: 20:00): ");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_plano.horario_fim, buffer);
+
+
+    printf(">>> Digite o horário de INÍCIO (ex: 10:00): ");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_plano.horario_inicio, buffer);
+
+    // Horário final
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR PLANO                            ===\n");
@@ -48,6 +86,7 @@ void telaCadastrarPlano(void) {
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_plano.horario_fim, buffer);
+
 
     // Atividades
     novo_plano.total_atividades = 0;

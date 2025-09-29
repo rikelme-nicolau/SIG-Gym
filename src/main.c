@@ -4,7 +4,8 @@
 #include "telaPrincipal.h"
 #include "modAluno.h"
 #include "modPlano.h"
-#include "modCheckin.h"
+#include "modFuncionario.h"
+#include "modEquipamento.h"
 #include "telaSobre.h"
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
@@ -12,11 +13,25 @@
 #include "src\ui\aluno\arquivoAluno.h"  // persistência alunos
 #include "src\ui\plano\arquivoPlano.h"  // persistência plano
 
-
-
-
-int main(void) {
+int main(void)
+{
     char op;
+
+
+    animacao();
+
+    do
+    {
+        op = telaPrincipal();
+        switch (op)
+        {
+
+        case '1':
+            moduloAluno();
+            limparTela();
+            break;
+
+        case '2':
 
 
     animacao();
@@ -44,28 +59,36 @@ int main(void) {
                         limparTela();
                         break;
 
+            moduloPlano();
+            limparTela();
+            break;
+
+        case '3':
+
+            moduloEquipamento();
+            break;
+
         case '4':
-                                    
-                        moduloCheckin();           
-                        limparTela();               
-                        break;
-            
+
+            moduloFuncionario();
+            limparTela();
+            break;
+
         case '5':
-                        telaSobre();
-                        limparTela();
-                        break;
+            telaSobre();
+            limparTela();
+            break;
         case '0':
-                        telaFinalizacao();
-                        limparTela();
-                        break;
+            telaFinalizacao();
+            limparTela();
+            break;
 
         default:
-                        opInvalida();
-                        limparTela();
-                        break;
-                
-    }
-     }while (op != '0');
+            opInvalida();
+            limparTela();
+            break;
+        }
+    } while (op != '0');
 
     return 0;
 }

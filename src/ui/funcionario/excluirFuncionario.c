@@ -2,18 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "limparTela.h"
-#include "cadastrarAluno.h"
-#include "arquivoAluno.h"  // <-- persistência
+#include "cadastrarFuncionario.h"
 
-void telaExcluirAluno(void)
+void telaExcluirFuncionario(void)
 {
-    if (total_alunos == 0)
+    if (total_funcionarios == 0)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                        EXCLUIR ALUNO                              ===\n");
+        printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
         printf("=========================================================================\n");
-        printf("===                      NENHUM ALUNO CADASTRADO                      ===\n");
+        printf("===                NENHUM FUNCIONÁRIO CADASTRADO                      ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -22,16 +21,19 @@ void telaExcluirAluno(void)
 
     limparTela();
     printf("=========================================================================\n");
-    printf("===                        EXCLUIR ALUNO                              ===\n");
+    printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
     printf("=========================================================================\n");
 
-    // Listar apenas alunos ativos
+    // Listar apenas funcionários ativos
     int algum_ativo = 0;
-    for (int i = 0; i < total_alunos; i++)
+    for (int i = 0; i < total_funcionarios; i++)
     {
-        if (lista_alunos[i].ativo)
+        if (lista_funcionarios[i].ativo)
         {
-            printf("[%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
+            printf("[%s] %s (%s)\n",
+                   lista_funcionarios[i].id,
+                   lista_funcionarios[i].nome,
+                   lista_funcionarios[i].cargo);
             algum_ativo = 1;
         }
     }
@@ -39,32 +41,29 @@ void telaExcluirAluno(void)
     if (!algum_ativo)
     {
         printf("=========================================================================\n");
-        printf("===                      NENHUM ALUNO ATIVO                             ===\n");
+        printf("===               NENHUM FUNCIONÁRIO ATIVO                             ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
         return;
     }
 
-    printf("\n>>>digite o ID do aluno que deseja excluir: ");
+    printf("\n>>> Digite o ID do funcionário que deseja excluir: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
     int encontrado = 0;
-    for (int i = 0; i < total_alunos; i++)
+    for (int i = 0; i < total_funcionarios; i++)
     {
-        if (strcmp(lista_alunos[i].id, id_busca) == 0 && lista_alunos[i].ativo)
+        if (strcmp(lista_funcionarios[i].id, id_busca) == 0 && lista_funcionarios[i].ativo)
         {
-            lista_alunos[i].ativo = false; // desativa o aluno
-
-            // **Persistência automática**
-            excluirAluno(id_busca);
+            lista_funcionarios[i].ativo = 0; // desativa o funcionário
             limparTela();
             printf("=========================================================================\n");
-            printf("===                        EXCLUIR ALUNO                              ===\n");
+            printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
             printf("=========================================================================\n");
-            printf("===                     ALUNO EXCLUIDO COM SUCESSO                    ===\n");
+            printf("===               FUNCIONÁRIO EXCLUÍDO COM SUCESSO                    ===\n");
             printf("=========================================================================\n");
             encontrado = 1;
             break;
@@ -74,9 +73,9 @@ void telaExcluirAluno(void)
     if (!encontrado)
     {
         printf("=========================================================================\n");
-        printf("===                        EXCLUIR ALUNO                              ===\n");
+        printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
         printf("=========================================================================\n");
-        printf("===                     ALUNO NAO ENCONTRADO                          ===\n");
+        printf("===                 FUNCIONÁRIO NÃO ENCONTRADO                        ===\n");
         printf("=========================================================================\n");
     }
 

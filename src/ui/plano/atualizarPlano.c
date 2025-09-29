@@ -117,7 +117,9 @@ void telaAtualizarPlano(void) {
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
                 strcpy(plano_sel->horario_fim, buffer);
+
                 atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
+
                 break;
 
             case '3':

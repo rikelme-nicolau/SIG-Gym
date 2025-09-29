@@ -3,10 +3,12 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarAluno.h"
-#include "src\ui\plano\cadastrarPlano.h"  // Para acessar lista_planos e total_planos
+#include "src/ui/plano/cadastrarPlano.h" // Para acessar lista_planos e total_planos
 
-void telaVisualizarAluno(void) {
-    if(total_alunos == 0) {
+void telaVisualizarAluno(void)
+{
+    if (total_alunos == 0)
+    {
         limparTela();
         printf("=========================================================================\n");
         printf("===                        VISUALIZAR ALUNO                           ===\n");
@@ -25,14 +27,17 @@ void telaVisualizarAluno(void) {
 
     // Listar apenas alunos ativos
     int algum_ativo = 0;
-    for(int i = 0; i < total_alunos; i++) {
-        if(lista_alunos[i].ativo) {
+    for (int i = 0; i < total_alunos; i++)
+    {
+        if (lista_alunos[i].ativo)
+        {
             printf("[%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
             algum_ativo = 1;
         }
     }
 
-    if(!algum_ativo) {
+    if (!algum_ativo)
+    {
         printf("=========================================================================\n");
         printf("===                      NENHUM ALUNO ATIVO                           ===\n");
         printf("=========================================================================\n");
@@ -44,11 +49,13 @@ void telaVisualizarAluno(void) {
     printf("\n>>> Digite o ID do aluno que deseja visualizar: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
-    id_busca[strcspn(id_busca, "\n")] = '\0'; 
+    id_busca[strcspn(id_busca, "\n")] = '\0';
 
     int encontrado = 0;
-    for(int i = 0; i < total_alunos; i++) {
-        if(strcmp(lista_alunos[i].id, id_busca) == 0 && lista_alunos[i].ativo) {
+    for (int i = 0; i < total_alunos; i++)
+    {
+        if (strcmp(lista_alunos[i].id, id_busca) == 0 && lista_alunos[i].ativo)
+        {
             limparTela();
             printf("=========================================================================\n");
             printf("===                        INFORMAÇÕES DO ALUNO                       ===\n");
@@ -63,9 +70,12 @@ void telaVisualizarAluno(void) {
 
             // Mostrar nome do plano associado
             char nome_plano[MAX_BUFFER] = "Nenhum";
-            if(strcmp(lista_alunos[i].plano_id, "0") != 0) {
-                for(int j = 0; j < total_planos; j++) {
-                    if(lista_planos[j].ativo && strcmp(lista_planos[j].id, lista_alunos[i].plano_id) == 0) {
+            if (strcmp(lista_alunos[i].plano_id, "0") != 0)
+            {
+                for (int j = 0; j < total_planos; j++)
+                {
+                    if (lista_planos[j].ativo && strcmp(lista_planos[j].id, lista_alunos[i].plano_id) == 0)
+                    {
                         strcpy(nome_plano, lista_planos[j].nome);
                         break;
                     }
@@ -80,7 +90,8 @@ void telaVisualizarAluno(void) {
         }
     }
 
-    if(!encontrado) {
+    if (!encontrado)
+    {
         printf("=========================================================================\n");
         printf("===                        VISUALIZAR ALUNO                           ===\n");
         printf("=========================================================================\n");
