@@ -1,6 +1,6 @@
 #ifndef EXCLUIR_FUNCIONARIO_H
 #define EXCLUIR_FUNCIONARIO_H
 
-char telaExcluirFuncionario(void);
+void telaExcluirFuncionario(void);
 
 #endif
