@@ -54,7 +54,7 @@ void telaVisualizarPlano(void) {
             printf("=========================================================================\n");
             printf("ID: %s\n", lista_planos[i].id);
             printf("Nome: %s\n", lista_planos[i].nome);
-            printf("Horario de funcionamento: %s\n", lista_planos[i].horario);
+            printf("Horario de funcionamento: %s\n", lista_planos[i].horario_fim);
             printf("Atividades incluídas:\n");
             for(int j = 0; j < lista_planos[i].total_atividades; j++) {
                 printf(" - %s\n", lista_planos[i].atividades[j]);
