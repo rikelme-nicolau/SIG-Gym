@@ -39,7 +39,7 @@ void telaAtualizarPlano(void) {
         return;
     }
 
-    printf("\n>>>digite o ID do plano que deseja atualizar: ");
+    printf("\n>>> Digite o ID do plano que deseja atualizar: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
@@ -75,7 +75,7 @@ void telaAtualizarPlano(void) {
         printf("Plano selecionado: %s (%s)\n", plano_sel->nome, plano_sel->id);
         printf("Escolha o campo para atualizar:\n");
         printf("[1] Nome\n");
-        printf("[2] Horario\n");
+        printf("[2] Horário de funcionamento\n");
         printf("[3] Atividades\n");
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
@@ -100,11 +100,21 @@ void telaAtualizarPlano(void) {
                 printf("=========================================================================\n");
                 printf("===                        ATUALIZAR PLANO                            ===\n");
                 printf("=========================================================================\n");
-                printf("=== Novo horario:                                                     ===\n");
+                printf("=== Novo horário de início:                                           ===\n");
                 printf("=========================================================================\n");
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
-                strcpy(plano_sel->horario, buffer);
+                strcpy(plano_sel->horario_inicio, buffer);
+
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR PLANO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== Novo horário de fim:                                              ===\n");
+                printf("=========================================================================\n");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                strcpy(plano_sel->horario_fim, buffer);
                 break;
 
             case '3':
@@ -114,7 +124,7 @@ void telaAtualizarPlano(void) {
                 printf("=========================================================================\n");
                 plano_sel->total_atividades = 0;
                 for(int i = 0; i < MAX_ATIVIDADES; i++) {
-                    printf(">>>digite a atividade #%d (ou ENTER para finalizar): ", i+1);
+                    printf(">>> Digite a atividade #%d (ou ENTER para finalizar): ", i+1);
                     fgets(buffer, sizeof(buffer), stdin);
                     buffer[strcspn(buffer, "\n")] = '\0';
                     if(strlen(buffer) == 0) break;
@@ -131,7 +141,7 @@ void telaAtualizarPlano(void) {
                 printf("=========================================================================\n");
                 printf("===                        ATUALIZAR PLANO                            ===\n");
                 printf("=========================================================================\n");
-                printf("===                        OPCAO  INVALIDA                            ===\n");
+                printf("===                        OPCAO INVALIDA                             ===\n");
                 printf("=========================================================================\n");
                 break;
         }

@@ -11,7 +11,8 @@
 struct plano {
     char id[12];
     char nome[MAX_BUFFER];
-    char horario[MAX_BUFFER];
+    char horario_inicio[12];   // horário inicial
+    char horario_fim[12];      // horário final
     char atividades[MAX_ATIVIDADES][MAX_BUFFER];
     int total_atividades;
     bool ativo;
@@ -30,31 +31,44 @@ void telaCadastrarPlano(void) {
     struct plano novo_plano;
     char buffer[MAX_BUFFER];
 
+    // Nome
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR PLANO                            ===\n");
     printf("=========================================================================\n");
-    printf(">>>digite o nome do plano: ");
+    printf(">>> Digite o nome do plano: ");
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_plano.nome, buffer);
 
+    // Horário inicial
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR PLANO                            ===\n");
     printf("=========================================================================\n");
-    printf(">>>digite o horario de funcionamento: ");
+    printf(">>> Digite o horário de INÍCIO (ex: 10:00): ");
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_plano.horario, buffer);
+    strcpy(novo_plano.horario_inicio, buffer);
 
+    // Horário final
+    limparTela();
+    printf("=========================================================================\n");
+    printf("===                        CADASTRAR PLANO                            ===\n");
+    printf("=========================================================================\n");
+    printf(">>> Digite o horário de FIM (ex: 20:00): ");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strcpy(novo_plano.horario_fim, buffer);
+
+    // Atividades
     novo_plano.total_atividades = 0;
     for(int i = 0; i < MAX_ATIVIDADES; i++) {
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR PLANO                            ===\n");
         printf("=========================================================================\n");
-        printf(">>>digite a atividade #%d (ou <ENTER> para finalizar): ", i+1);
+        printf(">>> Digite a atividade #%d (ou <ENTER> para finalizar): ", i+1);
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
         if(strlen(buffer) == 0) break; 
@@ -62,6 +76,7 @@ void telaCadastrarPlano(void) {
         novo_plano.total_atividades++;
     }
 
+    // ID e ativação
     snprintf(novo_plano.id, sizeof(novo_plano.id), "%d", total_planos + 1);
     novo_plano.ativo = true;
 
@@ -71,7 +86,7 @@ void telaCadastrarPlano(void) {
     printf("=========================================================================\n");
     printf("===                        CADASTRAR PLANO                            ===\n");
     printf("=========================================================================\n");
-    printf(">>>press <ENTER>");
+    printf(">>> Plano cadastrado com sucesso! <ENTER>\n");
     getchar();
     limparTela();
 }
