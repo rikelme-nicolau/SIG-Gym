@@ -10,10 +10,13 @@
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
 #include "limparTela.h"
+#include "src\ui\aluno\arquivoAluno.h"  // persistência alunos
+#include "src\ui\plano\arquivoPlano.h"  // persistência plano
 
 int main(void)
 {
     char op;
+
 
     animacao();
 
@@ -29,6 +32,32 @@ int main(void)
             break;
 
         case '2':
+
+
+    animacao();
+
+    total_alunos = carregarAlunos(lista_alunos);
+    total_planos = carregarPlanos(lista_planos);
+
+    do {
+        op = telaPrincipal();
+        switch(op) {
+            
+        case '1':  
+                        moduloAluno();
+                        limparTela();
+                        break;
+            
+        case '2': 
+            
+                        moduloPlano();
+                        limparTela();
+                        break;
+                                    
+        case '3':  
+            
+                        limparTela();
+                        break;
 
             moduloPlano();
             limparTela();

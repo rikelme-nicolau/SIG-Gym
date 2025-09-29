@@ -6,6 +6,8 @@
 #include "cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
 
+#include "arquivoAluno.h" // <-- persistência
+
 void telaAtualizarAluno(void)
 {
     if (total_alunos == 0)
@@ -99,6 +101,8 @@ void telaAtualizarAluno(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(aluno_sel->nome, buffer);
+            atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
+
             break;
         case '2':
             limparTela();
@@ -110,6 +114,9 @@ void telaAtualizarAluno(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(aluno_sel->idade, buffer);
+
+            atualizarAlunoNoArquivo(*aluno_sel);
+
             break;
         case '3':
             limparTela();
@@ -121,6 +128,8 @@ void telaAtualizarAluno(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(aluno_sel->cpf, buffer);
+            atualizarAlunoNoArquivo(*aluno_sel);
+
             break;
         case '4':
             limparTela();
@@ -132,6 +141,8 @@ void telaAtualizarAluno(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(aluno_sel->telefone, buffer);
+
+            atualizarAlunoNoArquivo(*aluno_sel);
             break;
         case '5':
             limparTela();
@@ -143,6 +154,9 @@ void telaAtualizarAluno(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(aluno_sel->endereco, buffer);
+
+            atualizarAlunoNoArquivo(*aluno_sel);
+
             break;
         case '6':
             limparTela();
@@ -154,6 +168,9 @@ void telaAtualizarAluno(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(aluno_sel->email, buffer);
+
+            atualizarAlunoNoArquivo(*aluno_sel);
+
             break;
         case '7':
             if (total_planos == 0)
@@ -219,6 +236,9 @@ void telaAtualizarAluno(void)
             {
                 strcpy(aluno_sel->plano_id, "0");
             }
+
+            atualizarAlunoNoArquivo(*aluno_sel); // salva alteração do plano
+
             break;
         case '0':
             break;

@@ -3,6 +3,7 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarPlano.h"
+#include "arquivoPlano.h"  // <-- persistência
 
 void telaAtualizarPlano(void) {
     if(total_planos == 0) {
@@ -93,6 +94,7 @@ void telaAtualizarPlano(void) {
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
                 strcpy(plano_sel->nome, buffer);
+                atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
                 break;
 
             case '2':
@@ -115,6 +117,9 @@ void telaAtualizarPlano(void) {
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
                 strcpy(plano_sel->horario_fim, buffer);
+
+                atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
+
                 break;
 
             case '3':
@@ -131,6 +136,7 @@ void telaAtualizarPlano(void) {
                     strcpy(plano_sel->atividades[i], buffer);
                     plano_sel->total_atividades++;
                 }
+                atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
                 break;
 
             case '0':
