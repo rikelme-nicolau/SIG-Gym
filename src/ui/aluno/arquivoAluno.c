@@ -38,20 +38,28 @@ void salvarAlunos(struct aluno lista_alunos[], int total_alunos) {
 // Carrega todos os alunos do arquivo texto
 int carregarAlunos(struct aluno lista_alunos[]) {
     FILE *fp = fopen(ALUNOS_FILE, "rt");
-    if (!fp) return 0;
+    if (!fp) {
+        // Se o arquivo não existe, não é um erro, apenas não há alunos para carregar.
+        return 0;
+    }
 
     int total = 0;
-    while (!feof(fp) && total < MAX_ALUNOS) {
-        fscanf(fp, "%11[^;];%1023[^;];%11[^;];%21[^;];%21[^;];%1023[^;];%1023[^;];%d;%11[^\n]\n",
-               lista_alunos[total].id,
-               lista_alunos[total].nome,
-               lista_alunos[total].idade,
-               lista_alunos[total].cpf,
-               lista_alunos[total].telefone,
-               lista_alunos[total].endereco,
-               lista_alunos[total].email,
-               (int*)&lista_alunos[total].ativo,
-               lista_alunos[total].plano_id);
+
+    // MUDANÇA 1: A condição do loop foi alterada.
+    // Agora, verificamos se o fscanf conseguiu ler com sucesso os 9 campos que esperamos.
+    // Isso evita o problema com o feof() e também lida com linhas mal formatadas no arquivo.
+    while (total < MAX_ALUNOS && 
+           fscanf(fp, "%11[^;];%1023[^;];%11[^;];%21[^;];%21[^;];%1023[^;];%1023[^;];%d;%11[^\n]\n",
+                  lista_alunos[total].id,
+                  lista_alunos[total].nome,
+                  lista_alunos[total].idade,
+                  lista_alunos[total].cpf,
+                  lista_alunos[total].telefone,
+                  lista_alunos[total].endereco,
+                  lista_alunos[total].email,
+                  &lista_alunos[total].ativo, // MUDANÇA 2: Removido o cast desnecessário.
+                  lista_alunos[total].plano_id) == 9) // A condição verifica se 9 itens foram lidos.
+    {
         total++;
     }
 
