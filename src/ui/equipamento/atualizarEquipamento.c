@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
+#include "arquivoEquipamento.h"
+
+#define MAX_BUFFER 1024
 
 void telaAtualizarEquipamento(void)
 {
@@ -11,9 +13,9 @@ void telaAtualizarEquipamento(void)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                  ATUALIZAR EQUIPAMENTO                            ===\n");
+        printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
         printf("=========================================================================\n");
-        printf("===             NENHUM EQUIPAMENTO CADASTRADO                         ===\n");
+        printf("===                   NENHUM EQUIPAMENTO CADASTRADO                     ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -22,10 +24,10 @@ void telaAtualizarEquipamento(void)
 
     limparTela();
     printf("=========================================================================\n");
-    printf("===                  ATUALIZAR EQUIPAMENTO                            ===\n");
+    printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
     printf("=========================================================================\n");
 
-    // Listar equipamentos ativos
+    // Lista equipamentos ativos
     for (int i = 0; i < total_equipamentos; i++)
     {
         if (lista_equipamentos[i].ativo)
@@ -34,7 +36,7 @@ void telaAtualizarEquipamento(void)
         }
     }
 
-    printf("===             DIGITE O ID DO EQUIPAMENTO:                           ===\n");
+    printf("===                          DIGITE O ID:                             ===\n");
     printf("=========================================================================\n");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
@@ -53,16 +55,16 @@ void telaAtualizarEquipamento(void)
     if (encontrado == -1)
     {
         printf("=========================================================================\n");
-        printf("===                  ATUALIZAR EQUIPAMENTO                            ===\n");
+        printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
         printf("=========================================================================\n");
-        printf("===             EQUIPAMENTO NÃO ENCONTRADO                            ===\n");
+        printf("===                   ID NÃO ENCONTRADO                                 ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
         return;
     }
 
-    struct equipamento *eq_sel = &lista_equipamentos[encontrado];
+    struct equipamento *equip_sel = &lista_equipamentos[encontrado];
     char buffer[MAX_BUFFER];
     char opcao;
 
@@ -70,14 +72,13 @@ void telaAtualizarEquipamento(void)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                  ATUALIZAR EQUIPAMENTO                            ===\n");
+        printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
         printf("=========================================================================\n");
-        printf("Equipamento selecionado: %s (%s)\n", eq_sel->nome, eq_sel->id);
+        printf("Equipamento selecionado: %s (%s)\n", equip_sel->nome, equip_sel->id);
         printf("Escolha o campo para atualizar:\n");
         printf("[1] Nome\n");
         printf("[2] Última manutenção\n");
-        printf("[3] Próxima manutenção\n");
-        printf("[4] Categoria\n");
+        printf("[3] Categoria\n");
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
         scanf(" %c", &opcao);
@@ -90,31 +91,35 @@ void telaAtualizarEquipamento(void)
             printf("=== Novo nome: ===\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(eq_sel->nome, buffer);
+            strcpy(equip_sel->nome, buffer);
+            atualizarEquipamentoNoArquivo(*equip_sel);
             break;
+
         case '2':
             limparTela();
-            printf("=== Nova última manutenção: ===\n");
+            printf("=== Nova data da última manutenção (dd/mm/aaaa): ===\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(eq_sel->ultima_manutencao, buffer);
+            strcpy(equip_sel->ultima_manutencao, buffer);
+
+            // Atualiza automaticamente a próxima manutenção
+            calcularProximaManutencao(equip_sel->ultima_manutencao, equip_sel->proxima_manutencao);
+
+            atualizarEquipamentoNoArquivo(*equip_sel);
             break;
+
         case '3':
-            limparTela();
-            printf("=== Nova próxima manutenção: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(eq_sel->proxima_manutencao, buffer);
-            break;
-        case '4':
             limparTela();
             printf("=== Nova categoria: ===\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(eq_sel->categoria, buffer);
+            strcpy(equip_sel->categoria, buffer);
+            atualizarEquipamentoNoArquivo(*equip_sel);
             break;
+
         case '0':
             break;
+
         default:
             limparTela();
             printf("=== OPÇÃO INVÁLIDA ===\n");
@@ -125,9 +130,9 @@ void telaAtualizarEquipamento(void)
         {
             limparTela();
             printf("=========================================================================\n");
-            printf("===                  ATUALIZAR EQUIPAMENTO                            ===\n");
+            printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
             printf("=========================================================================\n");
-            printf("=== Atualizado com sucesso! <enter>                                   ===\n");
+            printf("=== Atualizado com sucesso! <ENTER>                                     ===\n");
             printf("=========================================================================\n");
             getchar();
         }

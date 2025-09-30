@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
+#include "arquivoEquipamento.h" // Persistência
+
+#define MAX_BUFFER 1024
 
 struct equipamento lista_equipamentos[MAX_EQUIPAMENTOS];
 int total_equipamentos = 0;
@@ -66,15 +70,18 @@ void telaCadastrarEquipamento(void)
     fgets(novo.categoria, sizeof(novo.categoria), stdin);
     novo.categoria[strcspn(novo.categoria, "\n")] = '\0';
 
-    // Marcar ativo e salvar
-    novo.ativo = 1;
+    // Marcar ativo e adicionar
+    novo.ativo = true;
     lista_equipamentos[total_equipamentos++] = novo;
+
+    // Salvar automaticamente usando o arquivo de persistência
+    salvarEquipamentos(lista_equipamentos, total_equipamentos);
 
     // Mensagem de sucesso
     printf("\n=========================================================================\n");
     printf("===                  EQUIPAMENTO CADASTRADO COM SUCESSO               ===\n");
     printf("=========================================================================\n");
     printf(">>> Pressione <ENTER> para continuar...");
-    getchar(); // garante que o usuário veja a mensagem
+    getchar();
     limparTela();
 }

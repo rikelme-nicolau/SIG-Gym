@@ -3,6 +3,7 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
+#include "arquivoFuncionario.h" // <-- persistência
 
 void telaExcluirFuncionario(void)
 {
@@ -10,9 +11,9 @@ void telaExcluirFuncionario(void)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
+        printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
         printf("=========================================================================\n");
-        printf("===                NENHUM FUNCIONÁRIO CADASTRADO                      ===\n");
+        printf("===                  NENHUM FUNCIONÁRIO CADASTRADO                     ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -21,7 +22,7 @@ void telaExcluirFuncionario(void)
 
     limparTela();
     printf("=========================================================================\n");
-    printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
+    printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
     printf("=========================================================================\n");
 
     // Listar apenas funcionários ativos
@@ -30,8 +31,7 @@ void telaExcluirFuncionario(void)
     {
         if (lista_funcionarios[i].ativo)
         {
-            printf("[%s] %s (%s)\n",
-                   lista_funcionarios[i].id,
+            printf("[%s] %s (%s)\n", lista_funcionarios[i].id,
                    lista_funcionarios[i].nome,
                    lista_funcionarios[i].cargo);
             algum_ativo = 1;
@@ -41,7 +41,7 @@ void telaExcluirFuncionario(void)
     if (!algum_ativo)
     {
         printf("=========================================================================\n");
-        printf("===               NENHUM FUNCIONÁRIO ATIVO                             ===\n");
+        printf("===                  NENHUM FUNCIONÁRIO ATIVO                           ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -58,12 +58,15 @@ void telaExcluirFuncionario(void)
     {
         if (strcmp(lista_funcionarios[i].id, id_busca) == 0 && lista_funcionarios[i].ativo)
         {
-            lista_funcionarios[i].ativo = 0; // desativa o funcionário
+            lista_funcionarios[i].ativo = false; // desativa o funcionário
+
+            // **Persistência automática**
+            excluirFuncionario(id_busca);
             limparTela();
             printf("=========================================================================\n");
-            printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
+            printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
             printf("=========================================================================\n");
-            printf("===               FUNCIONÁRIO EXCLUÍDO COM SUCESSO                    ===\n");
+            printf("===                 FUNCIONÁRIO EXCLUIDO COM SUCESSO                   ===\n");
             printf("=========================================================================\n");
             encontrado = 1;
             break;
@@ -73,9 +76,9 @@ void telaExcluirFuncionario(void)
     if (!encontrado)
     {
         printf("=========================================================================\n");
-        printf("===                      EXCLUIR FUNCIONÁRIO                          ===\n");
+        printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
         printf("=========================================================================\n");
-        printf("===                 FUNCIONÁRIO NÃO ENCONTRADO                        ===\n");
+        printf("===                 FUNCIONÁRIO NÃO ENCONTRADO                         ===\n");
         printf("=========================================================================\n");
     }
 

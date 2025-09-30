@@ -10,12 +10,12 @@
 
 char moduloEquipamento(void)
 {
-    char opEquipamento;
+    char opEquip;
 
     do
     {
-        opEquipamento = telaEquipamento(); // Função que mostra o menu de equipamentos
-        switch (opEquipamento)
+        opEquip = telaEquipamento();
+        switch (opEquip)
         {
         case '1':
             telaCadastrarEquipamento();
@@ -40,7 +40,7 @@ char moduloEquipamento(void)
             opInvalida();
             break;
         }
-    } while (opEquipamento != '0');
+    } while (opEquip != '0');
 
-    return opEquipamento;
+    return opEquip;
 }

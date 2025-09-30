@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
+#include "arquivoFuncionario.h"
+
+#define MAX_BUFFER 1024
 
 void telaAtualizarFuncionario(void)
 {
@@ -13,7 +16,7 @@ void telaAtualizarFuncionario(void)
         printf("=========================================================================\n");
         printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
         printf("=========================================================================\n");
-        printf("===                   ID  NAO  ENCONTRADO                             ===\n");
+        printf("===                   NENHUM FUNCIONÁRIO CADASTRADO                   ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -25,7 +28,6 @@ void telaAtualizarFuncionario(void)
     printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
     printf("=========================================================================\n");
 
-    // Listar IDs e nomes apenas dos ativos
     for (int i = 0; i < total_funcionarios; i++)
     {
         if (lista_funcionarios[i].ativo)
@@ -34,13 +36,12 @@ void telaAtualizarFuncionario(void)
         }
     }
 
-    printf("===                      DIGITE O ID:                                 ===\n");
+    printf("===                          DIGITE O ID:                             ===\n");
     printf("=========================================================================\n");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
-    // Procurar funcionário pelo ID apenas se estiver ativo
     int encontrado = -1;
     for (int i = 0; i < total_funcionarios; i++)
     {
@@ -56,7 +57,7 @@ void telaAtualizarFuncionario(void)
         printf("=========================================================================\n");
         printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
         printf("=========================================================================\n");
-        printf("===                   ID  NAO  ENCONTRADO                             ===\n");
+        printf("===                   ID NÃO ENCONTRADO                               ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -93,6 +94,7 @@ void telaAtualizarFuncionario(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(func_sel->nome, buffer);
+            atualizarFuncionarioNoArquivo(*func_sel);
             break;
         case '2':
             limparTela();
@@ -100,6 +102,7 @@ void telaAtualizarFuncionario(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(func_sel->cargo, buffer);
+            atualizarFuncionarioNoArquivo(*func_sel);
             break;
         case '3':
             limparTela();
@@ -107,6 +110,7 @@ void telaAtualizarFuncionario(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(func_sel->idade, buffer);
+            atualizarFuncionarioNoArquivo(*func_sel);
             break;
         case '4':
             limparTela();
@@ -114,6 +118,7 @@ void telaAtualizarFuncionario(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(func_sel->cpf, buffer);
+            atualizarFuncionarioNoArquivo(*func_sel);
             break;
         case '5':
             limparTela();
@@ -121,6 +126,7 @@ void telaAtualizarFuncionario(void)
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
             strcpy(func_sel->endereco, buffer);
+            atualizarFuncionarioNoArquivo(*func_sel);
             break;
         case '0':
             break;
@@ -136,7 +142,7 @@ void telaAtualizarFuncionario(void)
             printf("=========================================================================\n");
             printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
             printf("=========================================================================\n");
-            printf("=== Atualizado com sucesso ! <enter>                                  ===\n");
+            printf("=== Atualizado com sucesso! <ENTER>                                   ===\n");
             printf("=========================================================================\n");
             getchar();
         }

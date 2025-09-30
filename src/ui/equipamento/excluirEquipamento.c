@@ -3,6 +3,7 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
+#include "arquivoEquipamento.h" // <-- persistência
 
 void telaExcluirEquipamento(void)
 {
@@ -10,9 +11,9 @@ void telaExcluirEquipamento(void)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                   EXCLUIR EQUIPAMENTO                             ===\n");
+        printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
         printf("=========================================================================\n");
-        printf("===                NENHUM EQUIPAMENTO CADASTRADO                      ===\n");
+        printf("===                 NENHUM EQUIPAMENTO CADASTRADO                       ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -21,7 +22,7 @@ void telaExcluirEquipamento(void)
 
     limparTela();
     printf("=========================================================================\n");
-    printf("===                   EXCLUIR EQUIPAMENTO                             ===\n");
+    printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
     printf("=========================================================================\n");
 
     // Listar apenas equipamentos ativos
@@ -30,8 +31,7 @@ void telaExcluirEquipamento(void)
     {
         if (lista_equipamentos[i].ativo)
         {
-            printf("[%s] %s (Categoria: %s)\n",
-                   lista_equipamentos[i].id,
+            printf("[%s] %s (%s)\n", lista_equipamentos[i].id,
                    lista_equipamentos[i].nome,
                    lista_equipamentos[i].categoria);
             algum_ativo = 1;
@@ -41,7 +41,7 @@ void telaExcluirEquipamento(void)
     if (!algum_ativo)
     {
         printf("=========================================================================\n");
-        printf("===                NENHUM EQUIPAMENTO ATIVO                           ===\n");
+        printf("===                 NENHUM EQUIPAMENTO ATIVO                             ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -50,12 +50,7 @@ void telaExcluirEquipamento(void)
 
     printf("\n>>> Digite o ID do equipamento que deseja excluir: ");
     char id_busca[12];
-
-    if (fgets(id_busca, sizeof(id_busca), stdin) == NULL)
-    {
-        printf("Erro ao ler entrada!\n");
-        return;
-    }
+    fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
     int encontrado = 0;
@@ -63,12 +58,15 @@ void telaExcluirEquipamento(void)
     {
         if (strcmp(lista_equipamentos[i].id, id_busca) == 0 && lista_equipamentos[i].ativo)
         {
-            lista_equipamentos[i].ativo = 0; // desativa o equipamento
+            lista_equipamentos[i].ativo = false; // desativa o equipamento
+
+            // **Persistência automática**
+            excluirEquipamento(id_busca);
             limparTela();
             printf("=========================================================================\n");
-            printf("===                   EXCLUIR EQUIPAMENTO                             ===\n");
+            printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
             printf("=========================================================================\n");
-            printf("===               EQUIPAMENTO EXCLUÍDO COM SUCESSO                    ===\n");
+            printf("===                 EQUIPAMENTO EXCLUIDO COM SUCESSO                   ===\n");
             printf("=========================================================================\n");
             encontrado = 1;
             break;
@@ -78,9 +76,9 @@ void telaExcluirEquipamento(void)
     if (!encontrado)
     {
         printf("=========================================================================\n");
-        printf("===                   EXCLUIR EQUIPAMENTO                             ===\n");
+        printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
         printf("=========================================================================\n");
-        printf("===                 EQUIPAMENTO NÃO ENCONTRADO                        ===\n");
+        printf("===                 EQUIPAMENTO NÃO ENCONTRADO                           ===\n");
         printf("=========================================================================\n");
     }
 

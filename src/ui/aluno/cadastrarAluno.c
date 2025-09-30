@@ -5,26 +5,10 @@
 #include "limparTela.h"
 #include "src/ui/plano/cadastrarPlano.h"
 
-#include "arquivoAluno.h"  // <-- persistência
-
+#include "arquivoAluno.h" // <-- persistência
 
 #define MAX_BUFFER 1024
 #define MAX_ALUNOS 1024
-
-
-struct aluno
-{
-    char id[12];
-    char nome[MAX_BUFFER];
-    char idade[12];
-    char cpf[22];
-    char telefone[22];
-    char endereco[MAX_BUFFER];
-    char email[MAX_BUFFER];
-    bool ativo;
-    char plano_id[12];
-};
-
 
 struct aluno lista_alunos[MAX_ALUNOS];
 int total_alunos = 0;
@@ -107,9 +91,7 @@ void telaCadastrarAluno(void)
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_aluno.email, buffer);
 
-
     // Plano
-
 
     if (total_planos == 0)
     {
