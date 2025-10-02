@@ -5,6 +5,7 @@
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
 #include "arquivoFuncionario.h"
+#include "../utils/gerarMatricula.h" //lembrar de voltar 1 pasta para referenciar certo
 
 #define MAX_BUFFER 1024
 #define MAX_FUNCIONARIOS 1024
@@ -77,10 +78,14 @@ void telaCadastrarFuncionario(void)
     printf("=========================================================================\n");
     fgets(buffer, sizeof(buffer), stdin);
     buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_func.cargo, buffer);
 
-    // Gera ID e define ativo
-    snprintf(novo_func.id, sizeof(novo_func.id), "%d", total_funcionarios + 1);
+    // Copia com segurança para evitar overflow
+    strncpy(novo_func.cargo, buffer, MAX_BUFFER - 1);
+    novo_func.cargo[MAX_BUFFER - 1] = '\0';
+
+    // Gera ID(Agora matricula) e define ativo
+    // Gera matrícula
+    strcpy(novo_func.id, gerarMatricula("001"));
     novo_func.ativo = true;
 
     // Adiciona ao vetor e atualiza contador

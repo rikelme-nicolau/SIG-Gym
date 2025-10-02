@@ -47,7 +47,7 @@ void telaVisualizarAluno(void)
     }
 
     printf("\n>>> Digite o ID do aluno que deseja visualizar: ");
-    char id_busca[12];
+    char id_busca[1024];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
 

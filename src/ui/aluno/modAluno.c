@@ -10,7 +10,6 @@
 
 char moduloAluno(void)
 {
-
     char opAluno;
 
     do

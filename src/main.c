@@ -20,6 +20,7 @@
 
 int main(void)
 {
+
     char op;
 
     // animação inicial
