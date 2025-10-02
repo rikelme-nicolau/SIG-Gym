@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "limparTela.h"
 #include "src/ui/plano/cadastrarPlano.h"
+#include "../utils/gerarMatricula.h" // implementei em alunos
 
 #include "arquivoAluno.h" // <-- persistência
 
@@ -161,8 +162,9 @@ void telaCadastrarAluno(void)
         }
     }
 
-    // Gera ID e define ativo
-    snprintf(novo_aluno.id, sizeof(novo_aluno.id), "%d", total_alunos + 1);
+    // Gera ID(Agora matricula) e define ativo
+    // Gera matrícula
+    strcpy(novo_aluno.id, gerarMatricula("002"));
     novo_aluno.ativo = true;
 
     // Adiciona ao vetor e atualiza contador

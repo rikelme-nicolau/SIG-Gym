@@ -10,7 +10,7 @@ void telaCadastrarFuncionario(void);
 
 struct funcionario
 {
-    char id[12];
+    char id[MAX_BUFFER];
     char nome[MAX_BUFFER];
     char idade[12];
     char cpf[22];
