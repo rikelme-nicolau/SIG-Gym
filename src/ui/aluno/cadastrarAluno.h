@@ -1,4 +1,4 @@
-#include <stdbool.h> 
+#include <stdbool.h>
 
 #ifndef CADASTRAR_ALUNO_H
 #define CADASTRAR_ALUNO_H
@@ -8,7 +8,8 @@ void telaCadastrarAluno(void);
 #define MAX_BUFFER 1024
 #define MAX_ALUNOS 1024
 
-struct aluno {
+struct aluno
+{
     char id[12];
     char nome[MAX_BUFFER];
     char idade[12];

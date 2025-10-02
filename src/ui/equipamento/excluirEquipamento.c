@@ -2,18 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "limparTela.h"
-#include "cadastrarFuncionario.h"
-#include "arquivoFuncionario.h" // <-- persistência
+#include "cadastrarEquipamento.h"
+#include "arquivoEquipamento.h" // <-- persistência
 
-void telaExcluirFuncionario(void)
+void telaExcluirEquipamento(void)
 {
-    if (total_funcionarios == 0)
+    if (total_equipamentos == 0)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
+        printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
         printf("=========================================================================\n");
-        printf("===                  NENHUM FUNCIONÁRIO CADASTRADO                     ===\n");
+        printf("===                 NENHUM EQUIPAMENTO CADASTRADO                       ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -22,18 +22,18 @@ void telaExcluirFuncionario(void)
 
     limparTela();
     printf("=========================================================================\n");
-    printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
+    printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
     printf("=========================================================================\n");
 
-    // Listar apenas funcionários ativos
+    // Listar apenas equipamentos ativos
     int algum_ativo = 0;
-    for (int i = 0; i < total_funcionarios; i++)
+    for (int i = 0; i < total_equipamentos; i++)
     {
-        if (lista_funcionarios[i].ativo)
+        if (lista_equipamentos[i].ativo)
         {
-            printf("[%s] %s (%s)\n", lista_funcionarios[i].id,
-                   lista_funcionarios[i].nome,
-                   lista_funcionarios[i].cargo);
+            printf("[%s] %s (%s)\n", lista_equipamentos[i].id,
+                   lista_equipamentos[i].nome,
+                   lista_equipamentos[i].categoria);
             algum_ativo = 1;
         }
     }
@@ -41,32 +41,32 @@ void telaExcluirFuncionario(void)
     if (!algum_ativo)
     {
         printf("=========================================================================\n");
-        printf("===                  NENHUM FUNCIONÁRIO ATIVO                           ===\n");
+        printf("===                 NENHUM EQUIPAMENTO ATIVO                             ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
         return;
     }
 
-    printf("\n>>> Digite o ID do funcionário que deseja excluir: ");
+    printf("\n>>> Digite o ID do equipamento que deseja excluir: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
     int encontrado = 0;
-    for (int i = 0; i < total_funcionarios; i++)
+    for (int i = 0; i < total_equipamentos; i++)
     {
-        if (strcmp(lista_funcionarios[i].id, id_busca) == 0 && lista_funcionarios[i].ativo)
+        if (strcmp(lista_equipamentos[i].id, id_busca) == 0 && lista_equipamentos[i].ativo)
         {
-            lista_funcionarios[i].ativo = false; // desativa o funcionário
+            lista_equipamentos[i].ativo = false; // desativa o equipamento
 
             // **Persistência automática**
-            excluirFuncionario(id_busca);
+            excluirEquipamento(id_busca);
             limparTela();
             printf("=========================================================================\n");
-            printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
+            printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
             printf("=========================================================================\n");
-            printf("===                 FUNCIONÁRIO EXCLUIDO COM SUCESSO                   ===\n");
+            printf("===                 EQUIPAMENTO EXCLUIDO COM SUCESSO                   ===\n");
             printf("=========================================================================\n");
             encontrado = 1;
             break;
@@ -76,9 +76,9 @@ void telaExcluirFuncionario(void)
     if (!encontrado)
     {
         printf("=========================================================================\n");
-        printf("===                    EXCLUIR FUNCIONÁRIO                             ===\n");
+        printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
         printf("=========================================================================\n");
-        printf("===                 FUNCIONÁRIO NÃO ENCONTRADO                         ===\n");
+        printf("===                 EQUIPAMENTO NÃO ENCONTRADO                           ===\n");
         printf("=========================================================================\n");
     }
 

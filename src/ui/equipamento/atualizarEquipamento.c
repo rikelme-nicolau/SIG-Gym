@@ -1,22 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include "limparTela.h"
-#include "cadastrarFuncionario.h"
-#include "arquivoFuncionario.h"
+#include "cadastrarEquipamento.h"
+#include "arquivoEquipamento.h"
 
 #define MAX_BUFFER 1024
 
-void telaAtualizarFuncionario(void)
+void telaAtualizarEquipamento(void)
 {
-    if (total_funcionarios == 0)
+    if (total_equipamentos == 0)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
+        printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
         printf("=========================================================================\n");
-        printf("===                   NENHUM FUNCIONÁRIO CADASTRADO                   ===\n");
+        printf("===                   NENHUM EQUIPAMENTO CADASTRADO                     ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
@@ -25,14 +24,15 @@ void telaAtualizarFuncionario(void)
 
     limparTela();
     printf("=========================================================================\n");
-    printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
+    printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
     printf("=========================================================================\n");
 
-    for (int i = 0; i < total_funcionarios; i++)
+    // Lista equipamentos ativos
+    for (int i = 0; i < total_equipamentos; i++)
     {
-        if (lista_funcionarios[i].ativo)
+        if (lista_equipamentos[i].ativo)
         {
-            printf("[%s] %s\n", lista_funcionarios[i].id, lista_funcionarios[i].nome);
+            printf("[%s] %s\n", lista_equipamentos[i].id, lista_equipamentos[i].nome);
         }
     }
 
@@ -43,9 +43,9 @@ void telaAtualizarFuncionario(void)
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
     int encontrado = -1;
-    for (int i = 0; i < total_funcionarios; i++)
+    for (int i = 0; i < total_equipamentos; i++)
     {
-        if (strcmp(lista_funcionarios[i].id, id_busca) == 0 && lista_funcionarios[i].ativo)
+        if (strcmp(lista_equipamentos[i].id, id_busca) == 0 && lista_equipamentos[i].ativo)
         {
             encontrado = i;
             break;
@@ -55,16 +55,16 @@ void telaAtualizarFuncionario(void)
     if (encontrado == -1)
     {
         printf("=========================================================================\n");
-        printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
+        printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
         printf("=========================================================================\n");
-        printf("===                   ID NÃO ENCONTRADO                               ===\n");
+        printf("===                   ID NÃO ENCONTRADO                                 ===\n");
         printf("=========================================================================\n");
         getchar();
         limparTela();
         return;
     }
 
-    struct funcionario *func_sel = &lista_funcionarios[encontrado];
+    struct equipamento *equip_sel = &lista_equipamentos[encontrado];
     char buffer[MAX_BUFFER];
     char opcao;
 
@@ -72,15 +72,13 @@ void telaAtualizarFuncionario(void)
     {
         limparTela();
         printf("=========================================================================\n");
-        printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
+        printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
         printf("=========================================================================\n");
-        printf("Funcionário selecionado: %s (%s)\n", func_sel->nome, func_sel->id);
+        printf("Equipamento selecionado: %s (%s)\n", equip_sel->nome, equip_sel->id);
         printf("Escolha o campo para atualizar:\n");
         printf("[1] Nome\n");
-        printf("[2] Cargo\n");
-        printf("[3] Idade\n");
-        printf("[4] CPF\n");
-        printf("[5] Endereço\n");
+        printf("[2] Última manutenção\n");
+        printf("[3] Categoria\n");
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
         scanf(" %c", &opcao);
@@ -93,43 +91,35 @@ void telaAtualizarFuncionario(void)
             printf("=== Novo nome: ===\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->nome, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+            strcpy(equip_sel->nome, buffer);
+            atualizarEquipamentoNoArquivo(*equip_sel);
             break;
+
         case '2':
             limparTela();
-            printf("=== Novo cargo: ===\n");
+            printf("=== Nova data da última manutenção (dd/mm/aaaa): ===\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->cargo, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+            strcpy(equip_sel->ultima_manutencao, buffer);
+
+            // Atualiza automaticamente a próxima manutenção
+            calcularProximaManutencao(equip_sel->ultima_manutencao, equip_sel->proxima_manutencao);
+
+            atualizarEquipamentoNoArquivo(*equip_sel);
             break;
+
         case '3':
             limparTela();
-            printf("=== Nova idade: ===\n");
+            printf("=== Nova categoria: ===\n");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->idade, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+            strcpy(equip_sel->categoria, buffer);
+            atualizarEquipamentoNoArquivo(*equip_sel);
             break;
-        case '4':
-            limparTela();
-            printf("=== Novo CPF: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->cpf, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
-            break;
-        case '5':
-            limparTela();
-            printf("=== Novo endereço: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->endereco, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
-            break;
+
         case '0':
             break;
+
         default:
             limparTela();
             printf("=== OPÇÃO INVÁLIDA ===\n");
@@ -140,9 +130,9 @@ void telaAtualizarFuncionario(void)
         {
             limparTela();
             printf("=========================================================================\n");
-            printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
+            printf("===                   ATUALIZAR EQUIPAMENTO                             ===\n");
             printf("=========================================================================\n");
-            printf("=== Atualizado com sucesso! <ENTER>                                   ===\n");
+            printf("=== Atualizado com sucesso! <ENTER>                                     ===\n");
             printf("=========================================================================\n");
             getchar();
         }

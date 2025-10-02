@@ -10,7 +10,6 @@
 
 char moduloAluno(void)
 {
-    srand(time(NULL)); // inicializa aleatoriedade (func matricula)
     char opAluno;
 
     do

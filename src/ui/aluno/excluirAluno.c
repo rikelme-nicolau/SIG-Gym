@@ -3,6 +3,7 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarAluno.h"
+#include "arquivoAluno.h"  // <-- persistência
 
 void telaExcluirAluno(void)
 {
@@ -56,6 +57,9 @@ void telaExcluirAluno(void)
         if (strcmp(lista_alunos[i].id, id_busca) == 0 && lista_alunos[i].ativo)
         {
             lista_alunos[i].ativo = false; // desativa o aluno
+
+            // **Persistência automática**
+            excluirAluno(id_busca);
             limparTela();
             printf("=========================================================================\n");
             printf("===                        EXCLUIR ALUNO                              ===\n");

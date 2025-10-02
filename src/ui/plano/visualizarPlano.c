@@ -40,7 +40,7 @@ void telaVisualizarPlano(void) {
         return;
     }
 
-    printf("\n>>>digite o ID do plano que deseja visualizar: ");
+    printf("\n>>> Digite o ID do plano que deseja visualizar: ");
     char id_busca[12];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0'; 
@@ -54,7 +54,12 @@ void telaVisualizarPlano(void) {
             printf("=========================================================================\n");
             printf("ID: %s\n", lista_planos[i].id);
             printf("Nome: %s\n", lista_planos[i].nome);
-            printf("Horario de funcionamento: %s\n", lista_planos[i].horario);
+            printf("Horario de funcionamento: %s\n", lista_planos[i].horario_fim);
+
+            printf("Horário de funcionamento: %s às %s\n", 
+                   lista_planos[i].horario_inicio, 
+                   lista_planos[i].horario_fim);
+
             printf("Atividades incluídas:\n");
             for(int j = 0; j < lista_planos[i].total_atividades; j++) {
                 printf(" - %s\n", lista_planos[i].atividades[j]);
@@ -73,7 +78,7 @@ void telaVisualizarPlano(void) {
         printf("=========================================================================\n");
     }
 
-    printf("\n>>>press <ENTER>");
+    printf("\n>>> Pressione <ENTER>");
     getchar();
     limparTela();
 }

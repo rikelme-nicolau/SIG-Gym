@@ -10,13 +10,12 @@
 
 char moduloFuncionario(void)
 {
-    srand(time(NULL)); // inicializa aleatoriedade (func matricula)
-    char opFuncionario;
+    char opFunc;
 
     do
     {
-        opFuncionario = telaFuncionario();
-        switch (opFuncionario)
+        opFunc = telaFuncionario();
+        switch (opFunc)
         {
         case '1':
             telaCadastrarFuncionario();
@@ -41,7 +40,7 @@ char moduloFuncionario(void)
             opInvalida();
             break;
         }
-    } while (opFuncionario != '0');
+    } while (opFunc != '0');
 
-    return opFuncionario;
+    return opFunc;
 }

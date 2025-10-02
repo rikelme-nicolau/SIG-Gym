@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "limparTela.h"
-#include "cadastrarPlano.h" 
+#include "cadastrarPlano.h"
+#include "arquivoPlano.h"  // <-- persistência
 
 void telaExcluirPlano(void) {
     if(total_planos == 0) {
@@ -48,6 +49,9 @@ void telaExcluirPlano(void) {
     for(int i = 0; i < total_planos; i++) {
         if(strcmp(lista_planos[i].id, id_busca) == 0 && lista_planos[i].ativo) {
             lista_planos[i].ativo = false; 
+            // **Persistência automática**
+            excluirPlano(id_busca);
+
             limparTela();
             printf("=========================================================================\n");
             printf("===                        EXCLUIR PLANO                              ===\n");
