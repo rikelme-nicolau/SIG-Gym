@@ -51,19 +51,6 @@ void telaCadastrarPlano(void)
     // Horário inicial
 
     limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR PLANO                            ===\n");
-    printf("=========================================================================\n");
-
-    printf(">>> Digite o horário de FIM (ex: 20:00): ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_plano.horario_fim, buffer);
-
-    printf(">>> Digite o horário de INÍCIO (ex: 10:00): ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_plano.horario_inicio, buffer);
 
     // Horário final
     limparTela();
