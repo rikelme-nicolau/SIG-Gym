@@ -1,28 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "cadastrarPlano.h"
 #include "arquivoPlano.h"
 
-#define PLANOS_FILE "planos.txt"
-#define TMP_FILE    "planos.tmp"
+#define PLANOS_FILE "planos.dat"
+#define TMP_FILE "planos.tmp"
 
-// Salva todos os planos ativos no arquivo
-void salvarPlanos(struct plano lista_planos[], int total_planos) {
-    FILE *fp = fopen(TMP_FILE, "wt");
-    if (!fp) { perror("Erro ao criar arquivo"); return; }
+// Salva todos os planos ativos no arquivo binário
+void salvarPlanos(struct plano lista_planos[], int total_planos)
+{
+    FILE *fp = fopen(TMP_FILE, "wb");
+    if (!fp)
+    {
+        perror("Erro ao criar arquivo temporário");
+        return;
+    }
 
-    for (int i = 0; i < total_planos; i++) {
-        if(lista_planos[i].ativo) {
-            fprintf(fp, "%s;%s;%s;%s;%d\n",
-                    lista_planos[i].id,
-                    lista_planos[i].nome,
-                    lista_planos[i].horario_inicio,
-                    lista_planos[i].horario_fim,
-                    lista_planos[i].total_atividades);
-            for(int j=0; j < lista_planos[i].total_atividades; j++) {
-                fprintf(fp, "%s\n", lista_planos[i].atividades[j]);
-            }
+    for (int i = 0; i < total_planos; i++)
+    {
+        if (lista_planos[i].ativo)
+        {
+            // Escreve a struct inteira de uma vez
+            fwrite(&lista_planos[i], sizeof(struct plano), 1, fp);
         }
     }
 
@@ -31,26 +32,18 @@ void salvarPlanos(struct plano lista_planos[], int total_planos) {
     rename(TMP_FILE, PLANOS_FILE);
 }
 
-// Carrega todos os planos do arquivo
-int carregarPlanos(struct plano lista_planos[]) {
-    FILE *fp = fopen(PLANOS_FILE, "rt");
-    if(!fp) return 0;
+// Carrega todos os planos do arquivo binário
+int carregarPlanos(struct plano lista_planos[])
+{
+    FILE *fp = fopen(PLANOS_FILE, "rb");
+    if (!fp)
+        return 0;
 
     int total = 0;
-    while(!feof(fp) && total < MAX_PLANOS) {
-        if(fscanf(fp, "%11[^;];%1023[^;];%11[^;];%11[^;];%d\n",
-                  lista_planos[total].id,
-                  lista_planos[total].nome,
-                  lista_planos[total].horario_inicio,
-                  lista_planos[total].horario_fim,
-                  &lista_planos[total].total_atividades) != 5) break;
 
-        for(int j=0; j < lista_planos[total].total_atividades; j++) {
-            fgets(lista_planos[total].atividades[j], MAX_BUFFER, fp);
-            lista_planos[total].atividades[j][strcspn(lista_planos[total].atividades[j], "\n")] = '\0';
-        }
-
-        lista_planos[total].ativo = true;
+    // Lê structs completas até o fim do arquivo
+    while (total < MAX_PLANOS && fread(&lista_planos[total], sizeof(struct plano), 1, fp) == 1)
+    {
         total++;
     }
 
@@ -59,12 +52,15 @@ int carregarPlanos(struct plano lista_planos[]) {
 }
 
 // Atualiza um plano específico no arquivo
-void atualizarPlanoNoArquivo(struct plano plano) {
+void atualizarPlanoNoArquivo(struct plano plano)
+{
     struct plano planos[MAX_PLANOS];
     int total = carregarPlanos(planos);
 
-    for(int i=0; i<total; i++) {
-        if(strcmp(planos[i].id, plano.id) == 0) {
+    for (int i = 0; i < total; i++)
+    {
+        if (strcmp(planos[i].id, plano.id) == 0)
+        {
             planos[i] = plano;
             break;
         }
@@ -73,13 +69,16 @@ void atualizarPlanoNoArquivo(struct plano plano) {
     salvarPlanos(planos, total);
 }
 
-// Marca um plano como excluído
-void excluirPlano(char *id) {
+// Marca um plano como excluído (exclusão lógica)
+void excluirPlano(char *id)
+{
     struct plano planos[MAX_PLANOS];
     int total = carregarPlanos(planos);
 
-    for(int i=0; i<total; i++) {
-        if(strcmp(planos[i].id, id) == 0) {
+    for (int i = 0; i < total; i++)
+    {
+        if (strcmp(planos[i].id, id) == 0)
+        {
             planos[i].ativo = false;
             break;
         }

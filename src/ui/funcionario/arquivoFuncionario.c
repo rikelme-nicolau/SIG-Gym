@@ -5,13 +5,14 @@
 #include "cadastrarFuncionario.h"
 #include "arquivoFuncionario.h"
 
-#define FUNCIONARIOS_FILE "funcionarios.txt"
+// Agora usamos .dat pra indicar arquivo binário
+#define FUNCIONARIOS_FILE "funcionarios.dat"
 #define TMP_FILE_FUNC "funcionarios.tmp"
 
-// Salva todos os funcionários ativos no arquivo texto
+// Salva todos os funcionários ativos no arquivo binário
 void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funcionarios)
 {
-    FILE *fp = fopen(TMP_FILE_FUNC, "wt");
+    FILE *fp = fopen(TMP_FILE_FUNC, "wb");
     if (!fp)
     {
         perror("Erro ao criar arquivo temporário");
@@ -22,14 +23,8 @@ void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funci
     {
         if (lista_funcionarios[i].ativo)
         {
-            fprintf(fp, "%s;%s;%s;%s;%s;%s;%d\n",
-                    lista_funcionarios[i].id,
-                    lista_funcionarios[i].nome,
-                    lista_funcionarios[i].idade,
-                    lista_funcionarios[i].cpf,
-                    lista_funcionarios[i].endereco,
-                    lista_funcionarios[i].cargo,
-                    lista_funcionarios[i].ativo);
+            // Escreve a struct completa em binário
+            fwrite(&lista_funcionarios[i], sizeof(struct funcionario), 1, fp);
         }
     }
 
@@ -38,24 +33,17 @@ void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funci
     rename(TMP_FILE_FUNC, FUNCIONARIOS_FILE);
 }
 
-// Carrega todos os funcionários do arquivo texto
+// Carrega todos os funcionários do arquivo binário
 int carregarFuncionarios(struct funcionario lista_funcionarios[])
 {
-    FILE *fp = fopen(FUNCIONARIOS_FILE, "rt");
+    FILE *fp = fopen(FUNCIONARIOS_FILE, "rb");
     if (!fp)
         return 0;
 
     int total = 0;
-    while (!feof(fp) && total < MAX_FUNCIONARIOS)
+
+    while (total < MAX_FUNCIONARIOS && fread(&lista_funcionarios[total], sizeof(struct funcionario), 1, fp) == 1)
     {
-        fscanf(fp, "%11[^;];%1023[^;];%11[^;];%21[^;];%1023[^;];%1023[^;];%d\n",
-               lista_funcionarios[total].id,
-               lista_funcionarios[total].nome,
-               lista_funcionarios[total].idade,
-               lista_funcionarios[total].cpf,
-               lista_funcionarios[total].endereco,
-               lista_funcionarios[total].cargo,
-               (int *)&lista_funcionarios[total].ativo);
         total++;
     }
 

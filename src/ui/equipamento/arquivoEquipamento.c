@@ -5,13 +5,14 @@
 #include "cadastrarEquipamento.h"
 #include "arquivoEquipamento.h"
 
-#define EQUIPAMENTOS_FILE "equipamentos.txt"
+// Agora usamos .dat pra indicar arquivo binário
+#define EQUIPAMENTOS_FILE "equipamentos.dat"
 #define TMP_FILE_EQUIP "equipamentos.tmp"
 
-// Salva todos os equipamentos ativos no arquivo texto
+// Salva todos os equipamentos ativos no arquivo binário
 void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equipamentos)
 {
-    FILE *fp = fopen(TMP_FILE_EQUIP, "wt");
+    FILE *fp = fopen(TMP_FILE_EQUIP, "wb");
     if (!fp)
     {
         perror("Erro ao criar arquivo temporário");
@@ -22,13 +23,7 @@ void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equip
     {
         if (lista_equipamentos[i].ativo)
         {
-            fprintf(fp, "%s;%s;%s;%s;%s;%d\n",
-                    lista_equipamentos[i].id,
-                    lista_equipamentos[i].nome,
-                    lista_equipamentos[i].ultima_manutencao,
-                    lista_equipamentos[i].proxima_manutencao,
-                    lista_equipamentos[i].categoria,
-                    lista_equipamentos[i].ativo);
+            fwrite(&lista_equipamentos[i], sizeof(struct equipamento), 1, fp);
         }
     }
 
@@ -37,23 +32,17 @@ void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equip
     rename(TMP_FILE_EQUIP, EQUIPAMENTOS_FILE);
 }
 
-// Carrega todos os equipamentos do arquivo texto
+// Carrega todos os equipamentos do arquivo binário
 int carregarEquipamentos(struct equipamento lista_equipamentos[])
 {
-    FILE *fp = fopen(EQUIPAMENTOS_FILE, "rt");
+    FILE *fp = fopen(EQUIPAMENTOS_FILE, "rb");
     if (!fp)
         return 0;
 
     int total = 0;
-    while (!feof(fp) && total < MAX_EQUIPAMENTOS)
+
+    while (total < MAX_EQUIPAMENTOS && fread(&lista_equipamentos[total], sizeof(struct equipamento), 1, fp) == 1)
     {
-        fscanf(fp, "%11[^;];%1023[^;];%11[^;];%11[^;];%1023[^;];%d\n",
-               lista_equipamentos[total].id,
-               lista_equipamentos[total].nome,
-               lista_equipamentos[total].ultima_manutencao,
-               lista_equipamentos[total].proxima_manutencao,
-               lista_equipamentos[total].categoria,
-               (int *)&lista_equipamentos[total].ativo);
         total++;
     }
 
