@@ -3,4 +3,8 @@
 
 void telaAtualizarAluno(void);
 
+void limparBufferEntrada(void);
+
+
+
 #endif
