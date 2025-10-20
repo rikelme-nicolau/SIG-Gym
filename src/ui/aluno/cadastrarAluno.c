@@ -6,7 +6,8 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "../utils/gerarMatricula.h"
 #include "src/ui/utils/validarNome.h"
-#include "src/ui/utils/valdiarCPF.h"// Adicionado para a validação do CPF
+#include "src/ui/utils/valdiarCPF.h"
+#include "src/ui/utils/validarNascimento.h" // Adicionado para a validação da data
 #include "arquivoAluno.h"
 
 #define MAX_BUFFER 1024
@@ -31,7 +32,6 @@ void telaCadastrarAluno(void)
     bool nomeValido = false;
     do
     {
-        // Nome
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -61,20 +61,42 @@ void telaCadastrarAluno(void)
         }
     } while (!nomeValido);
 
-    // --- Idade (Data de Nascimento) ---
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("=== Nome: %-55s ===\n", novo_aluno.nome);
-    printf("=== Por favor, digite a data de nascimento:                           ===\n");
-    printf("=========================================================================\n");
-    printf(">>> ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_aluno.idade, buffer);
+    // ======================= MODIFICAÇÃO PARA VALIDAR DATA DE NASCIMENTO =======================
+    bool dataValida = false;
+    do
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                        CADASTRAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("=== Nome: %-55s ===\n", novo_aluno.nome);
+        printf("=== Por favor, digite a data de nascimento (DD/MM/AAAA):              ===\n");
+        printf("=========================================================================\n");
+        printf(">>> ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';
 
-    // ======================= MODIFICAÇÃO PARA VALIDAR CPF =======================
+        if (validarNascimento(buffer))
+        {
+            strcpy(novo_aluno.idade, buffer); // O campo 'idade' armazena a data de nascimento
+            dataValida = true;
+        }
+        else
+        {
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                   DATA DE NASCIMENTO INVÁLIDA                     ===\n");
+            printf("=========================================================================\n");
+            printf("=== A data deve estar no formato DD/MM/AAAA, não pode ser futura      ===\n");
+            printf("=== e deve ser uma data válida no calendário. Tente novamente.        ===\n");
+            printf("=========================================================================\n");
+            printf(">>> Pressione <ENTER> para tentar novamente...");
+            getchar(); // Pausa para o usuário ler a mensagem
+        }
+    } while (!dataValida);
+    // ======================= FIM DA MODIFICAÇÃO =======================
+
+    // --- Validação do CPF (já estava correto) ---
     bool cpfValido = false;
     do
     {
@@ -89,15 +111,13 @@ void telaCadastrarAluno(void)
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
 
-        // Chama a função de validação de CPF
         if (validarCPF(buffer))
         {
-            strcpy(novo_aluno.cpf, buffer); // Copia o CPF válido para a struct
-            cpfValido = true;               // Libera a saída do loop
+            strcpy(novo_aluno.cpf, buffer);
+            cpfValido = true;
         }
         else
         {
-            // Se for inválido, exibe uma mensagem de erro
             limparTela();
             printf("=========================================================================\n");
             printf("===                        CPF INVÁLIDO                               ===\n");
@@ -106,10 +126,9 @@ void telaCadastrarAluno(void)
             printf("=== Verifique os dígitos e tente novamente.                         ===\n");
             printf("=========================================================================\n");
             printf(">>> Pressione <ENTER> para tentar novamente...");
-            getchar(); // Pausa para o usuário ler a mensagem
+            getchar();
         }
     } while (!cpfValido);
-    // ======================= FIM DA MODIFICAÇÃO =======================
 
     // --- Telefone ---
     limparTela();

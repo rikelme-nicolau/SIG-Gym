@@ -6,7 +6,8 @@
 #include "cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/utils/validarNome.h"
-#include "src/ui/utils/valdiarCPF.h" // Incluído para validar o CPF
+#include "src/ui/utils/valdiarCPF.h"
+#include "src/ui/utils/validarNascimento.h" // Adicionado para a validação da data
 #include "arquivoAluno.h" // <-- persistência
 
 void limparBufferEntrada(void) {
@@ -85,57 +86,125 @@ void telaAtualizarAluno(void)
         switch (opcao)
         {
         case '1':
-            // ... (seu código de validar nome, que já está correto) ...
-            break;
+            // ... (Seu código de validação de NOME, já correto) ...
+            {
+                bool nomeValido = false;
+                do
+                {
+                    limparTela();
+                    printf("=========================================================================\n");
+                    printf("===                        ATUALIZAR ALUNO                            ===\n");
+                    printf("=========================================================================\n");
+                    printf("=== Nome atual: %-51s ===\n", aluno_sel->nome);
+                    printf("=== Digite o novo nome:                                               ===\n");
+                    printf("=========================================================================\n");
+                    printf(">>> ");
+                    fgets(buffer, sizeof(buffer), stdin);
+                    buffer[strcspn(buffer, "\n")] = '\0';
+                    if (validarNome(buffer))
+                    {
+                        strcpy(aluno_sel->nome, buffer);
+                        nomeValido = true;
+                    }
+                    else
+                    {
+                        limparTela();
+                        printf("=========================================================================\n");
+                        printf("===                        NOME INVÁLIDO                              ===\n");
+                        printf("=========================================================================\n");
+                        printf("=== O nome deve conter apenas letras e espaços, sem caracteres      ===\n");
+                        printf("=== especiais ou números. Verifique também o tamanho.               ===\n");
+                        printf("=========================================================================\n");
+                        printf(">>> Pressione <ENTER> para tentar novamente...");
+                        getchar();
+                    }
+                } while (!nomeValido);
+                atualizarAlunoNoArquivo(*aluno_sel);
+                break;
+            }
         
+        // ======================= AGREGAÇÃO DA VALIDAÇÃO DA DATA DE NASCIMENTO =======================
         case '2':
-            // ... (seu código para data de nascimento) ...
-            break;
-
-        // ======================= MODIFICAÇÃO PARA VALIDAR CPF =======================
-        case '3':
         {
-            bool cpfValido = false;
+            bool dataValida = false;
             do
             {
                 limparTela();
                 printf("=========================================================================\n");
                 printf("===                        ATUALIZAR ALUNO                            ===\n");
                 printf("=========================================================================\n");
-                printf("=== CPF atual: %-54s ===\n", aluno_sel->cpf);
-                printf("=== Digite o novo CPF:                                                ===\n");
+                printf("=== Data atual: %-51s ===\n", aluno_sel->idade);
+                printf("=== Digite a nova data de nascimento (DD/MM/AAAA):                    ===\n");
                 printf("=========================================================================\n");
                 printf(">>> ");
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
 
-                // Chama a função de validação de CPF
-                if (validarCPF(buffer))
+                // Chama a função de validação de data de nascimento
+                if (validarNascimento(buffer))
                 {
-                    strcpy(aluno_sel->cpf, buffer); // Copia o novo CPF válido
-                    cpfValido = true;              // Libera a saída do loop
+                    strcpy(aluno_sel->idade, buffer); // O campo 'idade' armazena a data
+                    dataValida = true;               // Libera a saída do loop
                 }
                 else
                 {
-                    // Exibe mensagem de erro se o CPF for inválido
+                    // Exibe mensagem de erro se a data for inválida
                     limparTela();
                     printf("=========================================================================\n");
-                    printf("===                        CPF INVÁLIDO                               ===\n");
+                    printf("===                   DATA DE NASCIMENTO INVÁLIDA                     ===\n");
                     printf("=========================================================================\n");
-                    printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
-                    printf("=== Verifique os dígitos e tente novamente.                         ===\n");
+                    printf("=== A data deve estar no formato DD/MM/AAAA, não pode ser futura      ===\n");
+                    printf("=== e deve ser uma data válida no calendário. Tente novamente.        ===\n");
                     printf("=========================================================================\n");
                     printf(">>> Pressione <ENTER> para tentar novamente...");
                     getchar();
                 }
-            } while (!cpfValido);
+            } while (!dataValida);
 
             atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
             break;
         }
-        // ======================= FIM DA MODIFICAÇÃO =======================
+        // ======================= FIM DA AGREGAÇÃO =======================
+
+        case '3':
+            // ... (Seu código de validação de CPF, já correto) ...
+            {
+                bool cpfValido = false;
+                do
+                {
+                    limparTela();
+                    printf("=========================================================================\n");
+                    printf("===                        ATUALIZAR ALUNO                            ===\n");
+                    printf("=========================================================================\n");
+                    printf("=== CPF atual: %-54s ===\n", aluno_sel->cpf);
+                    printf("=== Digite o novo CPF:                                                ===\n");
+                    printf("=========================================================================\n");
+                    printf(">>> ");
+                    fgets(buffer, sizeof(buffer), stdin);
+                    buffer[strcspn(buffer, "\n")] = '\0';
+                    if (validarCPF(buffer))
+                    {
+                        strcpy(aluno_sel->cpf, buffer);
+                        cpfValido = true;
+                    }
+                    else
+                    {
+                        limparTela();
+                        printf("=========================================================================\n");
+                        printf("===                        CPF INVÁLIDO                               ===\n");
+                        printf("=========================================================================\n");
+                        printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
+                        printf("=== Verifique os dígitos e tente novamente.                         ===\n");
+                        printf("=========================================================================\n");
+                        printf(">>> Pressione <ENTER> para tentar novamente...");
+                        getchar();
+                    }
+                } while (!cpfValido);
+                atualizarAlunoNoArquivo(*aluno_sel);
+                break;
+            }
         
-        // ... (o restante do seu código 'case 4', '5', '6', etc. permanece o mesmo) ...
+        // ... (o restante do seu código 'case 4', '5', '6', etc.) ...
         
         case '0':
             break;
