@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.hh>
 #include <string.h>
 #include <stdbool.h>
 #include "limparTela.h"
@@ -9,7 +9,8 @@
 #include "src/ui/utils/valdiarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarTelefone.h"
-#include "src/ui/utils/validarEndereco.h" // Adicionado para a validação do endereço
+#include "src/ui/utils/validarEndereco.h"
+#include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
 #include "arquivoAluno.h" // <-- persistência
 
 void limparBufferEntrada(void) {
@@ -249,9 +250,9 @@ void telaAtualizarAluno(void)
             break;
         }
         
-        // ======================= AGREGAÇÃO DA VALIDAÇÃO DE ENDEREÇO =======================
-        case '5':
+        case '5': // Validação do Endereço
         {
+            // ... (código existente de validação de endereço) ...
             bool enderecoValido = false;
             do
             {
@@ -266,33 +267,71 @@ void telaAtualizarAluno(void)
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
 
-                // Chama a função de validação de endereço
                 if (validarEndereco(buffer))
                 {
-                    strcpy(aluno_sel->endereco, buffer); // Copia o novo endereço válido
-                    enderecoValido = true;              // Libera a saída do loop
+                    strcpy(aluno_sel->endereco, buffer);
+                    enderecoValido = true;
                 }
                 else
                 {
-                    // Exibe mensagem de erro se o endereço for inválido
                     limparTela();
                     printf("=========================================================================\n");
                     printf("===                        ENDEREÇO INVÁLIDO                          ===\n");
                     printf("=========================================================================\n");
                     printf("=== O endereço é muito curto ou contém caracteres inválidos.          ===\n");
-                    printf("=== Verifique o texto e tente novamente.                              ===\n");
                     printf("=========================================================================\n");
                     printf(">>> Pressione <ENTER> para tentar novamente...");
                     getchar();
                 }
             } while (!enderecoValido);
+            atualizarAlunoNoArquivo(*aluno_sel);
+            break;
+        }
+
+        // ======================= AGREGAÇÃO DA VALIDAÇÃO DE E-MAIL =======================
+        case '6':
+        {
+            bool emailValido = false;
+            do
+            {
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR ALUNO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== E-mail atual: %-51s ===\n", aluno_sel->email);
+                printf("=== Digite o novo e-mail (Ex: nome@dominio.com):                      ===\n");
+                printf("=========================================================================\n");
+                printf(">>> ");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+
+                // Chama a função de validação de e-mail
+                if (validarEmail(buffer))
+                {
+                    strcpy(aluno_sel->email, buffer); // Copia o novo e-mail válido
+                    emailValido = true;              // Libera a saída do loop
+                }
+                else
+                {
+                    // Exibe mensagem de erro se o e-mail for inválido
+                    limparTela();
+                    printf("=========================================================================\n");
+                    printf("===                        ENDEREÇO DE E-MAIL INVÁLIDO                ===\n");
+                    printf("=========================================================================\n");
+                    printf("=== O formato do e-mail parece incorreto.                           ===\n");
+                    printf("=== Certifique-se de que ele contém um '@' e um domínio válido.       ===\n");
+                    printf("=========================================================================\n");
+                    printf(">>> Pressione <ENTER> para tentar novamente...");
+                    getchar();
+                }
+            } while (!emailValido);
 
             atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
             break;
         }
         // ======================= FIM DA AGREGAÇÃO =======================
         
-        // ... (Aqui entrariam as lógicas para Email e Plano) ...
+        // ... (Aqui entraria a lógica para o Plano) ...
         
         case '0':
             break;

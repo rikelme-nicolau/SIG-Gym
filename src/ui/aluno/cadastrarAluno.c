@@ -9,7 +9,8 @@
 #include "src/ui/utils/valdiarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarTelefone.h"
-#include "src/ui/utils/validarEndereco.h" // Adicionado para a validação do endereço
+#include "src/ui/utils/validarEndereco.h"
+#include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
 #include "arquivoAluno.h"
 
 #define MAX_BUFFER 1024
@@ -34,6 +35,7 @@ void telaCadastrarAluno(void)
     bool nomeValido = false;
     do
     {
+        // ... (código existente de validação de nome) ...
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -67,6 +69,7 @@ void telaCadastrarAluno(void)
     bool dataValida = false;
     do
     {
+        // ... (código existente de validação de data) ...
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -101,6 +104,7 @@ void telaCadastrarAluno(void)
     bool cpfValido = false;
     do
     {
+        // ... (código existente de validação de CPF) ...
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -135,6 +139,7 @@ void telaCadastrarAluno(void)
     bool telefoneValido = false;
     do
     {
+        // ... (código existente de validação de telefone) ...
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -164,10 +169,11 @@ void telaCadastrarAluno(void)
         }
     } while (!telefoneValido);
 
-    // ======================= MODIFICAÇÃO PARA VALIDAR ENDEREÇO =======================
+    // --- Validação do Endereço (já está correto) ---
     bool enderecoValido = false;
     do
     {
+        // ... (código existente de validação de endereço) ...
         limparTela();
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -193,22 +199,43 @@ void telaCadastrarAluno(void)
             printf("=== Verifique o texto e tente novamente.                              ===\n");
             printf("=========================================================================\n");
             printf(">>> Pressione <ENTER> para tentar novamente...");
-            getchar(); // Pausa para o usuário ler a mensagem
+            getchar();
         }
     } while (!enderecoValido);
-    // ======================= FIM DA MODIFICAÇÃO =======================
 
-    // --- Email ---
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("=== Por favor, digite o email:                                        ===\n");
-    printf("=========================================================================\n");
-    printf(">>> ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_aluno.email, buffer);
+    // ======================= MODIFICAÇÃO PARA VALIDAR E-MAIL =======================
+    bool emailValido = false;
+    do
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                        CADASTRAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("=== Por favor, digite o email (Ex: nome@dominio.com):                 ===\n");
+        printf("=========================================================================\n");
+        printf(">>> ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (validarEmail(buffer))
+        {
+            strcpy(novo_aluno.email, buffer);
+            emailValido = true;
+        }
+        else
+        {
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                        ENDEREÇO DE E-MAIL INVÁLIDO                ===\n");
+            printf("=========================================================================\n");
+            printf("=== O formato do e-mail parece incorreto.                           ===\n");
+            printf("=== Certifique-se de que ele contém um '@' e um domínio válido.       ===\n");
+            printf("=========================================================================\n");
+            printf(">>> Pressione <ENTER> para tentar novamente...");
+            getchar(); // Pausa para o usuário ler a mensagem
+        }
+    } while (!emailValido);
+    // ======================= FIM DA MODIFICAÇÃO =======================
 
     // ... (O restante do seu código para Plano, salvar, etc. continua o mesmo) ...
 
