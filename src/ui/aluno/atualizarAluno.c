@@ -8,7 +8,8 @@
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/valdiarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
-#include "src/ui/utils/validarTelefone.h" // Incluindo todas as validações
+#include "src/ui/utils/validarTelefone.h"
+#include "src/ui/utils/validarEndereco.h" // Adicionado para a validação do endereço
 #include "arquivoAluno.h" // <-- persistência
 
 void limparBufferEntrada(void) {
@@ -100,6 +101,7 @@ void telaAtualizarAluno(void)
         {
         case '1': // Validação do Nome
         {
+            // ... (código existente de validação de nome) ...
             bool nomeValido = false;
             do
             {
@@ -136,7 +138,8 @@ void telaAtualizarAluno(void)
         
         case '2': // Validação da Data de Nascimento
         {
-            bool dataValida = false;
+            // ... (código existente de validação de data) ...
+             bool dataValida = false;
             do
             {
                 limparTela();
@@ -173,6 +176,7 @@ void telaAtualizarAluno(void)
 
         case '3': // Validação do CPF
         {
+            // ... (código existente de validação de CPF) ...
             bool cpfValido = false;
             do
             {
@@ -209,6 +213,7 @@ void telaAtualizarAluno(void)
         
         case '4': // Validação do Telefone
         {
+            // ... (código existente de validação de telefone) ...
             bool telefoneValido = false;
             do
             {
@@ -244,7 +249,50 @@ void telaAtualizarAluno(void)
             break;
         }
         
-        // ... (Aqui entrariam as lógicas para Endereço, Email e Plano) ...
+        // ======================= AGREGAÇÃO DA VALIDAÇÃO DE ENDEREÇO =======================
+        case '5':
+        {
+            bool enderecoValido = false;
+            do
+            {
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR ALUNO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== Endereço atual: %-50s ===\n", aluno_sel->endereco);
+                printf("=== Digite o novo endereço (Ex: Rua Exemplo, 123 - Centro):           ===\n");
+                printf("=========================================================================\n");
+                printf(">>> ");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+
+                // Chama a função de validação de endereço
+                if (validarEndereco(buffer))
+                {
+                    strcpy(aluno_sel->endereco, buffer); // Copia o novo endereço válido
+                    enderecoValido = true;              // Libera a saída do loop
+                }
+                else
+                {
+                    // Exibe mensagem de erro se o endereço for inválido
+                    limparTela();
+                    printf("=========================================================================\n");
+                    printf("===                        ENDEREÇO INVÁLIDO                          ===\n");
+                    printf("=========================================================================\n");
+                    printf("=== O endereço é muito curto ou contém caracteres inválidos.          ===\n");
+                    printf("=== Verifique o texto e tente novamente.                              ===\n");
+                    printf("=========================================================================\n");
+                    printf(">>> Pressione <ENTER> para tentar novamente...");
+                    getchar();
+                }
+            } while (!enderecoValido);
+
+            atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
+            break;
+        }
+        // ======================= FIM DA AGREGAÇÃO =======================
+        
+        // ... (Aqui entrariam as lógicas para Email e Plano) ...
         
         case '0':
             break;

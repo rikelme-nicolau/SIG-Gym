@@ -8,7 +8,8 @@
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/valdiarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
-#include "src/ui/utils/validarTelefone.h" // Adicionado para a validação do telefone
+#include "src/ui/utils/validarTelefone.h"
+#include "src/ui/utils/validarEndereco.h" // Adicionado para a validação do endereço
 #include "arquivoAluno.h"
 
 #define MAX_BUFFER 1024
@@ -130,7 +131,7 @@ void telaCadastrarAluno(void)
         }
     } while (!cpfValido);
 
-    // ======================= MODIFICAÇÃO PARA VALIDAR TELEFONE =======================
+    // --- Validação do Telefone (já está correto) ---
     bool telefoneValido = false;
     do
     {
@@ -159,22 +160,43 @@ void telaCadastrarAluno(void)
             printf("=== (11 dígitos, começando com 9). Ex: (11) 98765-4321.             ===\n");
             printf("=========================================================================\n");
             printf(">>> Pressione <ENTER> para tentar novamente...");
-            getchar(); // Pausa para o usuário ler a mensagem
+            getchar();
         }
     } while (!telefoneValido);
-    // ======================= FIM DA MODIFICAÇÃO =======================
 
-    // --- Endereço ---
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("=== Por favor, digite o endereco:                                     ===\n");
-    printf("=========================================================================\n");
-    printf(">>> ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_aluno.endereco, buffer);
+    // ======================= MODIFICAÇÃO PARA VALIDAR ENDEREÇO =======================
+    bool enderecoValido = false;
+    do
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                        CADASTRAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("=== Por favor, digite o endereço (Ex: Rua Exemplo, 123 - Centro):     ===\n");
+        printf("=========================================================================\n");
+        printf(">>> ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (validarEndereco(buffer))
+        {
+            strcpy(novo_aluno.endereco, buffer);
+            enderecoValido = true;
+        }
+        else
+        {
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                        ENDEREÇO INVÁLIDO                          ===\n");
+            printf("=========================================================================\n");
+            printf("=== O endereço é muito curto ou contém caracteres inválidos.          ===\n");
+            printf("=== Verifique o texto e tente novamente.                              ===\n");
+            printf("=========================================================================\n");
+            printf(">>> Pressione <ENTER> para tentar novamente...");
+            getchar(); // Pausa para o usuário ler a mensagem
+        }
+    } while (!enderecoValido);
+    // ======================= FIM DA MODIFICAÇÃO =======================
 
     // --- Email ---
     limparTela();
