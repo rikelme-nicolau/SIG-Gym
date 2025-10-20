@@ -7,7 +7,8 @@
 #include "../utils/gerarMatricula.h"
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/valdiarCPF.h"
-#include "src/ui/utils/validarNascimento.h" // Adicionado para a validação da data
+#include "src/ui/utils/validarNascimento.h"
+#include "src/ui/utils/validarTelefone.h" // Adicionado para a validação do telefone
 #include "arquivoAluno.h"
 
 #define MAX_BUFFER 1024
@@ -28,7 +29,7 @@ void telaCadastrarAluno(void)
     struct aluno novo_aluno;
     char buffer[MAX_BUFFER];
 
-    // --- Validação do Nome (já estava correto) ---
+    // --- Validação do Nome (já está correto) ---
     bool nomeValido = false;
     do
     {
@@ -61,7 +62,7 @@ void telaCadastrarAluno(void)
         }
     } while (!nomeValido);
 
-    // ======================= MODIFICAÇÃO PARA VALIDAR DATA DE NASCIMENTO =======================
+    // --- Validação da Data de Nascimento (já está correto) ---
     bool dataValida = false;
     do
     {
@@ -78,7 +79,7 @@ void telaCadastrarAluno(void)
 
         if (validarNascimento(buffer))
         {
-            strcpy(novo_aluno.idade, buffer); // O campo 'idade' armazena a data de nascimento
+            strcpy(novo_aluno.idade, buffer);
             dataValida = true;
         }
         else
@@ -91,12 +92,11 @@ void telaCadastrarAluno(void)
             printf("=== e deve ser uma data válida no calendário. Tente novamente.        ===\n");
             printf("=========================================================================\n");
             printf(">>> Pressione <ENTER> para tentar novamente...");
-            getchar(); // Pausa para o usuário ler a mensagem
+            getchar();
         }
     } while (!dataValida);
-    // ======================= FIM DA MODIFICAÇÃO =======================
-
-    // --- Validação do CPF (já estava correto) ---
+    
+    // --- Validação do CPF (já está correto) ---
     bool cpfValido = false;
     do
     {
@@ -130,17 +130,39 @@ void telaCadastrarAluno(void)
         }
     } while (!cpfValido);
 
-    // --- Telefone ---
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("=== Por favor, digite o telefone:                                     ===\n");
-    printf("=========================================================================\n");
-    printf(">>> ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_aluno.telefone, buffer);
+    // ======================= MODIFICAÇÃO PARA VALIDAR TELEFONE =======================
+    bool telefoneValido = false;
+    do
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                        CADASTRAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("=== Por favor, digite o telefone (Ex: (DD) 9XXXX-XXXX):               ===\n");
+        printf("=========================================================================\n");
+        printf(">>> ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (validarTelefone(buffer))
+        {
+            strcpy(novo_aluno.telefone, buffer);
+            telefoneValido = true;
+        }
+        else
+        {
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                      NÚMERO DE TELEFONE INVÁLIDO                  ===\n");
+            printf("=========================================================================\n");
+            printf("=== O número deve ser um telefone fixo (10 dígitos) ou celular      ===\n");
+            printf("=== (11 dígitos, começando com 9). Ex: (11) 98765-4321.             ===\n");
+            printf("=========================================================================\n");
+            printf(">>> Pressione <ENTER> para tentar novamente...");
+            getchar(); // Pausa para o usuário ler a mensagem
+        }
+    } while (!telefoneValido);
+    // ======================= FIM DA MODIFICAÇÃO =======================
 
     // --- Endereço ---
     limparTela();

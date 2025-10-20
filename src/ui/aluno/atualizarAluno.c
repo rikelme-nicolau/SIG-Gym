@@ -7,7 +7,8 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/valdiarCPF.h"
-#include "src/ui/utils/validarNascimento.h" // Adicionado para a validação da data
+#include "src/ui/utils/validarNascimento.h"
+#include "src/ui/utils/validarTelefone.h" // Incluindo todas as validações
 #include "arquivoAluno.h" // <-- persistência
 
 void limparBufferEntrada(void) {
@@ -17,10 +18,16 @@ void limparBufferEntrada(void) {
 
 void telaAtualizarAluno(void)
 {
-    // ... (O código de busca do aluno permanece o mesmo) ...
     if (total_alunos == 0)
     {
-        // ... (código de erro) ...
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                        ATUALIZAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("===                       NENHUM ALUNO CADASTRADO                     ===\n");
+        printf("=========================================================================\n");
+        getchar();
+        limparTela();
         return;
     }
 
@@ -55,7 +62,13 @@ void telaAtualizarAluno(void)
 
     if (encontrado == -1)
     {
-        // ... (código de erro) ...
+        printf("=========================================================================\n");
+        printf("===                        ATUALIZAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("===                       ID  NAO  ENCONTRADO                         ===\n");
+        printf("=========================================================================\n");
+        getchar();
+        limparTela();
         return;
     }
 
@@ -85,46 +98,43 @@ void telaAtualizarAluno(void)
         limparBufferEntrada();
         switch (opcao)
         {
-        case '1':
-            // ... (Seu código de validação de NOME, já correto) ...
+        case '1': // Validação do Nome
+        {
+            bool nomeValido = false;
+            do
             {
-                bool nomeValido = false;
-                do
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR ALUNO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== Nome atual: %-51s ===\n", aluno_sel->nome);
+                printf("=== Digite o novo nome:                                               ===\n");
+                printf("=========================================================================\n");
+                printf(">>> ");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarNome(buffer))
+                {
+                    strcpy(aluno_sel->nome, buffer);
+                    nomeValido = true;
+                }
+                else
                 {
                     limparTela();
                     printf("=========================================================================\n");
-                    printf("===                        ATUALIZAR ALUNO                            ===\n");
+                    printf("===                        NOME INVÁLIDO                              ===\n");
                     printf("=========================================================================\n");
-                    printf("=== Nome atual: %-51s ===\n", aluno_sel->nome);
-                    printf("=== Digite o novo nome:                                               ===\n");
+                    printf("=== O nome deve conter apenas letras e espaços.                     ===\n");
                     printf("=========================================================================\n");
-                    printf(">>> ");
-                    fgets(buffer, sizeof(buffer), stdin);
-                    buffer[strcspn(buffer, "\n")] = '\0';
-                    if (validarNome(buffer))
-                    {
-                        strcpy(aluno_sel->nome, buffer);
-                        nomeValido = true;
-                    }
-                    else
-                    {
-                        limparTela();
-                        printf("=========================================================================\n");
-                        printf("===                        NOME INVÁLIDO                              ===\n");
-                        printf("=========================================================================\n");
-                        printf("=== O nome deve conter apenas letras e espaços, sem caracteres      ===\n");
-                        printf("=== especiais ou números. Verifique também o tamanho.               ===\n");
-                        printf("=========================================================================\n");
-                        printf(">>> Pressione <ENTER> para tentar novamente...");
-                        getchar();
-                    }
-                } while (!nomeValido);
-                atualizarAlunoNoArquivo(*aluno_sel);
-                break;
-            }
+                    printf(">>> Pressione <ENTER> para tentar novamente...");
+                    getchar();
+                }
+            } while (!nomeValido);
+            atualizarAlunoNoArquivo(*aluno_sel);
+            break;
+        }
         
-        // ======================= AGREGAÇÃO DA VALIDAÇÃO DA DATA DE NASCIMENTO =======================
-        case '2':
+        case '2': // Validação da Data de Nascimento
         {
             bool dataValida = false;
             do
@@ -140,82 +150,123 @@ void telaAtualizarAluno(void)
                 fgets(buffer, sizeof(buffer), stdin);
                 buffer[strcspn(buffer, "\n")] = '\0';
 
-                // Chama a função de validação de data de nascimento
                 if (validarNascimento(buffer))
                 {
-                    strcpy(aluno_sel->idade, buffer); // O campo 'idade' armazena a data
-                    dataValida = true;               // Libera a saída do loop
+                    strcpy(aluno_sel->idade, buffer);
+                    dataValida = true;
                 }
                 else
                 {
-                    // Exibe mensagem de erro se a data for inválida
                     limparTela();
                     printf("=========================================================================\n");
                     printf("===                   DATA DE NASCIMENTO INVÁLIDA                     ===\n");
                     printf("=========================================================================\n");
-                    printf("=== A data deve estar no formato DD/MM/AAAA, não pode ser futura      ===\n");
-                    printf("=== e deve ser uma data válida no calendário. Tente novamente.        ===\n");
+                    printf("=== Formato DD/MM/AAAA. A data não pode ser futura.               ===\n");
                     printf("=========================================================================\n");
                     printf(">>> Pressione <ENTER> para tentar novamente...");
                     getchar();
                 }
             } while (!dataValida);
-
-            atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
+            atualizarAlunoNoArquivo(*aluno_sel);
             break;
         }
-        // ======================= FIM DA AGREGAÇÃO =======================
 
-        case '3':
-            // ... (Seu código de validação de CPF, já correto) ...
+        case '3': // Validação do CPF
+        {
+            bool cpfValido = false;
+            do
             {
-                bool cpfValido = false;
-                do
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR ALUNO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== CPF atual: %-54s ===\n", aluno_sel->cpf);
+                printf("=== Digite o novo CPF:                                                ===\n");
+                printf("=========================================================================\n");
+                printf(">>> ");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarCPF(buffer))
+                {
+                    strcpy(aluno_sel->cpf, buffer);
+                    cpfValido = true;
+                }
+                else
                 {
                     limparTela();
                     printf("=========================================================================\n");
-                    printf("===                        ATUALIZAR ALUNO                            ===\n");
+                    printf("===                        CPF INVÁLIDO                               ===\n");
                     printf("=========================================================================\n");
-                    printf("=== CPF atual: %-54s ===\n", aluno_sel->cpf);
-                    printf("=== Digite o novo CPF:                                                ===\n");
+                    printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
                     printf("=========================================================================\n");
-                    printf(">>> ");
-                    fgets(buffer, sizeof(buffer), stdin);
-                    buffer[strcspn(buffer, "\n")] = '\0';
-                    if (validarCPF(buffer))
-                    {
-                        strcpy(aluno_sel->cpf, buffer);
-                        cpfValido = true;
-                    }
-                    else
-                    {
-                        limparTela();
-                        printf("=========================================================================\n");
-                        printf("===                        CPF INVÁLIDO                               ===\n");
-                        printf("=========================================================================\n");
-                        printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
-                        printf("=== Verifique os dígitos e tente novamente.                         ===\n");
-                        printf("=========================================================================\n");
-                        printf(">>> Pressione <ENTER> para tentar novamente...");
-                        getchar();
-                    }
-                } while (!cpfValido);
-                atualizarAlunoNoArquivo(*aluno_sel);
-                break;
-            }
+                    printf(">>> Pressione <ENTER> para tentar novamente...");
+                    getchar();
+                }
+            } while (!cpfValido);
+            atualizarAlunoNoArquivo(*aluno_sel);
+            break;
+        }
         
-        // ... (o restante do seu código 'case 4', '5', '6', etc.) ...
+        case '4': // Validação do Telefone
+        {
+            bool telefoneValido = false;
+            do
+            {
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR ALUNO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== Telefone atual: %-49s ===\n", aluno_sel->telefone);
+                printf("=== Digite o novo telefone (Ex: (DD) 9XXXX-XXXX):                     ===\n");
+                printf("=========================================================================\n");
+                printf(">>> ");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+
+                if (validarTelefone(buffer))
+                {
+                    strcpy(aluno_sel->telefone, buffer);
+                    telefoneValido = true;
+                }
+                else
+                {
+                    limparTela();
+                    printf("=========================================================================\n");
+                    printf("===                      NÚMERO DE TELEFONE INVÁLIDO                  ===\n");
+                    printf("=========================================================================\n");
+                    printf("=== O número deve ser um telefone fixo (10) ou celular (11 dígitos).===\n");
+                    printf("=========================================================================\n");
+                    printf(">>> Pressione <ENTER> para tentar novamente...");
+                    getchar();
+                }
+            } while (!telefoneValido);
+            atualizarAlunoNoArquivo(*aluno_sel);
+            break;
+        }
+        
+        // ... (Aqui entrariam as lógicas para Endereço, Email e Plano) ...
         
         case '0':
             break;
         default:
-            // ... (código para opção inválida) ...
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                        ATUALIZAR ALUNO                            ===\n");
+            printf("=========================================================================\n");
+            printf("===                        OPCAO  INVALIDA                            ===\n");
+            printf("=========================================================================\n");
             break;
         }
 
-        if (opcao > '0' && opcao <= '7')
+        if (opcao > '0' && opcao < '8')
         {
-            // ... (mensagem de sucesso) ...
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                        ATUALIZAR ALUNO                            ===\n");
+            printf("=========================================================================\n");
+            printf("=== Campo atualizado com sucesso! <ENTER>                             ===\n");
+            printf("=========================================================================\n");
+            getchar();
         }
 
     } while (opcao != '0');
