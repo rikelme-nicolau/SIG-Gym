@@ -6,6 +6,8 @@ void telaCadastrarEquipamento(void);
 #define MAX_BUFFER 1024
 #define MAX_EQUIPAMENTOS 1024
 
+void calcularProximaManutencao(const char*, char*);
+
 struct equipamento
 {
     char id[12];
