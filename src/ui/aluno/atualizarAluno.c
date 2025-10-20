@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include <stdlib.hh>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include "limparTela.h"
 #include "cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/utils/validarNome.h"
-#include "src/ui/utils/valdiarCPF.h"
+#include "src/ui/utils/validarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarTelefone.h"
 #include "src/ui/utils/validarEndereco.h"
