@@ -5,8 +5,8 @@
 #include "limparTela.h"
 #include "src/ui/plano/cadastrarPlano.h"
 #include "../utils/gerarMatricula.h"
-#include "src/ui/utils/validarNome.h" // <<< SUA FUNÇÃO ESTÁ SENDO INCLUÍDA AQUI
-
+#include "src/ui/utils/validarNome.h"
+#include "src/ui/utils/valdiarCPF.h"// Adicionado para a validação do CPF
 #include "arquivoAluno.h"
 
 #define MAX_BUFFER 1024
@@ -27,8 +27,7 @@ void telaCadastrarAluno(void)
     struct aluno novo_aluno;
     char buffer[MAX_BUFFER];
 
-    // ======================= MODIFICAÇÃO COMEÇA AQUI =======================
-
+    // --- Validação do Nome (já estava correto) ---
     bool nomeValido = false;
     do
     {
@@ -43,15 +42,13 @@ void telaCadastrarAluno(void)
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
 
-        // Chama a sua função de validação que veio do #include
         if (validarNome(buffer))
         {
-            nomeValido = true; // Se o nome for bom, a flag vira true e o loop acaba
-            strcpy(novo_aluno.nome, buffer); // Copia o nome válido para a struct
+            nomeValido = true;
+            strcpy(novo_aluno.nome, buffer);
         }
         else
         {
-            // Se o nome for inválido, mostra uma mensagem de erro e o loop repetirá
             limparTela();
             printf("=========================================================================\n");
             printf("===                        NOME INVÁLIDO                              ===\n");
@@ -60,19 +57,16 @@ void telaCadastrarAluno(void)
             printf("=== especiais ou números. Verifique também o tamanho.               ===\n");
             printf("=========================================================================\n");
             printf(">>> Pressione <ENTER> para tentar novamente...");
-            getchar(); // Pausa para o usuário ler a mensagem
+            getchar();
         }
-
     } while (!nomeValido);
 
-    // ======================= MODIFICAÇÃO TERMINA AQUI =======================
-
-    // Idade
+    // --- Idade (Data de Nascimento) ---
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
     printf("=========================================================================\n");
-    printf("=== Nome: %-55s ===\n", novo_aluno.nome); // Mostra o nome já validado
+    printf("=== Nome: %-55s ===\n", novo_aluno.nome);
     printf("=== Por favor, digite a data de nascimento:                           ===\n");
     printf("=========================================================================\n");
     printf(">>> ");
@@ -80,23 +74,44 @@ void telaCadastrarAluno(void)
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_aluno.idade, buffer);
 
-    // CPF
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("=== Nome: %-55s ===\n", novo_aluno.nome);
-    printf("=== Por favor, digite o CPF:                                          ===\n");
-    printf("=========================================================================\n");
-    printf(">>> ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    strcpy(novo_aluno.cpf, buffer);
+    // ======================= MODIFICAÇÃO PARA VALIDAR CPF =======================
+    bool cpfValido = false;
+    do
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                        CADASTRAR ALUNO                            ===\n");
+        printf("=========================================================================\n");
+        printf("=== Nome: %-55s ===\n", novo_aluno.nome);
+        printf("=== Por favor, digite o CPF:                                          ===\n");
+        printf("=========================================================================\n");
+        printf(">>> ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';
 
-    // (O restante do seu código continua aqui, sem alterações...)
-    // ... Telefone, Endereço, Email, Plano ...
-    
-    // Telefone
+        // Chama a função de validação de CPF
+        if (validarCPF(buffer))
+        {
+            strcpy(novo_aluno.cpf, buffer); // Copia o CPF válido para a struct
+            cpfValido = true;               // Libera a saída do loop
+        }
+        else
+        {
+            // Se for inválido, exibe uma mensagem de erro
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                        CPF INVÁLIDO                               ===\n");
+            printf("=========================================================================\n");
+            printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
+            printf("=== Verifique os dígitos e tente novamente.                         ===\n");
+            printf("=========================================================================\n");
+            printf(">>> Pressione <ENTER> para tentar novamente...");
+            getchar(); // Pausa para o usuário ler a mensagem
+        }
+    } while (!cpfValido);
+    // ======================= FIM DA MODIFICAÇÃO =======================
+
+    // --- Telefone ---
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -108,7 +123,7 @@ void telaCadastrarAluno(void)
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_aluno.telefone, buffer);
 
-    // Endereço
+    // --- Endereço ---
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -120,7 +135,7 @@ void telaCadastrarAluno(void)
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_aluno.endereco, buffer);
 
-    // Email
+    // --- Email ---
     limparTela();
     printf("=========================================================================\n");
     printf("===                        CADASTRAR ALUNO                            ===\n");
@@ -132,8 +147,7 @@ void telaCadastrarAluno(void)
     buffer[strcspn(buffer, "\n")] = '\0';
     strcpy(novo_aluno.email, buffer);
 
-    // Plano
-    // ... (seu código de plano)
+    // ... (O restante do seu código para Plano, salvar, etc. continua o mesmo) ...
 
     // Gera ID e define ativo
     strcpy(novo_aluno.id, gerarMatricula("002"));
