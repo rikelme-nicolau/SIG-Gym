@@ -16,5 +16,6 @@
  * @return true se a data for válida, false caso contrário.
  */
 bool validarNascimento(const char *data_nasc);
+int calcularIdade(const char *nascimento);
 
 #endif // VALIDACAO_H

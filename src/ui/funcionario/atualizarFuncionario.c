@@ -5,40 +5,32 @@
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
 #include "arquivoFuncionario.h"
-
-#define MAX_BUFFER 1024
+#include "src/ui/utils/validarNome.h"
+#include "src/ui/utils/validarCPF.h"
+#include "src/ui/utils/validarNascimento.h"
+#include "src/ui/utils/validarEndereco.h"
+#include "src/ui/utils/validarNascimento.h"
 
 void telaAtualizarFuncionario(void)
 {
     if (total_funcionarios == 0)
     {
         limparTela();
-        printf("=========================================================================\n");
-        printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
-        printf("=========================================================================\n");
-        printf("===                   NENHUM FUNCIONÁRIO CADASTRADO                   ===\n");
-        printf("=========================================================================\n");
+        printf("=== ATUALIZAR FUNCIONÁRIO ===\nNenhum funcionário cadastrado.\n");
         getchar();
-        limparTela();
         return;
     }
 
     limparTela();
-    printf("=========================================================================\n");
-    printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
-    printf("=========================================================================\n");
-
+    printf("=== ATUALIZAR FUNCIONÁRIO ===\nFuncionários disponíveis:\n");
     for (int i = 0; i < total_funcionarios; i++)
     {
         if (lista_funcionarios[i].ativo)
-        {
             printf("[%s] %s\n", lista_funcionarios[i].id, lista_funcionarios[i].nome);
-        }
     }
 
-    printf("===                          DIGITE O ID:                             ===\n");
-    printf("=========================================================================\n");
-    char id_busca[12];
+    printf("Digite o ID do funcionário: ");
+    char id_busca[MAX_BUFFER];
     fgets(id_busca, sizeof(id_busca), stdin);
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
@@ -54,13 +46,8 @@ void telaAtualizarFuncionario(void)
 
     if (encontrado == -1)
     {
-        printf("=========================================================================\n");
-        printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
-        printf("=========================================================================\n");
-        printf("===                   ID NÃO ENCONTRADO                               ===\n");
-        printf("=========================================================================\n");
+        printf("ID não encontrado! Pressione ENTER para continuar...");
         getchar();
-        limparTela();
         return;
     }
 
@@ -71,83 +58,152 @@ void telaAtualizarFuncionario(void)
     do
     {
         limparTela();
-        printf("=========================================================================\n");
-        printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
-        printf("=========================================================================\n");
+        printf("=== ATUALIZAR FUNCIONÁRIO ===\n");
         printf("Funcionário selecionado: %s (%s)\n", func_sel->nome, func_sel->id);
         printf("Escolha o campo para atualizar:\n");
-        printf("[1] Nome\n");
-        printf("[2] Cargo\n");
-        printf("[3] Idade\n");
-        printf("[4] CPF\n");
-        printf("[5] Endereço\n");
-        printf("[0] Voltar\n");
-        printf("=========================================================================\n");
+        printf("[1] Nome\n[2] Data de nascimento\n[3] CPF\n[4] Telefone\n[5] Endereço\n[6] E-mail\n[7] Cargo\n[0] Voltar\n>>> ");
         scanf(" %c", &opcao);
-        getchar();
+        limparBufferEntrada();
 
         switch (opcao)
         {
-        case '1':
-            limparTela();
-            printf("=== Novo nome: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->nome, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+        case '1': // Nome
+            do
+            {
+                printf("Nome atual: %s\nDigite o novo nome: ", func_sel->nome);
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarNome(buffer))
+                {
+                    strcpy(func_sel->nome, buffer);
+                    atualizarFuncionarioNoArquivo(*func_sel);
+                    break;
+                }
+                printf("Nome inválido! Pressione ENTER para tentar novamente...");
+                getchar();
+            } while (true);
             break;
-        case '2':
-            limparTela();
-            printf("=== Novo cargo: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->cargo, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+
+        case '2': // Nascimento
+            do
+            {
+                printf("Data atual: %s\nDigite a nova data (DD/MM/AAAA): ", func_sel->nascimento);
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarNascimento(buffer))
+                {
+                    strcpy(func_sel->nascimento, buffer);
+                    func_sel->idade = calcularIdade(buffer);
+                    atualizarFuncionarioNoArquivo(*func_sel);
+                    break;
+                }
+                printf("Data inválida! Pressione ENTER para tentar novamente...");
+                getchar();
+            } while (true);
             break;
-        case '3':
-            limparTela();
-            printf("=== Nova idade: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->idade, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+
+        case '3': // CPF
+            do
+            {
+                printf("CPF atual: %s\nDigite o novo CPF: ", func_sel->cpf);
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarCPF(buffer))
+                {
+                    strcpy(func_sel->cpf, buffer);
+                    atualizarFuncionarioNoArquivo(*func_sel);
+                    break;
+                }
+                printf("CPF inválido! Pressione ENTER para tentar novamente...");
+                getchar();
+            } while (true);
             break;
-        case '4':
-            limparTela();
-            printf("=== Novo CPF: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->cpf, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+
+        case '4': // Telefone
+            do
+            {
+                printf("Telefone atual: %s\nDigite o novo telefone: ", func_sel->telefone);
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarTelefone(buffer))
+                {
+                    strcpy(func_sel->telefone, buffer);
+                    atualizarFuncionarioNoArquivo(*func_sel);
+                    break;
+                }
+                printf("Telefone inválido! Pressione ENTER para tentar novamente...");
+                getchar();
+            } while (true);
             break;
-        case '5':
-            limparTela();
-            printf("=== Novo endereço: ===\n");
-            fgets(buffer, sizeof(buffer), stdin);
-            buffer[strcspn(buffer, "\n")] = '\0';
-            strcpy(func_sel->endereco, buffer);
-            atualizarFuncionarioNoArquivo(*func_sel);
+
+        case '5': // Endereço
+            do
+            {
+                printf("Endereço atual: %s\nDigite o novo endereço: ", func_sel->endereco);
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarEndereco(buffer))
+                {
+                    strcpy(func_sel->endereco, buffer);
+                    atualizarFuncionarioNoArquivo(*func_sel);
+                    break;
+                }
+                printf("Endereço inválido! Pressione ENTER para tentar novamente...");
+                getchar();
+            } while (true);
             break;
+
+        case '6': // E-mail
+            do
+            {
+                printf("E-mail atual: %s\nDigite o novo e-mail: ", func_sel->email);
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (validarEmail(buffer))
+                {
+                    strcpy(func_sel->email, buffer);
+                    atualizarFuncionarioNoArquivo(*func_sel);
+                    break;
+                }
+                printf("E-mail inválido! Pressione ENTER para tentar novamente...");
+                getchar();
+            } while (true);
+            break;
+
+        case '7': // Cargo
+            do
+            {
+                printf("Cargo atual: %s\nEscolha o novo cargo:\n1 - Atendente\n2 - Personal\n3 - Gerente\n>>> ", func_sel->cargo);
+                fgets(buffer, sizeof(buffer), stdin);
+                int escolha = atoi(buffer);
+                if (escolha == 1)
+                    strcpy(func_sel->cargo, "Atendente");
+                else if (escolha == 2)
+                    strcpy(func_sel->cargo, "Personal");
+                else if (escolha == 3)
+                    strcpy(func_sel->cargo, "Gerente");
+                else
+                {
+                    printf("Opção inválida! Pressione ENTER para tentar novamente...");
+                    getchar();
+                    continue;
+                }
+                atualizarFuncionarioNoArquivo(*func_sel);
+                break;
+            } while (true);
+            break;
+
         case '0':
-            break;
+            return;
+
         default:
-            limparTela();
-            printf("=== OPÇÃO INVÁLIDA ===\n");
+            printf("Opção inválida! Pressione ENTER para continuar...");
+            getchar();
             break;
         }
 
-        if (opcao != '0')
-        {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                    ATUALIZAR FUNCIONÁRIO                          ===\n");
-            printf("=========================================================================\n");
-            printf("=== Atualizado com sucesso! <ENTER>                                   ===\n");
-            printf("=========================================================================\n");
-            getchar();
-        }
+        printf("Campo atualizado com sucesso! Pressione ENTER para continuar...");
+        getchar();
 
-    } while (opcao != '0');
-
-    limparTela();
+    } while (true);
 }

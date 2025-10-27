@@ -3,6 +3,7 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
+#include "src/ui/utils/validarNascimento.h"
 
 void telaVisualizarFuncionario(void)
 {
@@ -65,7 +66,11 @@ void telaVisualizarFuncionario(void)
             printf("ID: %s\n", lista_funcionarios[i].id);
             printf("Nome: %s\n", lista_funcionarios[i].nome);
             printf("Cargo: %s\n", lista_funcionarios[i].cargo);
-            printf("Idade: %s\n", lista_funcionarios[i].idade);
+
+            // Calcula a idade usando a data de nascimento
+            int idade = calcularIdade(lista_funcionarios[i].nascimento);
+            printf("Idade: %d\n", idade);
+
             printf("CPF: %s\n", lista_funcionarios[i].cpf);
             printf("Endereço: %s\n", lista_funcionarios[i].endereco);
 
@@ -85,6 +90,7 @@ void telaVisualizarFuncionario(void)
         printf("=========================================================================\n");
     }
 
+    printf(">>> Pressione <ENTER> para continuar...");
     getchar();
     limparTela();
 }
