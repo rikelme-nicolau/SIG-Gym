@@ -1,4 +1,4 @@
-# SIG-Gym: Um Sistema de Gestão de Academias de Ginástica
+# SIG-Gym: Um Sistema de Gestão de Academias
 
 <p align="center">
   <img src="./logo.png" alt="Logo SIG-Gym" width="200"/>
