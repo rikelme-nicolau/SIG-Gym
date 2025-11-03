@@ -9,7 +9,11 @@
 #include "src/ui/utils/validarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarEndereco.h"
-#include "src/ui/utils/validarNascimento.h"
+#include "src/ui/utils/validarEmail.h"
+#include "src/ui/utils/validarTelefone.h"
+#include "src/ui/aluno/atualizarAluno.h"
+
+#define MAX_BUFFER 1024
 
 void telaAtualizarFuncionario(void)
 {
