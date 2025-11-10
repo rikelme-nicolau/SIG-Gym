@@ -9,6 +9,54 @@
 #define ALUNOS_FILE "alunos.dat"
 #define TMP_FILE    "alunos.tmp"
 
+static int preencherAlunosFicticios(struct aluno lista_alunos[])
+{
+    static const struct aluno alunos_iniciais[] = {
+        {
+            .id = "ALU-0001",
+            .nome = "João Silva",
+            .idade = "29",
+            .cpf = "123.456.789-00",
+            .telefone = "(11) 99876-5432",
+            .endereco = "Rua das Palmeiras, 120 - Centro",
+            .email = "joao.silva@example.com",
+            .ativo = true,
+            .plano_id = "PLAN-001",
+        },
+        {
+            .id = "ALU-0002",
+            .nome = "Maria Souza",
+            .idade = "34",
+            .cpf = "987.654.321-00",
+            .telefone = "(11) 91234-5678",
+            .endereco = "Av. Brasil, 45 - Jardim Europa",
+            .email = "maria.souza@example.com",
+            .ativo = true,
+            .plano_id = "PLAN-002",
+        },
+        {
+            .id = "ALU-0003",
+            .nome = "Carlos Pereira",
+            .idade = "41",
+            .cpf = "321.654.987-00",
+            .telefone = "(11) 97777-1122",
+            .endereco = "Rua do Sol, 88 - Vila Nova",
+            .email = "carlos.pereira@example.com",
+            .ativo = true,
+            .plano_id = "PLAN-003",
+        },
+    };
+
+    int total = sizeof(alunos_iniciais) / sizeof(alunos_iniciais[0]);
+
+    for (int i = 0; i < total; i++)
+    {
+        lista_alunos[i] = alunos_iniciais[i];
+    }
+
+    return total;
+}
+
 // Salva todos os alunos ativos no arquivo binário
 void salvarAlunos(struct aluno lista_alunos[], int total_alunos) {
     // ALTERAÇÃO: Abrimos o arquivo em modo "wb" (write binary)
@@ -37,8 +85,9 @@ int carregarAlunos(struct aluno lista_alunos[]) {
     // ALTERAÇÃO: Abrimos o arquivo em modo "rb" (read binary)
     FILE *fp = fopen(ALUNOS_FILE, "rb");
     if (!fp) {
-        // Se o arquivo não existe, não há alunos para carregar.
-        return 0;
+        int total = preencherAlunosFicticios(lista_alunos);
+        salvarAlunos(lista_alunos, total);
+        return total;
     }
 
     int total = 0;
