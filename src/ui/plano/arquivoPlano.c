@@ -8,6 +8,60 @@
 #define PLANOS_FILE "planos.dat"
 #define TMP_FILE "planos.tmp"
 
+static int preencherPlanosFicticios(struct plano lista_planos[])
+{
+    static const struct plano planos_iniciais[] = {
+        {
+            .id = "PLAN-001",
+            .nome = "Plano Performance",
+            .horario_inicio = "06:00",
+            .horario_fim = "10:00",
+            .atividades = {
+                "Musculação",
+                "Funcional",
+                "Cardio HIIT",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-002",
+            .nome = "Plano Bem-Estar",
+            .horario_inicio = "10:00",
+            .horario_fim = "14:00",
+            .atividades = {
+                "Pilates",
+                "Alongamento",
+                "Yoga",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-003",
+            .nome = "Plano Premium",
+            .horario_inicio = "16:00",
+            .horario_fim = "22:00",
+            .atividades = {
+                "Cross Training",
+                "Spinning",
+                "Natação",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+    };
+
+    int total = sizeof(planos_iniciais) / sizeof(planos_iniciais[0]);
+
+    for (int i = 0; i < total; i++)
+    {
+        lista_planos[i] = planos_iniciais[i];
+    }
+
+    return total;
+}
+
 // Salva todos os planos ativos no arquivo binário
 void salvarPlanos(struct plano lista_planos[], int total_planos)
 {
@@ -37,7 +91,11 @@ int carregarPlanos(struct plano lista_planos[])
 {
     FILE *fp = fopen(PLANOS_FILE, "rb");
     if (!fp)
-        return 0;
+    {
+        int total = preencherPlanosFicticios(lista_planos);
+        salvarPlanos(lista_planos, total);
+        return total;
+    }
 
     int total = 0;
 
