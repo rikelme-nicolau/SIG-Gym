@@ -16,7 +16,8 @@ char telaPrincipal(void)
     printf("===  [2]  PLANOS                                                      ===\n");
     printf("===  [3]  EQUIPAMENTOS                                                ===\n");
     printf("===  [4]  FUNCIONARIOS                                                ===\n");
-    printf("===  [5]  SOBRE                                                       ===\n");
+    printf("===  [5]  RELATORIOS                                                  ===\n");
+    printf("===  [6]  SOBRE                                                       ===\n");
     printf("===  [0]  SAIR                                                        ===\n");
     printf("===                                                                   ===\n");
     printf("=========================================================================\n");
