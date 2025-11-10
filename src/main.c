@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "animacao.h"
 #include "telaPrincipal.h"
 #include "modAluno.h"
@@ -10,20 +11,22 @@
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
 #include "limparTela.h"
-#include "buscar.h"
 
 // Persistência
-#include "src/ui/aluno/arquivoAluno.h"
-#include "src/ui/plano/arquivoPlano.h"
-#include "src/ui/funcionario/arquivoFuncionario.h"
-#include "src/ui/equipamento/arquivoEquipamento.h"
+#include "src/ui/aluno/arquivoAluno.h"             // lista_alunos[], total_alunos
+#include "src/ui/plano/arquivoPlano.h"             // lista_planos[], total_planos
+#include "src/ui/funcionario/arquivoFuncionario.h" // lista_funcionarios[], total_funcionarios
+#include "src/ui/equipamento/arquivoEquipamento.h" // lista_equipamentos[], total_equipamentos
 
 int main(void)
 {
+
     char op;
 
+    // animação inicial
     animacao();
 
+    // carrega dados persistentes
     total_alunos = carregarAlunos(lista_alunos);
     total_planos = carregarPlanos(lista_planos);
     total_funcionarios = carregarFuncionarios(lista_funcionarios);
@@ -39,35 +42,38 @@ int main(void)
             moduloAluno();
             limparTela();
             break;
+
         case '2':
             moduloPlano();
             limparTela();
             break;
+
         case '3':
             moduloEquipamento();
             limparTela();
             break;
+
         case '4':
             moduloFuncionario();
             limparTela();
             break;
+
         case '5':
             telaSobre();
             limparTela();
             break;
-        case '6':
-            buscarPorCPF();
-            limparTela();
-            break;
+
         case '0':
             telaFinalizacao();
             limparTela();
             break;
+
         default:
             opInvalida();
             limparTela();
             break;
         }
+
     } while (op != '0');
 
     return 0;

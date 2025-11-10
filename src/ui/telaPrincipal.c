@@ -3,6 +3,7 @@
 
 char telaPrincipal(void)
 {
+
     char op;
 
     printf("\n");
@@ -16,7 +17,6 @@ char telaPrincipal(void)
     printf("===  [3]  EQUIPAMENTOS                                                ===\n");
     printf("===  [4]  FUNCIONARIOS                                                ===\n");
     printf("===  [5]  SOBRE                                                       ===\n");
-    printf("===  [6]  BUSCAR POR CPF                                              ===\n"); // 🧭 nova opção adicionada
     printf("===  [0]  SAIR                                                        ===\n");
     printf("===                                                                   ===\n");
     printf("=========================================================================\n");

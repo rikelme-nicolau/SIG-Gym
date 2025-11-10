@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "cadastrarfuncionario.h": "c",
-        "limpartela.h": "c",
-        "cadastraraluno.h": "c",
-        "validarnascimento.h": "c"
-    }
-}
