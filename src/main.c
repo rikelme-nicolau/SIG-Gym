@@ -7,6 +7,7 @@
 #include "modPlano.h"
 #include "modFuncionario.h"
 #include "modEquipamento.h"
+#include "modRelatorio.h"
 #include "telaSobre.h"
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
@@ -59,6 +60,11 @@ int main(void)
             break;
 
         case '5':
+            moduloRelatorio();
+            limparTela();
+            break;
+
+        case '6':
             telaSobre();
             limparTela();
             break;
