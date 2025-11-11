@@ -11,7 +11,7 @@
 #include "src/ui/utils/validarEndereco.h"
 #include "src/ui/utils/validarEmail.h"
 #include "src/ui/utils/validarTelefone.h"
-#include "src/ui/aluno/atualizarAluno.h"
+#include "ui/utils/lerTecla.h"
 
 #define MAX_BUFFER 1024
 
@@ -66,8 +66,7 @@ void telaAtualizarFuncionario(void)
         printf("Funcionário selecionado: %s (%s)\n", func_sel->nome, func_sel->id);
         printf("Escolha o campo para atualizar:\n");
         printf("[1] Nome\n[2] Data de nascimento\n[3] CPF\n[4] Telefone\n[5] Endereço\n[6] E-mail\n[7] Cargo\n[0] Voltar\n>>> ");
-        scanf(" %c", &opcao);
-        limparBufferEntrada();
+        opcao = lerTecla();
 
         switch (opcao)
         {

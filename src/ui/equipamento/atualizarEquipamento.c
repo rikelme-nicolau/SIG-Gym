@@ -4,6 +4,7 @@
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
 #include "arquivoEquipamento.h"
+#include "ui/utils/lerTecla.h"
 
 #define MAX_BUFFER 1024
 
@@ -81,8 +82,7 @@ void telaAtualizarEquipamento(void)
         printf("[3] Categoria\n");
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
-        scanf(" %c", &opcao);
-        getchar();
+        opcao = lerTecla();
 
         switch (opcao)
         {

@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include "ui/utils/lerTecla.h"
+
+char lerTecla(void)
+{
+    struct termios oldt;
+    struct termios newt;
+    int ch;
+
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    newt.c_cc[VMIN] = 1;
+    newt.c_cc[VTIME] = 0;
+
+    tcflush(STDIN_FILENO, TCIFLUSH);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+    return (char)ch;
+}

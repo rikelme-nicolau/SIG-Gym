@@ -12,6 +12,7 @@
 #include "src/ui/utils/validarEndereco.h"
 #include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
 #include "arquivoAluno.h" // <-- persistência
+#include "ui/utils/lerTecla.h"
 
 void limparBufferEntrada(void) {
     int c;
@@ -96,8 +97,7 @@ void telaAtualizarAluno(void)
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
         printf("=========================================================================\n");
-        scanf(" %c", &opcao);
-        limparBufferEntrada();
+        opcao = lerTecla();
         switch (opcao)
         {
         case '1': // Validação do Nome

@@ -4,6 +4,7 @@
 #include "limparTela.h"
 #include "cadastrarPlano.h"
 #include "arquivoPlano.h"  // <-- persistência
+#include "ui/utils/lerTecla.h"
 
 void telaAtualizarPlano(void) {
     if(total_planos == 0) {
@@ -80,8 +81,7 @@ void telaAtualizarPlano(void) {
         printf("[3] Atividades\n");
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
-        scanf(" %c", &opcao);
-        getchar();
+        opcao = lerTecla();
 
         switch(opcao) {
             case '1':

@@ -8,6 +8,7 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "src/ui/equipamento/cadastrarEquipamento.h"
+#include "ui/utils/lerTecla.h"
 
 #define BUFFER_FILTRO 1024
 
@@ -434,8 +435,7 @@ void relatorioListagemFiltrada(void)
         printf("=========================================================================\n");
         printf("Opção: ");
 
-        scanf("%c", &tipo_registro);
-        getchar();
+        tipo_registro = lerTecla();
 
         if (tipo_registro == '0' || tipo_registro == '1' || tipo_registro == '2' ||
             tipo_registro == '3' || tipo_registro == '4')
@@ -470,8 +470,7 @@ void relatorioListagemFiltrada(void)
         printf("=========================================================================\n");
         printf("Opção: ");
 
-        scanf("%c", &filtroStatus);
-        getchar();
+        filtroStatus = lerTecla();
 
         if (filtroStatus == '1' || filtroStatus == '2' || filtroStatus == '3')
         {

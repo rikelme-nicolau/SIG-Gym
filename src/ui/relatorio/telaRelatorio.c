@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "limparTela.h"
+#include "ui/utils/lerTecla.h"
 
 char telaRelatorio(void)
 {
@@ -19,8 +20,7 @@ char telaRelatorio(void)
     printf("=========================================================================\n");
     printf("=========================================================================\n");
 
-    scanf("%c", &op);
-    getchar();
+    op = lerTecla();
 
     limparTela();
 

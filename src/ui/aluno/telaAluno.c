@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "limparTela.h"
 #include "atualizarAluno.h"
+#include "ui/utils/lerTecla.h"
 
 char telaAluno(void) {
     char op;
@@ -19,11 +20,7 @@ char telaAluno(void) {
     printf("=========================================================================\n");
     printf(">>> Digite sua opção: "); // Adicionado para clareza
 
-    // 1. O espaço antes de %c ignora quaisquer 'enter' ou 'espaços' anteriores.
-    scanf(" %c", &op);
-
-    // 2. A função robusta limpa QUALQUER COISA que o usuário tenha digitado a mais.
-    limparBufferEntrada(); 
+    op = lerTecla();
 
     limparTela();
     return op;
