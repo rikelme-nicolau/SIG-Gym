@@ -70,6 +70,30 @@ static const char *descricaoStatusFiltro(char filtroStatus)
     }
 }
 
+static void imprimirCabecalhoFiltro(void)
+{
+    printf("=========================================================================\n");
+    printf("===        RELATÓRIO - LISTAGEM COM APLICAÇÃO DE FILTRO              ===\n");
+    printf("=========================================================================\n\n");
+}
+
+static const char *descricaoTipoFiltro(char tipo)
+{
+    switch (tipo)
+    {
+    case '1':
+        return "Alunos";
+    case '2':
+        return "Planos";
+    case '3':
+        return "Funcionários";
+    case '4':
+        return "Equipamentos";
+    default:
+        return "";
+    }
+}
+
 static void relatorioFiltradoAlunos(char filtroStatus, const char *termo)
 {
     printf("ALUNOS\n");
@@ -394,20 +418,20 @@ void relatorioListagemFiltrada(void)
 {
     limparTela();
 
-    printf("=========================================================================\n");
-    printf("===        RELATÓRIO - LISTAGEM COM APLICAÇÃO DE FILTRO              ===\n");
-    printf("=========================================================================\n\n");
-
     char tipo_registro;
-
     while (1)
     {
-        printf("Escolha o tipo de registro que deseja filtrar:\n");
-        printf("  [1] Alunos\n");
-        printf("  [2] Planos\n");
-        printf("  [3] Funcionários\n");
-        printf("  [4] Equipamentos\n");
-        printf("  [0] Voltar\n");
+        imprimirCabecalhoFiltro();
+        printf("===  Escolha o tipo de registro que deseja filtrar:                  ===\n");
+        printf("===                                                                   ===\n");
+        printf("===    [1]  Alunos                                                    ===\n");
+        printf("===    [2]  Planos                                                    ===\n");
+        printf("===    [3]  Funcionários                                              ===\n");
+        printf("===    [4]  Equipamentos                                              ===\n");
+        printf("===                                                                   ===\n");
+        printf("===    [0]  Voltar                                                    ===\n");
+        printf("===                                                                   ===\n");
+        printf("=========================================================================\n");
         printf("Opção: ");
 
         scanf("%c", &tipo_registro);
@@ -419,7 +443,9 @@ void relatorioListagemFiltrada(void)
             break;
         }
 
-        printf("\nOpção inválida! Tente novamente.\n\n");
+        printf("\n>>> Opção inválida! Pressione <ENTER> para tentar novamente...");
+        getchar();
+        limparTela();
     }
 
     if (tipo_registro == '0')
@@ -429,13 +455,19 @@ void relatorioListagemFiltrada(void)
     }
 
     char filtroStatus;
-
     while (1)
     {
-        printf("\nFiltrar por status:\n");
-        printf("  [1] Somente ativos\n");
-        printf("  [2] Somente inativos\n");
-        printf("  [3] Todos\n");
+        limparTela();
+        imprimirCabecalhoFiltro();
+        printf("===  Tipo selecionado: %-47s===\n", descricaoTipoFiltro(tipo_registro));
+        printf("===                                                                   ===\n");
+        printf("===  Selecione o status desejado:                                     ===\n");
+        printf("===                                                                   ===\n");
+        printf("===    [1]  Somente ativos                                            ===\n");
+        printf("===    [2]  Somente inativos                                          ===\n");
+        printf("===    [3]  Todos                                                     ===\n");
+        printf("===                                                                   ===\n");
+        printf("=========================================================================\n");
         printf("Opção: ");
 
         scanf("%c", &filtroStatus);
@@ -446,11 +478,22 @@ void relatorioListagemFiltrada(void)
             break;
         }
 
-        printf("\nOpção inválida! Tente novamente.\n");
+        printf("\n>>> Opção inválida! Pressione <ENTER> para tentar novamente...");
+        getchar();
     }
 
+    limparTela();
+    imprimirCabecalhoFiltro();
+    printf("===  Tipo selecionado: %-47s===\n", descricaoTipoFiltro(tipo_registro));
+    printf("===  Status: %-57s===\n", descricaoStatusFiltro(filtroStatus));
+    printf("===                                                                   ===\n");
+    printf("===  Digite parte do nome, ID ou outra informação para filtrar.       ===\n");
+    printf("===  Pressione <ENTER> para ignorar.                                  ===\n");
+    printf("===                                                                   ===\n");
+    printf("=========================================================================\n");
+    printf("Filtro: ");
+
     char termo[BUFFER_FILTRO];
-    printf("\nDigite parte do nome, ID ou outra informação para filtrar (ENTER para ignorar): ");
     if (fgets(termo, sizeof(termo), stdin) != NULL)
     {
         termo[strcspn(termo, "\n")] = '\0';
@@ -460,10 +503,12 @@ void relatorioListagemFiltrada(void)
         termo[0] = '\0';
     }
 
-    printf("\nCritérios aplicados -> Status: %s | Termo: %s\n",
-           descricaoStatusFiltro(filtroStatus),
-           termo[0] != '\0' ? termo : "Nenhum");
-    printf("=========================================================================\n");
+    limparTela();
+    imprimirCabecalhoFiltro();
+    printf("===  Tipo selecionado: %-47s===\n", descricaoTipoFiltro(tipo_registro));
+    printf("===  Status: %-57s===\n", descricaoStatusFiltro(filtroStatus));
+    printf("===  Termo: %-58s===\n", termo[0] != '\0' ? termo : "Nenhum");
+    printf("=========================================================================\n\n");
 
     switch (tipo_registro)
     {

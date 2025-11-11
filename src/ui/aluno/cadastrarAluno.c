@@ -19,6 +19,28 @@
 struct aluno lista_alunos[MAX_ALUNOS];
 int total_alunos = 0;
 
+static bool desejaCancelar(const char *entrada)
+{
+    return strcmp(entrada, "0") == 0;
+}
+
+static bool exibirMensagemCancelamento(const char *entrada)
+{
+    if (!desejaCancelar(entrada))
+    {
+        return false;
+    }
+
+    limparTela();
+    printf("=========================================================================\n");
+    printf("===                     CADASTRO CANCELADO                            ===\n");
+    printf("=========================================================================\n");
+    printf(">>> Pressione <ENTER> para voltar ao menu...");
+    getchar();
+    limparTela();
+    return true;
+}
+
 void telaCadastrarAluno(void)
 {
     if (total_alunos >= MAX_ALUNOS)
@@ -40,11 +62,16 @@ void telaCadastrarAluno(void)
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
-        printf("=== Por favor, digite o nome:                                         ===\n");
+        printf("=== Por favor, digite o nome ou 0 para cancelar:                      ===\n");
         printf("=========================================================================\n");
         printf(">>> ");
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (exibirMensagemCancelamento(buffer))
+        {
+            return;
+        }
 
         if (validarNome(buffer))
         {
@@ -75,11 +102,17 @@ void telaCadastrarAluno(void)
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
         printf("=== Nome: %-55s ===\n", novo_aluno.nome);
-        printf("=== Por favor, digite a data de nascimento (DD/MM/AAAA):              ===\n");
+        printf("=== Por favor, digite a data de nascimento (DD/MM/AAAA) ou 0 para    ===\n");
+        printf("=== cancelar:                                                         ===\n");
         printf("=========================================================================\n");
         printf(">>> ");
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (exibirMensagemCancelamento(buffer))
+        {
+            return;
+        }
 
         if (validarNascimento(buffer))
         {
@@ -110,11 +143,16 @@ void telaCadastrarAluno(void)
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
         printf("=== Nome: %-55s ===\n", novo_aluno.nome);
-        printf("=== Por favor, digite o CPF:                                          ===\n");
+        printf("=== Por favor, digite o CPF ou 0 para cancelar:                       ===\n");
         printf("=========================================================================\n");
         printf(">>> ");
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (exibirMensagemCancelamento(buffer))
+        {
+            return;
+        }
 
         if (validarCPF(buffer))
         {
@@ -144,11 +182,17 @@ void telaCadastrarAluno(void)
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
-        printf("=== Por favor, digite o telefone (Ex: (DD) 9XXXX-XXXX):               ===\n");
+        printf("=== Por favor, digite o telefone (Ex: (DD) 9XXXX-XXXX) ou 0 para     ===\n");
+        printf("=== cancelar:                                                         ===\n");
         printf("=========================================================================\n");
         printf(">>> ");
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (exibirMensagemCancelamento(buffer))
+        {
+            return;
+        }
 
         if (validarTelefone(buffer))
         {
@@ -178,11 +222,17 @@ void telaCadastrarAluno(void)
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
-        printf("=== Por favor, digite o endereço (Ex: Rua Exemplo, 123 - Centro):     ===\n");
+        printf("=== Por favor, digite o endereço (Ex: Rua Exemplo, 123 - Centro) ou  ===\n");
+        printf("=== 0 para cancelar:                                                  ===\n");
         printf("=========================================================================\n");
         printf(">>> ");
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (exibirMensagemCancelamento(buffer))
+        {
+            return;
+        }
 
         if (validarEndereco(buffer))
         {
@@ -211,11 +261,17 @@ void telaCadastrarAluno(void)
         printf("=========================================================================\n");
         printf("===                        CADASTRAR ALUNO                            ===\n");
         printf("=========================================================================\n");
-        printf("=== Por favor, digite o email (Ex: nome@dominio.com):                 ===\n");
+        printf("=== Por favor, digite o email (Ex: nome@dominio.com) ou 0 para        ===\n");
+        printf("=== cancelar:                                                         ===\n");
         printf("=========================================================================\n");
         printf(">>> ");
         fgets(buffer, sizeof(buffer), stdin);
         buffer[strcspn(buffer, "\n")] = '\0';
+
+        if (exibirMensagemCancelamento(buffer))
+        {
+            return;
+        }
 
         if (validarEmail(buffer))
         {
