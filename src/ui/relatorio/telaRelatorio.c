@@ -12,6 +12,7 @@ char telaRelatorio(void)
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
     printf("===  [1]  RELATÓRIO DE LISTAGEM DE DADOS                              ===\n");
+    printf("===  [2]  RELATÓRIO COM APLICAÇÃO DE FILTRO                           ===\n");
     printf("===                                                                   ===\n");
     printf("===  [0]  VOLTAR                                                      ===\n");
     printf("===                                                                   ===\n");

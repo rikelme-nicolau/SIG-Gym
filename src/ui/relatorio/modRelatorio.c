@@ -18,6 +18,10 @@ char moduloRelatorio(void)
             relatorioListagemDados();
             break;
 
+        case '2':
+            relatorioListagemFiltrada();
+            break;
+
         case '0':
             break;
 
