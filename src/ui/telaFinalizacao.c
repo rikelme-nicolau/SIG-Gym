@@ -14,7 +14,6 @@ void telaFinalizacao(void) {
     printf("===                     DCT1106 -- Programação                        ===\n");
     printf("===               Centro de Ensino Superior do Seridó                 ===\n");
     printf("===             Departamento de Computação e Tecnologia               ===\n");
-    printf("===               Franciedson Lucas Linhares da Silva                 ===\n");
     printf("===               Rikelme Nicolau Borges do Nascimento                ===\n");
     printf("=========================================================================\n");
     printf("=========================================================================\n");
