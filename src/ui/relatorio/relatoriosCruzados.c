@@ -41,11 +41,12 @@ static void relatorioRelacaoAlunoPlano(void)
 {
     limparTela();
 
-    printf("============================================================\n");
-    printf("                  RELAÇÃO ALUNO / PLANO                     \n");
-    printf("============================================================\n");
-    printf("ID   NOME DO ALUNO            PLANO                 VALOR   \n");
-    printf("------------------------------------------------------------\n");
+    printf("=========================================================================\n");
+    printf("===                  RELAÇÃO ALUNO / PLANO                            ===\n");
+    printf("=========================================================================\n");
+    printf("+----------+------------------------------+----------------------+------------+\n");
+    printf("| ID       | NOME DO ALUNO                | PLANO                | VALOR (R$) |\n");
+    printf("+----------+------------------------------+----------------------+------------+\n");
 
     int total_relacoes = 0;
 
@@ -71,8 +72,8 @@ static void relatorioRelacaoAlunoPlano(void)
             valor_plano = plano->valor;
         }
 
-        printf("%-4.4s %-24.24s %-21.21s %10.2f\n",
-               lista_alunos[i].id,
+        printf("| %-8.8s | %-28.28s | %-20.20s | %10.2f |\n",
+               lista_alunos[i].id[0] != '\0' ? lista_alunos[i].id : "-",
                lista_alunos[i].nome,
                nome_plano,
                valor_plano);
@@ -84,9 +85,9 @@ static void relatorioRelacaoAlunoPlano(void)
         printf("Nenhuma relação aluno/plano encontrada.\n");
     }
 
-    printf("------------------------------------------------------------\n");
+    printf("+----------+------------------------------+----------------------+------------+\n");
     printf("Total de registros: %d\n", total_relacoes);
-    printf("============================================================\n");
+    printf("=========================================================================\n");
     printf(">>> Pressione <ENTER>");
     getchar();
     limparTela();
