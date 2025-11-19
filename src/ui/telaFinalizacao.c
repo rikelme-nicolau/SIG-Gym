@@ -23,3 +23,4 @@ void telaFinalizacao(void) {
 
     limparTela();
 }
+

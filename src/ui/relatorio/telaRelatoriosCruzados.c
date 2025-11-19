@@ -3,18 +3,18 @@
 #include "limparTela.h"
 #include "ui/utils/lerTecla.h"
 
-char telaRelatorio(void)
+#include "telaRelatoriosCruzados.h"
+
+char telaRelatoriosCruzados(void)
 {
     char op;
 
     printf("\n");
     printf("=========================================================================\n");
-    printf("===                          RELATÓRIOS                               ===\n");
+    printf("===                      RELATÓRIOS CRUZADOS                          ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
-    printf("===  [1]  RELATÓRIO DE LISTAGEM DE DADOS                              ===\n");
-    printf("===  [2]  RELATÓRIO COM APLICAÇÃO DE FILTRO                           ===\n");
-    printf("===  [3]  RELATÓRIOS CRUZADOS                                         ===\n");
+    printf("===  [1]  RELAÇÃO ALUNO / PLANO                                      ===\n");
     printf("===                                                                   ===\n");
     printf("===  [0]  VOLTAR                                                      ===\n");
     printf("===                                                                   ===\n");

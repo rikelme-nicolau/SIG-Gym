@@ -3,6 +3,7 @@
 #include "telaRelatorio.h"
 #include "listagemDados.h"
 #include "opInvalida.h"
+#include "relatoriosCruzados.h"
 
 char moduloRelatorio(void)
 {
@@ -20,6 +21,10 @@ char moduloRelatorio(void)
 
         case '2':
             relatorioListagemFiltrada();
+            break;
+
+        case '3':
+            moduloRelatoriosCruzados();
             break;
 
         case '0':

@@ -79,6 +79,7 @@ void telaAtualizarPlano(void) {
         printf("[1] Nome\n");
         printf("[2] Horário de funcionamento\n");
         printf("[3] Atividades\n");
+        printf("[4] Valor da mensalidade\n");
         printf("[0] Voltar\n");
         printf("=========================================================================\n");
         opcao = lerTecla();
@@ -137,6 +138,19 @@ void telaAtualizarPlano(void) {
                     plano_sel->total_atividades++;
                 }
                 atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
+                break;
+
+            case '4':
+                limparTela();
+                printf("=========================================================================\n");
+                printf("===                        ATUALIZAR PLANO                            ===\n");
+                printf("=========================================================================\n");
+                printf("=== Novo valor da mensalidade:                                       ===\n");
+                printf("=========================================================================\n");
+                fgets(buffer, sizeof(buffer), stdin);
+                buffer[strcspn(buffer, "\n")] = '\0';
+                plano_sel->valor = strtod(buffer, NULL);
+                atualizarPlanoNoArquivo(*plano_sel);
                 break;
 
             case '0':

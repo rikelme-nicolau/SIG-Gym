@@ -57,6 +57,7 @@ void telaVisualizarPlano(void) {
             printf("Horário de funcionamento: %s às %s\n", 
                    lista_planos[i].horario_inicio, 
                    lista_planos[i].horario_fim);
+            printf("Valor da mensalidade: R$ %.2f\n", lista_planos[i].valor);
 
             printf("Atividades incluídas:\n");
             for(int j = 0; j < lista_planos[i].total_atividades; j++) {

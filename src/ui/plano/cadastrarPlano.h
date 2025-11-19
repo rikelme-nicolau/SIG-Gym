@@ -14,6 +14,7 @@ struct plano {
     char horario_fim[12];
     char atividades[MAX_ATIVIDADES][MAX_BUFFER];
     int total_atividades;
+    double valor;
     bool ativo;
 };
 

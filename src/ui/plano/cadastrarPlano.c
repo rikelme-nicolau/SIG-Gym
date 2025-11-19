@@ -79,6 +79,16 @@ void telaCadastrarPlano(void)
         novo_plano.total_atividades++;
     }
 
+    // Valor mensalidade
+    limparTela();
+    printf("=========================================================================\n");
+    printf("===                        CADASTRAR PLANO                            ===\n");
+    printf("=========================================================================\n");
+    printf(">>> Digite o valor da mensalidade (ex: 149.90): ");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    novo_plano.valor = strtod(buffer, NULL);
+
     // ID e ativação
     snprintf(novo_plano.id, sizeof(novo_plano.id), "%d", total_planos + 1);
     novo_plano.ativo = true;
