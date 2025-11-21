@@ -14,7 +14,12 @@ char telaRelatoriosCruzados(void)
     printf("===                      RELATÓRIOS CRUZADOS                          ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
-    printf("===  [1]  RELAÇÃO ALUNO / PLANO                                      ===\n");
+    printf("===  [1]  ALUNO x PLANO x VALOR                                      ===\n");
+    printf("===  [2]  PLANO x HORARIO x ALUNOS                                   ===\n");
+    printf("===  [3]  EQUIPAMENTO x CATEGORIA x MANUTENCAO                        ===\n");
+    printf("===  [4]  FUNCIONARIO x CARGO x FAIXA ETARIA                          ===\n");
+    printf("===  [5]  ALUNO x IDADE x PLANO                                      ===\n");
+    printf("===  [6]  PLANO x ATIVIDADE x POPULARIDADE                           ===\n");
     printf("===                                                                   ===\n");
     printf("===  [0]  VOLTAR                                                      ===\n");
     printf("===                                                                   ===\n");

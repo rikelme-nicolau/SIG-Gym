@@ -9,12 +9,14 @@ char telaRelatorio(void)
 
     printf("\n");
     printf("=========================================================================\n");
-    printf("===                          RELATÓRIOS                               ===\n");
+    printf("===                        RELATORIOS - MENU                          ===\n");
     printf("=========================================================================\n");
     printf("===                                                                   ===\n");
-    printf("===  [1]  RELATÓRIO DE LISTAGEM DE DADOS                              ===\n");
-    printf("===  [2]  RELATÓRIO COM APLICAÇÃO DE FILTRO                           ===\n");
-    printf("===  [3]  RELATÓRIOS CRUZADOS                                         ===\n");
+    printf("===  [1]  RELATORIOS GERENCIAIS                                       ===\n");
+    printf("===  [2]  RELATORIOS OPERACIONAIS                                     ===\n");
+    printf("===  [3]  RELATORIOS POR MODULO                                       ===\n");
+    printf("===  [4]  RELATORIOS PERSONALIZADOS                                   ===\n");
+    printf("===  [5]  EXPORTAR RELATORIOS                                         ===\n");
     printf("===                                                                   ===\n");
     printf("===  [0]  VOLTAR                                                      ===\n");
     printf("===                                                                   ===\n");
