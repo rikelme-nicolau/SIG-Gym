@@ -129,8 +129,38 @@ static void relatorioListagemFuncionarios(void)
 
     qsort(lista, totalLista, sizeof(const struct funcionario *), compararFuncionarios);
 
+    const char *setaNome = (criterioOrdenacaoFuncionario == '1' || criterioOrdenacaoFuncionario == '4') ? "▲" : "";
+    const char *setaCargo = (criterioOrdenacaoFuncionario == '2' || criterioOrdenacaoFuncionario == '4') ? "▲" : "";
+    const char *setaIdade = (criterioOrdenacaoFuncionario == '3' || criterioOrdenacaoFuncionario == '5') ? "▲" : (criterioOrdenacaoFuncionario == '6' ? "▼" : "");
+    printf(">>> Ordenando por ");
+    switch (criterioOrdenacaoFuncionario)
+    {
+    case '2':
+        printf("Cargo %s\n", setaCargo);
+        break;
+    case '3':
+        printf("Idade %s\n", setaIdade);
+        break;
+    case '4':
+        printf("Cargo %s com desempate por Nome %s\n", setaCargo, setaNome);
+        break;
+    case '5':
+        printf("Idade %s (crescente)\n", setaIdade);
+        break;
+    case '6':
+        printf("Idade %s (decrescente)\n", setaIdade);
+        break;
+    case '1':
+    default:
+        printf("Nome %s\n", setaNome);
+        break;
+    }
+
     printf("+-----------+----------------------+----------------------+-------+----------------------+\n");
-    printf("| ID        | Nome                 | Cargo                | Idade | Telefone             |\n");
+    printf("| ID        | Nome %-15s | Cargo %-15s | Idade %-1s | Telefone             |\n",
+           setaNome,
+           setaCargo,
+           setaIdade);
     printf("+-----------+----------------------+----------------------+-------+----------------------+\n");
 
     for (int i = 0; i < totalLista; i++)
@@ -559,9 +589,12 @@ static char selecionarOrdenacaoFuncionario(void)
     printf("[1] Nome\n");
     printf("[2] Cargo\n");
     printf("[3] Idade\n");
+    printf("[4] Cargo + Nome\n");
+    printf("[5] Idade (crescente)\n");
+    printf("[6] Idade (decrescente)\n");
 
     char op = lerTecla();
-    if (op == '1' || op == '2' || op == '3')
+    if (op >= '1' && op <= '6')
     {
         return op;
     }
@@ -581,6 +614,19 @@ static int compararFuncionarios(const void *a, const void *b)
         return strcasecmp(fa->cargo, fb->cargo);
     case '3':
         return fa->idade - fb->idade;
+    case '4':
+    {
+        int cmpCargo = strcasecmp(fa->cargo, fb->cargo);
+        if (cmpCargo != 0)
+        {
+            return cmpCargo;
+        }
+        return strcasecmp(fa->nome, fb->nome);
+    }
+    case '5':
+        return fa->idade - fb->idade;
+    case '6':
+        return fb->idade - fa->idade;
     case '1':
     default:
         return strcasecmp(fa->nome, fb->nome);

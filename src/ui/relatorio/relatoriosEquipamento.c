@@ -28,6 +28,7 @@ static void relatorioCronogramaManutencoes(void);
 static void relatorioManutencoesVencidas(void);
 static void relatorioManutencoesProximas(void);
 static void relatorioHistoricoManutencoes(void);
+static void relatorioEquipamentosAgrupadosPorCategoria(void);
 static char selecionarFiltroCategoria(void);
 static char selecionarFiltroManutencao(void);
 static char selecionarOrdenacaoEquipamentos(void);
@@ -51,6 +52,7 @@ void moduloRelatoriosEquipamento(void)
         printf("===  [4]  MANUTENCOES VENCIDAS (URGENTE)                      ===\n");
         printf("===  [5]  MANUTENCOES PROXIMAS (7/15/30 DIAS)                 ===\n");
         printf("===  [6]  HISTORICO DE MANUTENCOES                            ===\n");
+        printf("===  [7]  AGRUPADOS POR CATEGORIA (SUMARIO)                   ===\n");
         printf("===                                                           ===\n");
         printf("===  [0]  VOLTAR                                              ===\n");
         printf("===                                                           ===\n");
@@ -78,6 +80,9 @@ void moduloRelatoriosEquipamento(void)
             break;
         case '6':
             relatorioHistoricoManutencoes();
+            break;
+        case '7':
+            relatorioEquipamentosAgrupadosPorCategoria();
             break;
         case '0':
             break;
@@ -315,6 +320,125 @@ static void relatorioEquipamentosPorCategoria(void)
     }
 
     printf("\n=========================================================================\n");
+    printf(">>> Pressione <ENTER>");
+    getchar();
+    limparTela();
+}
+
+static void relatorioEquipamentosAgrupadosPorCategoria(void)
+{
+    limparTela();
+
+    printf("=========================================================================\n");
+    printf("===         RELATORIO - EQUIPAMENTOS AGRUPADOS POR CATEGORIA         ===\n");
+    printf("=========================================================================\n");
+
+    if (total_equipamentos == 0)
+    {
+        printf("Nao ha equipamentos cadastrados.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER>");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    struct GrupoCategoria
+    {
+        char categoria[64];
+        int quantidade;
+        double percentual;
+    };
+
+    struct GrupoCategoria grupos[MAX_EQUIPAMENTOS];
+    int totalGrupos = 0;
+    int totalConsiderados = 0;
+
+    for (int i = 0; i < total_equipamentos; i++)
+    {
+        if (lista_equipamentos[i].nome[0] == '\0')
+        {
+            continue;
+        }
+
+        char cat[64];
+        strncpy(cat, lista_equipamentos[i].categoria, sizeof(cat));
+        cat[sizeof(cat) - 1] = '\0';
+
+        int idx = -1;
+        for (int g = 0; g < totalGrupos; g++)
+        {
+            if (strcmp(grupos[g].categoria, cat) == 0)
+            {
+                idx = g;
+                break;
+            }
+        }
+        if (idx == -1 && totalGrupos < MAX_EQUIPAMENTOS)
+        {
+            strncpy(grupos[totalGrupos].categoria, cat, sizeof(grupos[totalGrupos].categoria));
+            grupos[totalGrupos].categoria[sizeof(grupos[totalGrupos].categoria) - 1] = '\0';
+            grupos[totalGrupos].quantidade = 0;
+            grupos[totalGrupos].percentual = 0.0;
+            idx = totalGrupos;
+            totalGrupos++;
+        }
+
+        if (idx != -1)
+        {
+            grupos[idx].quantidade++;
+            totalConsiderados++;
+        }
+    }
+
+    if (totalGrupos == 0 || totalConsiderados == 0)
+    {
+        printf("Nao foi possivel agrupar equipamentos por categoria.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER>");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    for (int i = 0; i < totalGrupos; i++)
+    {
+        grupos[i].percentual = (double)grupos[i].quantidade / totalConsiderados * 100.0;
+    }
+
+    for (int i = 0; i < totalGrupos - 1; i++)
+    {
+        for (int j = i + 1; j < totalGrupos; j++)
+        {
+            if (grupos[j].quantidade > grupos[i].quantidade)
+            {
+                struct GrupoCategoria tmp = grupos[i];
+                grupos[i] = grupos[j];
+                grupos[j] = tmp;
+            }
+            else if (grupos[j].quantidade == grupos[i].quantidade &&
+                     strcmp(grupos[j].categoria, grupos[i].categoria) < 0)
+            {
+                struct GrupoCategoria tmp = grupos[i];
+                grupos[i] = grupos[j];
+                grupos[j] = tmp;
+            }
+        }
+    }
+
+    printf("\n+------------------------------+------------+-------------+\n");
+    printf("| %-28s | %-10s | %-9s |\n", "Categoria", "Quantidade", "%");
+    printf("+------------------------------+------------+-------------+\n");
+    for (int i = 0; i < totalGrupos; i++)
+    {
+        printf("| %-28.28s | %10d | %9.2f |\n",
+               grupos[i].categoria,
+               grupos[i].quantidade,
+               grupos[i].percentual);
+    }
+    printf("+------------------------------+------------+-------------+\n");
+    printf("Total de equipamentos considerados: %d\n", totalConsiderados);
+    printf("=========================================================================\n");
     printf(">>> Pressione <ENTER>");
     getchar();
     limparTela();

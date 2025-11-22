@@ -4,6 +4,7 @@
 #include <float.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -19,6 +20,31 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "src/ui/equipamento/cadastrarEquipamento.h"
+
+void relatorioTop10Alunos(void);
+
+struct PlanoComparativo
+{
+    const struct plano *plano;
+    int totalAlunos;
+    double receitaMensal;
+    double ticketMedio;
+    double percentualBase;
+    int ranking;
+};
+
+static char criterioComparativoPlanos = '2';
+
+static char selecionarOrdenacaoComparativo(void);
+static int compararPlanosComparativo(const void *a, const void *b);
+static int compararPlanosPorNome(const void *a, const void *b);
+static int compararPlanosPorAlunos(const void *a, const void *b);
+static int compararPlanosPorReceita(const void *a, const void *b);
+static int compararPlanosPorValor(const void *a, const void *b);
+static int compararPlanosPorPercentual(const void *a, const void *b);
+static int compararPlanosPorTotalDesc(const void *a, const void *b);
+static int compararAlunosPorId(const void *a, const void *b);
+static char selecionarRankingTop10(void);
 
 static int buscarIndicePlanoPorId(const char *id)
 {
@@ -113,6 +139,8 @@ void moduloRelatoriosGerenciais(void)
         printf("===  [2]  ANALISE FINANCEIRA                                  ===\n");
         printf("===  [3]  ANALISE DE DESEMPENHO                               ===\n");
         printf("===  [4]  INDICADORES (KPIs)                                  ===\n");
+        printf("===  [5]  COMPARATIVO DE PLANOS                               ===\n");
+        printf("===  [6]  TOP 10 (PLANOS / ALUNOS)                            ===\n");
         printf("===                                                           ===\n");
         printf("===  [0]  VOLTAR                                              ===\n");
         printf("===                                                           ===\n");
@@ -140,6 +168,14 @@ void moduloRelatoriosGerenciais(void)
             relatorioIndicadoresKPIs();
             break;
 
+        case '5':
+            relatorioComparativoPlanos();
+            break;
+
+        case '6':
+            relatorioTop10Alunos();
+            break;
+
         case '0':
             break;
 
@@ -148,6 +184,275 @@ void moduloRelatoriosGerenciais(void)
             break;
         }
     } while (op != '0');
+}
+
+static char selecionarRankingTop10(void)
+{
+    while (1)
+    {
+        printf("\nEscolha o ranking desejado:\n");
+        printf("[1] Top 10 planos com mais alunos\n");
+        printf("[2] Top 10 alunos mais antigos (ID menor)\n");
+        printf("[3] Distribuicao etaria dos Top 10 alunos mais antigos\n");
+        printf("[0] Voltar\n");
+        char op = lerTecla();
+        if (op >= '0' && op <= '3')
+        {
+            return op;
+        }
+        opInvalida();
+    }
+}
+
+void relatorioComparativoPlanos(void)
+{
+    limparTela();
+    printf("=========================================================================\n");
+    printf("===                 RELATORIO - COMPARATIVO DE PLANOS                ===\n");
+    printf("=========================================================================\n");
+
+    if (total_planos == 0)
+    {
+        printf("Nao ha planos cadastrados.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER> para voltar...");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    struct PlanoComparativo comparativos[MAX_PLANOS];
+    int totalComparados = 0;
+    int totalAlunosBase = 0;
+
+    for (int i = 0; i < total_planos && totalComparados < MAX_PLANOS; i++)
+    {
+        if (!lista_planos[i].ativo)
+        {
+            continue;
+        }
+
+        int alunosPlano = 0;
+        for (int j = 0; j < total_alunos; j++)
+        {
+            if (!lista_alunos[j].ativo)
+            {
+                continue;
+            }
+            if (strcmp(lista_alunos[j].plano_id, lista_planos[i].id) == 0)
+            {
+                alunosPlano++;
+            }
+        }
+
+        double receita = alunosPlano * lista_planos[i].valor;
+        double ticketMedio = alunosPlano > 0 ? receita / alunosPlano : lista_planos[i].valor;
+
+        comparativos[totalComparados].plano = &lista_planos[i];
+        comparativos[totalComparados].totalAlunos = alunosPlano;
+        comparativos[totalComparados].receitaMensal = receita;
+        comparativos[totalComparados].ticketMedio = ticketMedio;
+        comparativos[totalComparados].percentualBase = 0.0;
+        comparativos[totalComparados].ranking = 0;
+        totalComparados++;
+        totalAlunosBase += alunosPlano;
+    }
+
+    if (totalComparados == 0)
+    {
+        printf("Nao ha planos ativos para comparar.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER> para voltar...");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    for (int i = 0; i < totalComparados; i++)
+    {
+        if (totalAlunosBase > 0)
+        {
+            comparativos[i].percentualBase = (double)comparativos[i].totalAlunos / (double)totalAlunosBase * 100.0;
+        }
+        else
+        {
+            comparativos[i].percentualBase = 0.0;
+        }
+    }
+
+    criterioComparativoPlanos = selecionarOrdenacaoComparativo();
+    qsort(comparativos, totalComparados, sizeof(struct PlanoComparativo), compararPlanosComparativo);
+
+    for (int i = 0; i < totalComparados; i++)
+    {
+        comparativos[i].ranking = i + 1;
+    }
+
+    printf("\n+------+----------------------+----------+--------+---------------+---------------+------------+\n");
+    printf("| Rank | Plano                | Valor    | Alunos | Receita Mensal| Ticket Medio  | %% Base     |\n");
+    printf("+------+----------------------+----------+--------+---------------+---------------+------------+\n");
+    for (int i = 0; i < totalComparados; i++)
+    {
+        const struct PlanoComparativo *p = &comparativos[i];
+        printf("| %4d | %-20.20s | %8.2f | %6d | %13.2f | %13.2f | %10.2f%% |\n",
+               p->ranking,
+               p->plano->nome,
+               p->plano->valor,
+               p->totalAlunos,
+               p->receitaMensal,
+               p->ticketMedio,
+               p->percentualBase);
+    }
+    printf("+------+----------------------+----------+--------+---------------+---------------+------------+\n");
+    printf("Total de planos comparados: %d | Base de alunos considerada: %d\n", totalComparados, totalAlunosBase);
+    printf("=========================================================================\n");
+    printf(">>> Pressione <ENTER> para voltar...");
+    getchar();
+    limparTela();
+}
+
+void relatorioTop10Alunos(void)
+{
+    while (1)
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===                   RELATORIO - TOP 10 RANKINGS                    ===\n");
+        printf("=========================================================================\n");
+
+        char op = selecionarRankingTop10();
+        if (op == '0')
+        {
+            limparTela();
+            return;
+        }
+
+        if (op == '1')
+        {
+            struct
+            {
+                const struct plano *plano;
+                int alunos;
+            } ranks[MAX_PLANOS];
+            int total = 0;
+            for (int i = 0; i < total_planos && total < MAX_PLANOS; i++)
+            {
+                if (!lista_planos[i].ativo)
+                {
+                    continue;
+                }
+                int alunos = 0;
+                for (int j = 0; j < total_alunos; j++)
+                {
+                    if (!lista_alunos[j].ativo)
+                    {
+                        continue;
+                    }
+                    if (strcmp(lista_alunos[j].plano_id, lista_planos[i].id) == 0)
+                    {
+                        alunos++;
+                    }
+                }
+                ranks[total].plano = &lista_planos[i];
+                ranks[total].alunos = alunos;
+                total++;
+            }
+
+            qsort(ranks, total, sizeof(ranks[0]), compararPlanosPorTotalDesc);
+
+            int limite = total < 10 ? total : 10;
+            printf("\nTop 10 Planos com mais alunos (ativos):\n");
+            printf("+------+----------------------+----------+-----------+\n");
+            printf("| Rank | Plano                | Alunos   | Valor     |\n");
+            printf("+------+----------------------+----------+-----------+\n");
+            for (int i = 0; i < limite; i++)
+            {
+                printf("| %4d | %-20.20s | %8d | %9.2f |\n",
+                       i + 1,
+                       ranks[i].plano->nome,
+                       ranks[i].alunos,
+                       ranks[i].plano->valor);
+            }
+            printf("+------+----------------------+----------+-----------+\n");
+            printf("Total de planos ativos considerados: %d\n", total);
+        }
+        else if (op == '2' || op == '3')
+        {
+            const struct aluno *ordenados[MAX_ALUNOS];
+            int total = 0;
+            for (int i = 0; i < total_alunos && total < MAX_ALUNOS; i++)
+            {
+                if (!lista_alunos[i].ativo)
+                {
+                    continue;
+                }
+                ordenados[total++] = &lista_alunos[i];
+            }
+
+            qsort(ordenados, total, sizeof(ordenados[0]), compararAlunosPorId);
+            int limite = total < 10 ? total : 10;
+
+            if (op == '2')
+            {
+                printf("\nTop 10 alunos mais antigos (ID menor):\n");
+                printf("+------+---------+----------------------+-------+----------------------+\n");
+                printf("| Rank | ID      | Nome                 | Idade | Plano                |\n");
+                printf("+------+---------+----------------------+-------+----------------------+\n");
+                for (int i = 0; i < limite; i++)
+                {
+                    const struct aluno *aluno = ordenados[i];
+                    int idade = calcularIdade(aluno->idade);
+                    int idxPlano = buscarIndicePlanoPorId(aluno->plano_id);
+                    const struct plano *plano = idxPlano >= 0 ? &lista_planos[idxPlano] : NULL;
+                    printf("| %4d | %-7.7s | %-20.20s | %5d | %-20.20s |\n",
+                           i + 1,
+                           aluno->id,
+                           aluno->nome,
+                           idade > 0 ? idade : 0,
+                           plano != NULL ? plano->nome : "Sem plano");
+                }
+                printf("+------+---------+----------------------+-------+----------------------+\n");
+                printf("Total de alunos ativos considerados: %d\n", total);
+            }
+            else
+            {
+                int faixa18_25 = 0, faixa26_35 = 0, faixa36_45 = 0, faixa46_55 = 0, faixa56 = 0;
+                for (int i = 0; i < limite; i++)
+                {
+                    int idade = calcularIdade(ordenados[i]->idade);
+                    if (idade <= 0)
+                    {
+                        continue;
+                    }
+                    if (idade >= 18 && idade <= 25)
+                        faixa18_25++;
+                    else if (idade <= 35)
+                        faixa26_35++;
+                    else if (idade <= 45)
+                        faixa36_45++;
+                    else if (idade <= 55)
+                        faixa46_55++;
+                    else
+                        faixa56++;
+                }
+                printf("\nDistribuicao etaria dos Top 10 alunos mais antigos:\n");
+                printf("+--------------+-----------+\n");
+                printf("| Faixa        | Quantidade|\n");
+                printf("+--------------+-----------+\n");
+                printf("| 18-25 anos   | %9d |\n", faixa18_25);
+                printf("| 26-35 anos   | %9d |\n", faixa26_35);
+                printf("| 36-45 anos   | %9d |\n", faixa36_45);
+                printf("| 46-55 anos   | %9d |\n", faixa46_55);
+                printf("| 56+ anos     | %9d |\n", faixa56);
+                printf("+--------------+-----------+\n");
+                printf("Base considerada: %d alunos\n", limite);
+            }
+        }
+
+        printf("\n=========================================================================\n");
+        printf(">>> Pressione <ENTER> para selecionar outro ranking ou voltar...");
+        getchar();
+    }
 }
 
 void relatorioDashboardExecutivo(void)
@@ -366,6 +671,151 @@ void relatorioDashboardExecutivo(void)
     limparTela();
 }
 
+static char selecionarOrdenacaoComparativo(void)
+{
+    while (1)
+    {
+        printf("\nSelecione o criterio de ordenacao:\n");
+        printf("[1] Nome do plano (A-Z)\n");
+        printf("[2] Total de alunos (maior primeiro)\n");
+        printf("[3] Receita mensal (maior primeiro)\n");
+        printf("[4] Valor do plano (maior primeiro)\n");
+        printf("[5] Percentual da base (maior primeiro)\n");
+
+        char op = lerTecla();
+        if (op >= '1' && op <= '5')
+        {
+            return op;
+        }
+
+        opInvalida();
+    }
+}
+
+static int compararPlanosComparativo(const void *a, const void *b)
+{
+    int cmp = 0;
+    switch (criterioComparativoPlanos)
+    {
+    case '1':
+        cmp = compararPlanosPorNome(a, b);
+        break;
+    case '3':
+        cmp = compararPlanosPorReceita(a, b);
+        break;
+    case '4':
+        cmp = compararPlanosPorValor(a, b);
+        break;
+    case '5':
+        cmp = compararPlanosPorPercentual(a, b);
+        break;
+    case '2':
+    default:
+        cmp = compararPlanosPorAlunos(a, b);
+        break;
+    }
+
+    return cmp;
+}
+
+static int compararPlanosPorNome(const void *a, const void *b)
+{
+    const struct PlanoComparativo *pa = (const struct PlanoComparativo *)a;
+    const struct PlanoComparativo *pb = (const struct PlanoComparativo *)b;
+
+    int cmp = strcmp(pa->plano->nome, pb->plano->nome);
+    if (cmp == 0)
+    {
+        cmp = strcmp(pa->plano->id, pb->plano->id);
+    }
+    return cmp;
+}
+
+static int compararPlanosPorAlunos(const void *a, const void *b)
+{
+    const struct PlanoComparativo *pa = (const struct PlanoComparativo *)a;
+    const struct PlanoComparativo *pb = (const struct PlanoComparativo *)b;
+
+    int cmp = pb->totalAlunos - pa->totalAlunos; // decrescente
+    if (cmp == 0)
+    {
+        cmp = compararPlanosPorNome(a, b);
+    }
+    return cmp;
+}
+
+static int compararPlanosPorReceita(const void *a, const void *b)
+{
+    const struct PlanoComparativo *pa = (const struct PlanoComparativo *)a;
+    const struct PlanoComparativo *pb = (const struct PlanoComparativo *)b;
+
+    int cmp = (pb->receitaMensal > pa->receitaMensal) - (pb->receitaMensal < pa->receitaMensal); // decrescente
+    if (cmp == 0)
+    {
+        cmp = compararPlanosPorNome(a, b);
+    }
+    return cmp;
+}
+
+static int compararPlanosPorValor(const void *a, const void *b)
+{
+    const struct PlanoComparativo *pa = (const struct PlanoComparativo *)a;
+    const struct PlanoComparativo *pb = (const struct PlanoComparativo *)b;
+
+    int cmp = (pb->ticketMedio > pa->ticketMedio) - (pb->ticketMedio < pa->ticketMedio); // decrescente
+    if (cmp == 0)
+    {
+        cmp = compararPlanosPorNome(a, b);
+    }
+    return cmp;
+}
+
+static int compararPlanosPorPercentual(const void *a, const void *b)
+{
+    const struct PlanoComparativo *pa = (const struct PlanoComparativo *)a;
+    const struct PlanoComparativo *pb = (const struct PlanoComparativo *)b;
+
+    int cmp = (pb->percentualBase > pa->percentualBase) - (pb->percentualBase < pa->percentualBase); // decrescente
+    if (cmp == 0)
+    {
+        cmp = compararPlanosPorNome(a, b);
+    }
+    return cmp;
+}
+
+static int compararPlanosPorTotalDesc(const void *a, const void *b)
+{
+    const struct
+    {
+        const struct plano *plano;
+        int alunos;
+    } *pa = a, *pb = b;
+
+    int cmp = pb->alunos - pa->alunos; // decrescente
+    if (cmp == 0)
+    {
+        cmp = strcmp(pa->plano->nome, pb->plano->nome);
+    }
+    if (cmp == 0)
+    {
+        cmp = strcmp(pa->plano->id, pb->plano->id);
+    }
+    return cmp;
+}
+
+static int compararAlunosPorId(const void *a, const void *b)
+{
+    const struct aluno *const *aa = (const struct aluno *const *)a;
+    const struct aluno *const *bb = (const struct aluno *const *)b;
+    const struct aluno *alunoA = *aa;
+    const struct aluno *alunoB = *bb;
+    int cmp = strcmp(alunoA->id, alunoB->id);
+    if (cmp == 0)
+    {
+        cmp = strcmp(alunoA->nome, alunoB->nome);
+    }
+    return cmp;
+}
 void relatorioAnaliseFinanceira(void)
 {
     limparTela();

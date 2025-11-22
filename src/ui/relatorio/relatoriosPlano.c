@@ -15,6 +15,7 @@ static void relatorioRankingPopularidade(void);
 static void relatorioReceitaPorPlano(void);
 static void relatorioDistribuicaoAtividades(void);
 static void relatorioOcupacaoHorarioPlano(void);
+static void relatorioPlanosMaisLucrativos(void);
 
 struct PlanoView
 {
@@ -33,6 +34,7 @@ static void ordenarPlanos(struct PlanoView *lista, int total, char criterio);
 static int compararPlanosView(const struct PlanoView *a, const struct PlanoView *b, char criterio);
 static int compararStringsInsensitive(const char *a, const char *b);
 static int contarAlunosNoPlano(const struct plano *plano);
+static void quicksortPlanosPorReceita(struct PlanoView *lista, int inicio, int fim);
 
 void moduloRelatoriosPlano(void)
 {
@@ -50,6 +52,7 @@ void moduloRelatoriosPlano(void)
         printf("===  [3]  ANALISE DE RECEITA POR PLANO                        ===\n");
         printf("===  [4]  DISTRIBUICAO DE ATIVIDADES                          ===\n");
         printf("===  [5]  OCUPACAO POR HORARIO DE PLANO                       ===\n");
+        printf("===  [6]  TOP 5 PLANOS MAIS LUCRATIVOS                        ===\n");
         printf("===                                                           ===\n");
         printf("===  [0]  VOLTAR                                              ===\n");
         printf("===                                                           ===\n");
@@ -78,6 +81,9 @@ void moduloRelatoriosPlano(void)
 
         case '5':
             relatorioOcupacaoHorarioPlano();
+            break;
+        case '6':
+            relatorioPlanosMaisLucrativos();
             break;
 
         case '0':
@@ -148,6 +154,7 @@ static void relatorioListagemPlanos(void)
     printf("\nStatus: %s | Ordenacao: ",
            filtroStatus == '1' ? "Somente ativos" : filtroStatus == '2' ? "Somente inativos"
                                                                         : "Todos");
+    const char *setaOrdenacaoPlano = (ordenacao == '2' || ordenacao == '3') ? "▼" : "▲";
     switch (ordenacao)
     {
     case '2':
@@ -161,7 +168,21 @@ static void relatorioListagemPlanos(void)
         printf("Nome");
         break;
     }
-    printf(" | Termo: %s\n", termo[0] != '\0' ? termo : "Nenhum");
+    printf(" %s | Termo: %s\n", setaOrdenacaoPlano, termo[0] != '\0' ? termo : "Nenhum");
+    printf(">>> Ordenando por ");
+    switch (ordenacao)
+    {
+    case '2':
+        printf("Alunos vinculados %s\n", setaOrdenacaoPlano);
+        break;
+    case '3':
+        printf("Valor do plano %s\n", setaOrdenacaoPlano);
+        break;
+    case '1':
+    default:
+        printf("Nome %s\n", setaOrdenacaoPlano);
+        break;
+    }
     printf("-------------------------------------------------------------------------\n");
 
     double receitaTotal = 0.0;
@@ -616,6 +637,80 @@ static void relatorioOcupacaoHorarioPlano(void)
     limparTela();
 }
 
+static void relatorioPlanosMaisLucrativos(void)
+{
+    limparTela();
+
+    printf("=========================================================================\n");
+    printf("===               RELATORIO - TOP 5 PLANOS MAIS LUCRATIVOS           ===\n");
+    printf("=========================================================================\n");
+
+    if (total_planos == 0)
+    {
+        printf("Nao ha planos cadastrados.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER>");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    struct PlanoView views[MAX_PLANOS];
+    int total = 0;
+    double receitaTotal = 0.0;
+
+    for (int i = 0; i < total_planos; i++)
+    {
+        if (!lista_planos[i].ativo)
+        {
+            continue;
+        }
+        int alunos = contarAlunosNoPlano(&lista_planos[i]);
+        double receita = alunos * lista_planos[i].valor;
+        views[total].plano = &lista_planos[i];
+        views[total].alunosVinculados = alunos;
+        views[total].receita = receita;
+        receitaTotal += receita;
+        total++;
+    }
+
+    if (total == 0)
+    {
+        printf("Nao ha planos ativos para calcular receita.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER>");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    // Ordena por receita decrescente usando quicksort customizado (pivô no meio).
+    quicksortPlanosPorReceita(views, 0, total - 1);
+
+    int limite = total < 5 ? total : 5;
+
+    printf("+------+----------------------+----------+---------------+---------------+-------------+\n");
+    printf("| Rank | Plano                | Alunos   | Receita Mensal| Receita Anual | %% Receita   |\n");
+    printf("+------+----------------------+----------+---------------+---------------+-------------+\n");
+    for (int i = 0; i < limite; i++)
+    {
+        double percentual = receitaTotal > 0.0 ? (views[i].receita / receitaTotal) * 100.0 : 0.0;
+        printf("| %4d | %-20.20s | %8d | %13.2f | %13.2f | %10.2f%% |\n",
+               i + 1,
+               views[i].plano->nome,
+               views[i].alunosVinculados,
+               views[i].receita,
+               views[i].receita * 12.0,
+               percentual);
+    }
+    printf("+------+----------------------+----------+---------------+---------------+-------------+\n");
+    printf("Total de planos considerados: %d | Receita total mensal: %.2f\n", total, receitaTotal);
+    printf("=========================================================================\n");
+    printf(">>> Pressione <ENTER>");
+    getchar();
+    limparTela();
+}
+
 static char selecionarStatusPlano(void)
 {
     while (1)
@@ -788,6 +883,54 @@ static int compararPlanosView(const struct PlanoView *a, const struct PlanoView 
         return comp;
     }
     return compararStringsInsensitive(a->plano->id, b->plano->id);
+}
+
+/*
+ * Quicksort customizado para ordenar PlanoView por receita (decrescente).
+ * - Escolhe o pivô no meio do segmento atual.
+ * - Particiona movendo menores receitas para a direita e maiores para a esquerda.
+ * - Recursa em cada sublista ate tamanho 1.
+ */
+static void quicksortPlanosPorReceita(struct PlanoView *lista, int inicio, int fim)
+{
+    if (inicio >= fim)
+    {
+        return; // caso base: sublista de tamanho 0 ou 1
+    }
+
+    int i = inicio;
+    int j = fim;
+    double pivot = lista[(inicio + fim) / 2].receita; // pivô no meio
+
+    while (i <= j)
+    {
+        while (lista[i].receita > pivot)
+        {
+            i++; // avança até encontrar elemento menor que pivô
+        }
+        while (lista[j].receita < pivot)
+        {
+            j--; // recua até encontrar elemento maior que pivô
+        }
+        if (i <= j)
+        {
+            struct PlanoView tmp = lista[i];
+            lista[i] = lista[j];
+            lista[j] = tmp;
+            i++;
+            j--;
+        }
+    }
+
+    // Recursão em cada partição
+    if (inicio < j)
+    {
+        quicksortPlanosPorReceita(lista, inicio, j);
+    }
+    if (i < fim)
+    {
+        quicksortPlanosPorReceita(lista, i, fim);
+    }
 }
 
 static int compararStringsInsensitive(const char *a, const char *b)

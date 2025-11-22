@@ -20,6 +20,7 @@ char telaRelatoriosCruzados(void)
     printf("===  [4]  FUNCIONARIO x CARGO x FAIXA ETARIA                          ===\n");
     printf("===  [5]  ALUNO x IDADE x PLANO                                      ===\n");
     printf("===  [6]  PLANO x ATIVIDADE x POPULARIDADE                           ===\n");
+    printf("===  [7]  TODAS AS PESSOAS (ALUNOS + FUNCIONARIOS)                   ===\n");
     printf("===                                                                   ===\n");
     printf("===  [0]  VOLTAR                                                      ===\n");
     printf("===                                                                   ===\n");

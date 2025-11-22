@@ -1,11 +1,15 @@
 #include <ctype.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "limparTela.h"
 #include "opInvalida.h"
 #include "relatoriosAluno.h"
+#include "utilsRelatorios.h"
 #include "src/ui/aluno/cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
 #include "ui/utils/lerTecla.h"
@@ -17,11 +21,20 @@ void relatorioAlunosPorFaixaEtaria(void);
 void relatorioAlunosPorRegiao(void);
 void relatorioAlunosAtivosVsInativos(void);
 void relatorioAlunosSemPlano(void);
+void relatorioAlunosFiltroAvancado(void);
 
-struct aluno_view
+struct FiltrosAluno
 {
-    const struct aluno *aluno;
-    const struct plano *plano;
+    bool filtrarStatus;
+    char status;
+    bool filtrarPlano;
+    char planoId[12];
+    bool filtrarIdadeMin;
+    int idadeMin;
+    bool filtrarIdadeMax;
+    int idadeMax;
+    bool filtrarRegiao;
+    char regiao[128];
 };
 
 static char selecionarFiltroStatus(void);
@@ -36,8 +49,21 @@ static int compararStringsCaseInsensitive(const char *a, const char *b);
 static const struct plano *buscarPlanoPorIdLocal(const char *id);
 static const char *descricaoStatusAluno(char status);
 static const char *descricaoOrdenacao(char criterio);
-static void exportarAlunosCsv(const struct aluno_view *lista, int total);
+static void exportarAlunosCsv(const struct aluno_view *lista, int total, char criterio, char filtroStatus, const char *termo);
 static void extrairRegiao(const char *endereco, char *dest, size_t tamanho);
+static void inicializarFiltrosAluno(struct FiltrosAluno *filtros);
+static int aplicarFiltrosAluno(const struct FiltrosAluno *filtros, struct aluno_view *destino, int maxResultados);
+
+static char criterioComparacaoAtual = '1';
+static int comparadorAlunoView(const void *a, const void *b);
+
+static struct aluno_view cacheResultadosOrdenados[MAX_ALUNOS];
+static int cacheTotalOrdenados = 0;
+static char cacheCriterioOrdenacao = '\0';
+static char cacheFiltroStatus = '\0';
+static char cacheTermo[256] = "";
+static time_t cacheTimestampOrdenacao = 0;
+static bool cacheOrdenacaoValido = false;
 
 void moduloRelatoriosAluno(void)
 {
@@ -56,6 +82,7 @@ void moduloRelatoriosAluno(void)
         printf("===  [4]  ALUNOS POR REGIAO                                   ===\n");
         printf("===  [5]  ALUNOS ATIVOS VS INATIVOS                           ===\n");
         printf("===  [6]  ALUNOS SEM PLANO DEFINIDO                           ===\n");
+        printf("===  [7]  FILTRO AVANCADO (MULTIPLOS FILTROS)                 ===\n");
         printf("===                                                           ===\n");
         printf("===  [0]  VOLTAR                                              ===\n");
         printf("===                                                           ===\n");
@@ -88,6 +115,10 @@ void moduloRelatoriosAluno(void)
 
         case '6':
             relatorioAlunosSemPlano();
+            break;
+
+        case '7':
+            relatorioAlunosFiltroAvancado();
             break;
 
         case '0':
@@ -141,12 +172,98 @@ void relatorioListagemCompleta(void)
         return;
     }
 
-    ordenarResultados(resultados, totalFiltrados, ordenacao);
+    bool reutilizarCache = cacheOrdenacaoValido &&
+                           cacheCriterioOrdenacao == ordenacao &&
+                           cacheFiltroStatus == filtroStatus &&
+                           cacheTotalOrdenados == totalFiltrados &&
+                           strcmp(cacheTermo, termo) == 0;
+
+    // Cache simples: se filtros/ordenacao iguais, reaproveita lista ordenada da última execução
+    if (reutilizarCache)
+    {
+        memcpy(resultados, cacheResultadosOrdenados, sizeof(struct aluno_view) * cacheTotalOrdenados);
+    }
+    else
+    {
+        ordenarResultados(resultados, totalFiltrados, ordenacao);
+        memcpy(cacheResultadosOrdenados, resultados, sizeof(struct aluno_view) * totalFiltrados);
+        cacheTotalOrdenados = totalFiltrados;
+        cacheCriterioOrdenacao = ordenacao;
+        cacheFiltroStatus = filtroStatus;
+        strncpy(cacheTermo, termo, sizeof(cacheTermo));
+        cacheTermo[sizeof(cacheTermo) - 1] = '\0';
+        cacheTimestampOrdenacao = time(NULL);
+        cacheOrdenacaoValido = true;
+    }
+
+    int somaIdades = 0;
+    int idadesValidas = 0;
+    int idadeMin = INT_MAX;
+    int idadeMax = INT_MIN;
+    int ativos = 0;
+    int inativos = 0;
+    struct PlanoFreq
+    {
+        const char *nome;
+        int quantidade;
+    } planosMaisComuns[MAX_ALUNOS];
+    int totalPlanosContados = 0;
+
+    for (int i = 0; i < totalFiltrados; i++)
+    {
+        const struct aluno *aluno = resultados[i].aluno;
+        int idade = calcularIdade(aluno->idade);
+        if (idade > 0)
+        {
+            somaIdades += idade;
+            idadesValidas++;
+            if (idade < idadeMin)
+            {
+                idadeMin = idade;
+            }
+            if (idade > idadeMax)
+            {
+                idadeMax = idade;
+            }
+        }
+
+        if (aluno->ativo)
+        {
+            ativos++;
+        }
+        else
+        {
+            inativos++;
+        }
+
+        const char *planoNome = resultados[i].plano != NULL ? resultados[i].plano->nome : "Sem plano";
+        int encontrado = -1;
+        for (int p = 0; p < totalPlanosContados; p++)
+        {
+            if (strcmp(planosMaisComuns[p].nome, planoNome) == 0)
+            {
+                encontrado = p;
+                break;
+            }
+        }
+        if (encontrado == -1 && totalPlanosContados < MAX_ALUNOS)
+        {
+            planosMaisComuns[totalPlanosContados].nome = planoNome;
+            planosMaisComuns[totalPlanosContados].quantidade = 1;
+            totalPlanosContados++;
+        }
+        else if (encontrado != -1)
+        {
+            planosMaisComuns[encontrado].quantidade++;
+        }
+    }
 
     printf("\nStatus: %s | Ordenacao: %s | Termo: %s\n",
            descricaoStatusAluno(filtroStatus),
            descricaoOrdenacao(ordenacao),
            termo[0] != '\0' ? termo : "Nenhum");
+    const char *setaOrdenacao = (ordenacao == '4' || ordenacao == '6') ? "▼" : "▲";
+    printf(">>> Ordenando por %s %s\n", descricaoOrdenacao(ordenacao), setaOrdenacao);
     printf("-------------------------------------------------------------------------\n");
 
     const int porPagina = 10;
@@ -183,8 +300,35 @@ void relatorioListagemCompleta(void)
         }
     }
 
+    double idadeMedia = idadesValidas > 0 ? (double)somaIdades / idadesValidas : 0.0;
+    const char *planoMaisComum = "N/A";
+    int qtdPlanoMaisComum = 0;
+    for (int p = 0; p < totalPlanosContados; p++)
+    {
+        if (planosMaisComuns[p].quantidade > qtdPlanoMaisComum)
+        {
+            qtdPlanoMaisComum = planosMaisComuns[p].quantidade;
+            planoMaisComum = planosMaisComuns[p].nome;
+        }
+    }
+
     printf("\n-------------------------------------------------------------------------\n");
-    printf("Total de alunos listados: %d\n", totalFiltrados);
+    printf("+-----------------------------------------------------------------------+\n");
+    printf("|                     ESTATISTICAS DOS RESULTADOS                       |\n");
+    printf("+-----------------------------------------------------------------------+\n");
+    printf("| Total exibido: %-55d |\n", totalFiltrados);
+    if (idadesValidas > 0)
+    {
+        printf("| Idade media: %-6.2f | Idade minima: %-3d | Idade maxima: %-3d               |\n", idadeMedia, idadeMin, idadeMax);
+    }
+    else
+    {
+        printf("| Idade media: N/A   | Idade minima: N/A | Idade maxima: N/A               |\n");
+    }
+    printf("| Plano mais comum: %-20.20s (%-3d)                               |\n", planoMaisComum, qtdPlanoMaisComum);
+    printf("| Status: Ativos %-4d | Inativos %-4d                                      |\n", ativos, inativos);
+    printf("+-----------------------------------------------------------------------+\n");
+    printf("-------------------------------------------------------------------------\n");
 
     printf("Deseja exportar o resultado para CSV? (S/N): ");
     int resposta = getchar();
@@ -194,7 +338,7 @@ void relatorioListagemCompleta(void)
     }
     if (resposta == 's' || resposta == 'S')
     {
-        exportarAlunosCsv(resultados, totalFiltrados);
+        exportarAlunosCsv(resultados, totalFiltrados, ordenacao, filtroStatus, termo);
     }
 
     int ch;
@@ -207,6 +351,234 @@ void relatorioListagemCompleta(void)
     printf(">>> Pressione <ENTER> para voltar...");
     getchar();
     limparTela();
+}
+
+void relatorioAlunosFiltroAvancado(void)
+{
+    struct FiltrosAluno filtros;
+    inicializarFiltrosAluno(&filtros);
+
+    while (1)
+    {
+        limparTela();
+        printf("=========================================================================\n");
+        printf("===         RELATORIO - ALUNOS COM FILTROS AVANCADOS                 ===\n");
+        printf("=========================================================================\n");
+
+        printf("Filtros ativos:\n");
+        bool temFiltro = false;
+        if (filtros.filtrarStatus)
+        {
+            printf(" - Status: %s\n", filtros.status == '1' ? "Ativos" : (filtros.status == '2' ? "Inativos" : "Todos"));
+            temFiltro = true;
+        }
+        if (filtros.filtrarPlano && filtros.planoId[0] != '\0')
+        {
+            printf(" - Plano: %s\n", filtros.planoId);
+            temFiltro = true;
+        }
+        if (filtros.filtrarIdadeMin)
+        {
+            printf(" - Idade minima: %d\n", filtros.idadeMin);
+            temFiltro = true;
+        }
+        if (filtros.filtrarIdadeMax)
+        {
+            printf(" - Idade maxima: %d\n", filtros.idadeMax);
+            temFiltro = true;
+        }
+        if (filtros.filtrarRegiao && filtros.regiao[0] != '\0')
+        {
+            printf(" - Regiao: %s\n", filtros.regiao);
+            temFiltro = true;
+        }
+        if (!temFiltro)
+        {
+            printf(" Nenhum filtro ativo.\n");
+        }
+
+        printf("\nSelecione uma opcao:\n");
+        printf("[1] Adicionar filtro de status\n");
+        printf("[2] Adicionar filtro de plano\n");
+        printf("[3] Adicionar filtro de idade minima\n");
+        printf("[4] Adicionar filtro de idade maxima\n");
+        printf("[5] Adicionar filtro de regiao\n");
+        printf("[6] Limpar todos os filtros\n");
+        printf("[7] Aplicar filtros e gerar relatorio\n");
+        printf("[0] Voltar\n");
+
+        char op = lerTecla();
+        switch (op)
+        {
+        case '1':
+            filtros.status = selecionarFiltroStatus();
+            filtros.filtrarStatus = true;
+            break;
+        case '2':
+        {
+            printf("\nDigite o ID do plano (deixe vazio para remover o filtro): ");
+            char buffer[32];
+            if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+            {
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (buffer[0] == '\0')
+                {
+                    filtros.filtrarPlano = false;
+                    filtros.planoId[0] = '\0';
+                }
+                else
+                {
+                    filtros.filtrarPlano = true;
+                    strncpy(filtros.planoId, buffer, sizeof(filtros.planoId));
+                    filtros.planoId[sizeof(filtros.planoId) - 1] = '\0';
+                }
+            }
+            break;
+        }
+        case '3':
+        {
+            printf("\nInforme a idade minima (vazio para remover o filtro): ");
+            char buffer[32];
+            if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+            {
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (buffer[0] == '\0')
+                {
+                    filtros.filtrarIdadeMin = false;
+                    filtros.idadeMin = 0;
+                }
+                else
+                {
+                    filtros.filtrarIdadeMin = true;
+                    filtros.idadeMin = atoi(buffer);
+                }
+            }
+            break;
+        }
+        case '4':
+        {
+            printf("\nInforme a idade maxima (vazio para remover o filtro): ");
+            char buffer[32];
+            if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+            {
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (buffer[0] == '\0')
+                {
+                    filtros.filtrarIdadeMax = false;
+                    filtros.idadeMax = 0;
+                }
+                else
+                {
+                    filtros.filtrarIdadeMax = true;
+                    filtros.idadeMax = atoi(buffer);
+                }
+            }
+            break;
+        }
+        case '5':
+        {
+            printf("\nInforme a regiao (vazio para remover o filtro): ");
+            char buffer[128];
+            if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+            {
+                buffer[strcspn(buffer, "\n")] = '\0';
+                if (buffer[0] == '\0')
+                {
+                    filtros.filtrarRegiao = false;
+                    filtros.regiao[0] = '\0';
+                }
+                else
+                {
+                    filtros.filtrarRegiao = true;
+                    strncpy(filtros.regiao, buffer, sizeof(filtros.regiao));
+                    filtros.regiao[sizeof(filtros.regiao) - 1] = '\0';
+                }
+            }
+            break;
+        }
+        case '6':
+            inicializarFiltrosAluno(&filtros);
+            printf("\nFiltros limpos. Pressione <ENTER> para continuar...");
+            getchar();
+            break;
+        case '7':
+        {
+            struct aluno_view resultados[MAX_ALUNOS];
+            int total = aplicarFiltrosAluno(&filtros, resultados, MAX_ALUNOS);
+
+            limparTela();
+            printf("=========================================================================\n");
+            printf("===                 RESULTADO - FILTROS AVANCADOS                    ===\n");
+            printf("=========================================================================\n");
+            if (total == 0)
+            {
+                printf("Nenhum aluno encontrado com os filtros atuais.\n");
+            }
+            else
+            {
+                const int porPagina = 10;
+                int totalPaginas = (total + porPagina - 1) / porPagina;
+
+                for (int pagina = 0; pagina < totalPaginas; pagina++)
+                {
+                    int inicio = pagina * porPagina;
+                    int fim = inicio + porPagina;
+                    if (fim > total)
+                    {
+                        fim = total;
+                    }
+
+                    printf("\n--- Pagina %d de %d ----------------------------------------------\n", pagina + 1, totalPaginas);
+                    for (int i = inicio; i < fim; i++)
+                    {
+                        const struct aluno *aluno = resultados[i].aluno;
+                        const struct plano *plano = resultados[i].plano;
+                        int idade = calcularIdade(aluno->idade);
+                        char idadeStr[16];
+                        if (idade > 0)
+                        {
+                            snprintf(idadeStr, sizeof(idadeStr), "%d", idade);
+                        }
+                        else
+                        {
+                            strncpy(idadeStr, "N/A", sizeof(idadeStr));
+                            idadeStr[sizeof(idadeStr) - 1] = '\0';
+                        }
+                        char regiaoAluno[128];
+                        extrairRegiao(aluno->endereco, regiaoAluno, sizeof(regiaoAluno));
+
+                        printf("[%s] %s\n", aluno->id, aluno->nome);
+                        printf("    Status: %s | Idade: %s | Regiao: %s\n",
+                               aluno->ativo ? "Ativo" : "Inativo",
+                               idadeStr,
+                               regiaoAluno);
+                        printf("    Plano: %s (%s)\n",
+                               plano != NULL ? plano->nome : "Sem plano",
+                               (aluno->plano_id[0] != '\0') ? aluno->plano_id : "N/A");
+                    }
+
+                    if (pagina < totalPaginas - 1)
+                    {
+                        printf("\nPressione ENTER para proxima pagina...");
+                        getchar();
+                    }
+                }
+                printf("\nFim dos resultados\n");
+            }
+            printf("\nTotal de alunos listados: %d\n", total);
+            printf("=========================================================================\n");
+            printf(">>> Pressione <ENTER> para voltar ao menu de filtros...");
+            getchar();
+            break;
+        }
+        case '0':
+            limparTela();
+            return;
+        default:
+            opInvalida();
+            break;
+        }
+    }
 }
 
 void relatorioAlunosPorPlano(void)
@@ -694,9 +1066,12 @@ static char selecionarOrdenacao(void)
         printf("[1] Nome\n");
         printf("[2] ID\n");
         printf("[3] Plano\n");
+        printf("[4] Nome (ordem reversa Z-A)\n");
+        printf("[5] Idade (menor para maior)\n");
+        printf("[6] Idade (maior para menor)\n");
 
         char op = lerTecla();
-        if (op == '1' || op == '2' || op == '3')
+        if (op >= '1' && op <= '6')
         {
             return op;
         }
@@ -780,45 +1155,166 @@ static bool textoContemInsensitive(const char *texto, const char *busca)
     return false;
 }
 
-static void ordenarResultados(struct aluno_view *lista, int total, char criterio)
+static void inicializarFiltrosAluno(struct FiltrosAluno *filtros)
 {
-    for (int i = 0; i < total - 1; i++)
+    if (filtros == NULL)
     {
-        for (int j = i + 1; j < total; j++)
+        return;
+    }
+
+    filtros->filtrarStatus = false;
+    filtros->status = '0';
+    filtros->filtrarPlano = false;
+    filtros->planoId[0] = '\0';
+    filtros->filtrarIdadeMin = false;
+    filtros->idadeMin = 0;
+    filtros->filtrarIdadeMax = false;
+    filtros->idadeMax = 0;
+    filtros->filtrarRegiao = false;
+    filtros->regiao[0] = '\0';
+}
+
+static bool alunoAtendeFiltros(const struct aluno *aluno, const struct plano *plano, const struct FiltrosAluno *filtros)
+{
+    if (aluno == NULL || filtros == NULL)
+    {
+        return false;
+    }
+
+    if (filtros->filtrarStatus)
+    {
+        switch (filtros->status)
         {
-            if (compararViews(&lista[i], &lista[j], criterio) > 0)
+        case '1':
+            if (!aluno->ativo)
             {
-                struct aluno_view tmp = lista[i];
-                lista[i] = lista[j];
-                lista[j] = tmp;
+                return false;
             }
+            break;
+        case '2':
+            if (aluno->ativo)
+            {
+                return false;
+            }
+            break;
+        default:
+            break;
         }
     }
+
+    if (filtros->filtrarPlano)
+    {
+        if (filtros->planoId[0] == '\0' || strcmp(aluno->plano_id, filtros->planoId) != 0)
+        {
+            return false;
+        }
+    }
+
+    if (filtros->filtrarIdadeMin || filtros->filtrarIdadeMax)
+    {
+        int idade = calcularIdade(aluno->idade);
+        if (idade <= 0)
+        {
+            return false;
+        }
+        if (filtros->filtrarIdadeMin && idade < filtros->idadeMin)
+        {
+            return false;
+        }
+        if (filtros->filtrarIdadeMax && idade > filtros->idadeMax)
+        {
+            return false;
+        }
+    }
+
+    if (filtros->filtrarRegiao)
+    {
+        if (filtros->regiao[0] == '\0')
+        {
+            return false;
+        }
+
+        char regiaoAluno[128];
+        extrairRegiao(aluno->endereco, regiaoAluno, sizeof(regiaoAluno));
+        if (compararStringsCaseInsensitive(regiaoAluno, filtros->regiao) != 0)
+        {
+            return false;
+        }
+    }
+
+    (void)plano;
+    return true;
+}
+
+static int aplicarFiltrosAluno(const struct FiltrosAluno *filtros, struct aluno_view *destino, int maxResultados)
+{
+    if (filtros == NULL || destino == NULL || maxResultados <= 0)
+    {
+        return 0;
+    }
+
+    int total = 0;
+    for (int i = 0; i < total_alunos && total < maxResultados; i++)
+    {
+        const struct plano *plano = buscarPlanoPorIdLocal(lista_alunos[i].plano_id);
+        if (alunoAtendeFiltros(&lista_alunos[i], plano, filtros))
+        {
+            destino[total].aluno = &lista_alunos[i];
+            destino[total].plano = plano;
+            total++;
+        }
+    }
+
+    return total;
+}
+
+static void ordenarResultados(struct aluno_view *lista, int total, char criterio)
+{
+    criterioComparacaoAtual = criterio;
+    // Heurística: usa insertion sort para listas pequenas, qsort para listas maiores.
+    ordenarAlunosOtimizado(lista, total, comparadorAlunoView);
 }
 
 static int compararViews(const struct aluno_view *a, const struct aluno_view *b, char criterio)
 {
-    const char *campoA = "";
-    const char *campoB = "";
+    int comparacao = 0;
 
     switch (criterio)
     {
     case '2':
-        campoA = a->aluno->id;
-        campoB = b->aluno->id;
+        comparacao = compararStringsCaseInsensitive(a->aluno->id, b->aluno->id);
         break;
     case '3':
-        campoA = a->plano != NULL ? a->plano->nome : "";
-        campoB = b->plano != NULL ? b->plano->nome : "";
+    {
+        const char *planoA = a->plano != NULL ? a->plano->nome : "";
+        const char *planoB = b->plano != NULL ? b->plano->nome : "";
+        comparacao = compararStringsCaseInsensitive(planoA, planoB);
         break;
+    }
+    case '4':
+        comparacao = compararStringsCaseInsensitive(b->aluno->nome, a->aluno->nome);
+        break;
+    case '5':
+    {
+        int idadeA = calcularIdade(a->aluno->idade);
+        int idadeB = calcularIdade(b->aluno->idade);
+        comparacao = idadeA - idadeB;
+        break;
+    }
+    case '6':
+    {
+        int idadeA = calcularIdade(a->aluno->idade);
+        int idadeB = calcularIdade(b->aluno->idade);
+        comparacao = idadeB - idadeA;
+        break;
+    }
     case '1':
     default:
-        campoA = a->aluno->nome;
-        campoB = b->aluno->nome;
+        comparacao = compararStringsCaseInsensitive(a->aluno->nome, b->aluno->nome);
         break;
     }
 
-    int comparacao = compararStringsCaseInsensitive(campoA, campoB);
+    // Ordenacao em cascata: se empatar no criterio principal, desempata por nome e depois por ID
     if (comparacao == 0)
     {
         comparacao = compararStringsCaseInsensitive(a->aluno->nome, b->aluno->nome);
@@ -829,6 +1325,13 @@ static int compararViews(const struct aluno_view *a, const struct aluno_view *b,
     }
 
     return comparacao;
+}
+
+static int comparadorAlunoView(const void *a, const void *b)
+{
+    const struct aluno_view *va = (const struct aluno_view *)a;
+    const struct aluno_view *vb = (const struct aluno_view *)b;
+    return compararViews(va, vb, criterioComparacaoAtual);
 }
 
 static int compararStringsCaseInsensitive(const char *a, const char *b)
@@ -889,20 +1392,81 @@ static const char *descricaoOrdenacao(char criterio)
         return "ID";
     case '3':
         return "Plano";
+    case '4':
+        return "Nome (ordem reversa Z-A)";
+    case '5':
+        return "Idade (menor para maior)";
+    case '6':
+        return "Idade (maior para menor)";
     case '1':
     default:
         return "Nome";
     }
 }
 
-static void exportarAlunosCsv(const struct aluno_view *lista, int total)
+static const char *slugOrdenacao(char criterio)
 {
-    FILE *fp = fopen("relatorio_alunos.csv", "w");
+    switch (criterio)
+    {
+    case '2':
+        return "ordenado_id";
+    case '3':
+        return "ordenado_plano";
+    case '4':
+        return "ordenado_nome_reverso";
+    case '5':
+        return "ordenado_idade_crescente";
+    case '6':
+        return "ordenado_idade_decrescente";
+    case '1':
+    default:
+        return "ordenado_nome";
+    }
+}
+
+static void exportarAlunosCsv(const struct aluno_view *lista, int total, char criterio, char filtroStatus, const char *termo)
+{
+    time_t agora = time(NULL);
+    char timestampStr[32];
+    snprintf(timestampStr, sizeof(timestampStr), "%ld", (long)agora);
+
+    char nomeArquivo[160];
+    snprintf(nomeArquivo, sizeof(nomeArquivo), "relatorio_alunos_%s_%s.csv", slugOrdenacao(criterio), timestampStr);
+
+    FILE *fp = fopen(nomeArquivo, "w");
     if (fp == NULL)
     {
         printf("\nNao foi possivel criar o arquivo CSV.\n");
         return;
     }
+
+    char dataHora[64];
+    struct tm *tm_info = localtime(&agora);
+    if (tm_info != NULL)
+    {
+        strftime(dataHora, sizeof(dataHora), "%d/%m/%Y %H:%M:%S", tm_info);
+    }
+    else
+    {
+        strncpy(dataHora, "N/A", sizeof(dataHora));
+        dataHora[sizeof(dataHora) - 1] = '\0';
+    }
+
+    char filtros[256];
+    const char *statusDesc = descricaoStatusAluno(filtroStatus);
+    if (termo != NULL && termo[0] != '\0')
+    {
+        snprintf(filtros, sizeof(filtros), "Status=%s;Termo=%s", statusDesc, termo);
+    }
+    else
+    {
+        snprintf(filtros, sizeof(filtros), "Status=%s;Termo=Nenhum", statusDesc);
+    }
+
+    fprintf(fp, "# DataHora;%s\n", dataHora);
+    fprintf(fp, "# Ordenacao;%s\n", descricaoOrdenacao(criterio));
+    fprintf(fp, "# Registros;%d\n", total);
+    fprintf(fp, "# Filtros;%s\n", filtros);
 
     fprintf(fp, "ID;Nome;Status;PlanoID;PlanoNome\n");
     for (int i = 0; i < total; i++)
@@ -919,7 +1483,7 @@ static void exportarAlunosCsv(const struct aluno_view *lista, int total)
     }
 
     fclose(fp);
-    printf("\nArquivo 'relatorio_alunos.csv' gerado com sucesso.\n");
+    printf("\nArquivo '%s' gerado com sucesso.\n", nomeArquivo);
 }
 
 static void extrairRegiao(const char *endereco, char *dest, size_t tamanho)

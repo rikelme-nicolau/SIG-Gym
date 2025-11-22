@@ -15,6 +15,7 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/equipamento/cadastrarEquipamento.h"
 #include "src/ui/funcionario/cadastrarFuncionario.h"
+#include "mergeListas.h"
 
 static void relatorioRelacaoAlunoPlano(void);
 static void relatorioCruzadoPlanoHorarioAlunos(void);
@@ -22,11 +23,147 @@ static void relatorioEquipamentoCategoriaManutencao(void);
 static void relatorioCruzadoFuncionarioCargoIdade(void);
 static void relatorioAlunoIdadePlano(void);
 static void relatorioPlanoAtividadePopularidade(void);
+static void relatorioTodasPessoasUnificado(void);
+static void exportarPessoasCsv(const struct PessoaView *pessoas, int total, int totalAlunos, int totalFuncs);
 static const struct plano *buscarPlanoPorId(const char *id);
 static int contarAlunosDoPlano(const char *id);
 static int faixaHorarioPlano(const struct plano *plano);
 static const char *descricaoFaixa(int faixa);
 static double calcularDiasRestantes(const char *data);
+static int compararAlunosPorNome(const void *a, const void *b);
+static int compararFuncionariosPorNome(const void *a, const void *b);
+
+static void relatorioTodasPessoasUnificado(void)
+{
+    limparTela();
+
+    printf("=========================================================================\n");
+    printf("===              RELATORIO - TODAS AS PESSOAS (ALUNOS+FUNC)          ===\n");
+    printf("=========================================================================\n");
+
+    struct aluno alunosAtivos[MAX_ALUNOS];
+    int totalAlunosAtivos = 0;
+    for (int i = 0; i < total_alunos && totalAlunosAtivos < MAX_ALUNOS; i++)
+    {
+        if (lista_alunos[i].ativo)
+        {
+            alunosAtivos[totalAlunosAtivos++] = lista_alunos[i];
+        }
+    }
+
+    struct funcionario funcsAtivos[MAX_FUNCIONARIOS];
+    int totalFuncsAtivos = 0;
+    for (int i = 0; i < total_funcionarios && totalFuncsAtivos < MAX_FUNCIONARIOS; i++)
+    {
+        if (lista_funcionarios[i].ativo)
+        {
+            funcsAtivos[totalFuncsAtivos++] = lista_funcionarios[i];
+        }
+    }
+
+    if (totalAlunosAtivos == 0 && totalFuncsAtivos == 0)
+    {
+        printf("Nao ha alunos ou funcionarios ativos para listar.\n");
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER>");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    qsort(alunosAtivos, totalAlunosAtivos, sizeof(struct aluno), compararAlunosPorNome);
+    qsort(funcsAtivos, totalFuncsAtivos, sizeof(struct funcionario), compararFuncionariosPorNome);
+
+    int totalPessoas = 0;
+    struct PessoaView *pessoas = mergeListasOrdenadas(alunosAtivos, totalAlunosAtivos,
+                                                      funcsAtivos, totalFuncsAtivos,
+                                                      &totalPessoas);
+    if (pessoas == NULL || totalPessoas == 0)
+    {
+        printf("Nao foi possivel unificar as listas.\n");
+        free(pessoas);
+        printf("=========================================================================\n");
+        printf(">>> Pressione <ENTER>");
+        getchar();
+        limparTela();
+        return;
+    }
+
+    int contAlunos = 0;
+    int contFuncs = 0;
+
+    printf("+------+---------+----------------------+-------+\n");
+    printf("| Tipo | ID      | Nome                 | Idade |\n");
+    printf("+------+---------+----------------------+-------+\n");
+    for (int i = 0; i < totalPessoas; i++)
+    {
+        const struct PessoaView *p = &pessoas[i];
+        if (p->tipo == 'A')
+        {
+            contAlunos++;
+        }
+        else if (p->tipo == 'F')
+        {
+            contFuncs++;
+        }
+        printf("|  %c   | %-7.7s | %-20.20s | %5d |\n",
+               p->tipo,
+               p->id,
+               p->nome,
+               p->idade);
+    }
+    printf("+------+---------+----------------------+-------+\n");
+    printf("Total alunos: %d | Total funcionarios: %d | Total geral: %d\n", contAlunos, contFuncs, totalPessoas);
+
+    printf("\nDeseja exportar para CSV? (S/N): ");
+    int resp = getchar();
+    while (resp == '\n')
+    {
+        resp = getchar();
+    }
+    if (resp == 's' || resp == 'S')
+    {
+        exportarPessoasCsv(pessoas, totalPessoas, contAlunos, contFuncs);
+    }
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF)
+    {
+        // limpa buffer
+    }
+
+    free(pessoas);
+
+    printf("=========================================================================\n");
+    printf(">>> Pressione <ENTER>");
+    getchar();
+    limparTela();
+}
+static void exportarPessoasCsv(const struct PessoaView *pessoas, int total, int totalAlunos, int totalFuncs)
+{
+    FILE *fp = fopen("relatorio_pessoas_unificado.csv", "w");
+    if (fp == NULL)
+    {
+        printf("Nao foi possivel criar o arquivo CSV.\n");
+        return;
+    }
+
+    fprintf(fp, "# Relatorio unificado de pessoas\n");
+    fprintf(fp, "# Total alunos;%d\n", totalAlunos);
+    fprintf(fp, "# Total funcionarios;%d\n", totalFuncs);
+    fprintf(fp, "# Total geral;%d\n", total);
+    fprintf(fp, "Tipo;ID;Nome;Idade\n");
+    for (int i = 0; i < total; i++)
+    {
+        fprintf(fp, "%c;%s;%s;%d\n",
+                pessoas[i].tipo,
+                pessoas[i].id,
+                pessoas[i].nome,
+                pessoas[i].idade);
+    }
+
+    fclose(fp);
+    printf("Arquivo CSV gerado: relatorio_pessoas_unificado.csv\n");
+}
 
 void moduloRelatoriosCruzados(void)
 {
@@ -55,6 +192,9 @@ void moduloRelatoriosCruzados(void)
             break;
         case '6':
             relatorioPlanoAtividadePopularidade();
+            break;
+        case '7':
+            relatorioTodasPessoasUnificado();
             break;
 
         case '0':
@@ -1021,4 +1161,18 @@ static double calcularDiasRestantes(const char *data)
     time_t agora = time(NULL);
 
     return difftime(tAlvo, agora) / (60 * 60 * 24);
+}
+
+static int compararAlunosPorNome(const void *a, const void *b)
+{
+    const struct aluno *al = (const struct aluno *)a;
+    const struct aluno *bl = (const struct aluno *)b;
+    return strcasecmp(al->nome, bl->nome);
+}
+
+static int compararFuncionariosPorNome(const void *a, const void *b)
+{
+    const struct funcionario *fa = (const struct funcionario *)a;
+    const struct funcionario *fb = (const struct funcionario *)b;
+    return strcasecmp(fa->nome, fb->nome);
 }
