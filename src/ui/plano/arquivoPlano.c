@@ -233,6 +233,13 @@ static int preencherPlanosFicticios(struct plano lista_planos[])
     return total;
 }
 
+static int gerarPlanosPadrao(struct plano lista_planos[])
+{
+    int total_padrao = preencherPlanosFicticios(lista_planos);
+    salvarPlanos(lista_planos, total_padrao);
+    return total_padrao;
+}
+
 // Salva todos os planos ativos no arquivo binario
 void salvarPlanos(struct plano lista_planos[], int total_planos)
 {
@@ -262,14 +269,9 @@ int carregarPlanos(struct plano lista_planos[])
     FILE *fp = fopen(PLANOS_FILE, "rb");
     if (!fp)
     {
-        int lista_vazia = (lista_planos == NULL || lista_planos[0].id[0] == '\0');
-        if (lista_vazia)
-        {
-            int total = preencherPlanosFicticios(lista_planos);
-            salvarPlanos(lista_planos, total);
-            return total;
-        }
-        return 0;
+        // CORREÇÃO: Gera dados fictícios se o arquivo não existe
+        printf("Arquivo de planos nao encontrado. Gerando dados ficticios...\n");
+        return gerarPlanosPadrao(lista_planos);
     }
 
     long file_size = 0;
@@ -277,6 +279,13 @@ int carregarPlanos(struct plano lista_planos[])
     {
         file_size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
+    }
+
+    if (file_size == 0)
+    {
+        fclose(fp);
+        printf("Arquivo de planos vazio. Gerando dados ficticios...\n");
+        return gerarPlanosPadrao(lista_planos);
     }
 
     int total = 0;
@@ -288,6 +297,11 @@ int carregarPlanos(struct plano lista_planos[])
             total++;
         }
         fclose(fp);
+        if (total == 0)
+        {
+            printf("Nenhum plano valido encontrado. Gerando dados ficticios...\n");
+            return gerarPlanosPadrao(lista_planos);
+        }
         return total;
     }
 
@@ -304,14 +318,17 @@ int carregarPlanos(struct plano lista_planos[])
             total++;
         }
         fclose(fp);
+        if (total == 0)
+        {
+            printf("Nenhum plano valido encontrado. Gerando dados ficticios...\n");
+            return gerarPlanosPadrao(lista_planos);
+        }
         salvarPlanos(lista_planos, total);
         return total;
     }
 
     fclose(fp);
-    int total_padrao = preencherPlanosFicticios(lista_planos);
-    salvarPlanos(lista_planos, total_padrao);
-    return total_padrao;
+    return gerarPlanosPadrao(lista_planos);
 }
 
 // Atualiza um plano especifico no arquivo

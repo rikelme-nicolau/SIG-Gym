@@ -130,6 +130,13 @@ static int preencherAlunosFicticios(struct aluno lista_alunos[])
     return total;
 }
 
+static int gerarAlunosPadrao(struct aluno lista_alunos[])
+{
+    int total = preencherAlunosFicticios(lista_alunos);
+    salvarAlunos(lista_alunos, total);
+    return total;
+}
+
 // Salva todos os alunos ativos no arquivo binario
 void salvarAlunos(struct aluno lista_alunos[], int total_alunos)
 {
@@ -159,14 +166,22 @@ int carregarAlunos(struct aluno lista_alunos[])
     FILE *fp = fopen(ALUNOS_FILE, "rb");
     if (!fp)
     {
-        int lista_vazia = (lista_alunos == NULL || lista_alunos[0].id[0] == '\0');
-        if (lista_vazia)
-        {
-            int total = preencherAlunosFicticios(lista_alunos);
-            salvarAlunos(lista_alunos, total);
-            return total;
-        }
-        return 0;
+        printf("Arquivo de alunos nao encontrado. Gerando dados ficticios...\n");
+        return gerarAlunosPadrao(lista_alunos);
+    }
+
+    long file_size = 0;
+    if (fseek(fp, 0, SEEK_END) == 0)
+    {
+        file_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+    }
+
+    if (file_size == 0)
+    {
+        fclose(fp);
+        printf("Arquivo de alunos vazio. Gerando dados ficticios...\n");
+        return gerarAlunosPadrao(lista_alunos);
     }
 
     int total = 0;
@@ -177,6 +192,13 @@ int carregarAlunos(struct aluno lista_alunos[])
     }
 
     fclose(fp);
+
+    if (total == 0)
+    {
+        printf("Nenhum aluno valido encontrado. Gerando dados ficticios...\n");
+        return gerarAlunosPadrao(lista_alunos);
+    }
+
     return total;
 }
 

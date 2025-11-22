@@ -145,6 +145,13 @@ static int preencherEquipamentosFicticios(struct equipamento lista_equipamentos[
     return total;
 }
 
+static int gerarEquipamentosPadrao(struct equipamento lista_equipamentos[])
+{
+    int total = preencherEquipamentosFicticios(lista_equipamentos);
+    salvarEquipamentos(lista_equipamentos, total);
+    return total;
+}
+
 // Salva todos os equipamentos ativos no arquivo binario
 void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equipamentos)
 {
@@ -174,14 +181,22 @@ int carregarEquipamentos(struct equipamento lista_equipamentos[])
     FILE *fp = fopen(EQUIPAMENTOS_FILE, "rb");
     if (!fp)
     {
-        int lista_vazia = (lista_equipamentos == NULL || lista_equipamentos[0].id[0] == '\0');
-        if (lista_vazia)
-        {
-            int total = preencherEquipamentosFicticios(lista_equipamentos);
-            salvarEquipamentos(lista_equipamentos, total);
-            return total;
-        }
-        return 0;
+        printf("Arquivo de equipamentos nao encontrado. Gerando dados ficticios...\n");
+        return gerarEquipamentosPadrao(lista_equipamentos);
+    }
+
+    long file_size = 0;
+    if (fseek(fp, 0, SEEK_END) == 0)
+    {
+        file_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+    }
+
+    if (file_size == 0)
+    {
+        fclose(fp);
+        printf("Arquivo de equipamentos vazio. Gerando dados ficticios...\n");
+        return gerarEquipamentosPadrao(lista_equipamentos);
     }
 
     int total = 0;
@@ -192,6 +207,13 @@ int carregarEquipamentos(struct equipamento lista_equipamentos[])
     }
 
     fclose(fp);
+
+    if (total == 0)
+    {
+        printf("Nenhum equipamento valido encontrado. Gerando dados ficticios...\n");
+        return gerarEquipamentosPadrao(lista_equipamentos);
+    }
+
     return total;
 }
 

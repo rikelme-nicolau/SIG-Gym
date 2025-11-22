@@ -154,6 +154,13 @@ static int preencherFuncionariosFicticios(struct funcionario lista_funcionarios[
     return total;
 }
 
+static int gerarFuncionariosPadrao(struct funcionario lista_funcionarios[])
+{
+    int total = preencherFuncionariosFicticios(lista_funcionarios);
+    salvarFuncionarios(lista_funcionarios, total);
+    return total;
+}
+
 // Salva todos os funcionarios ativos no arquivo binario
 void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funcionarios)
 {
@@ -183,14 +190,22 @@ int carregarFuncionarios(struct funcionario lista_funcionarios[])
     FILE *fp = fopen(FUNCIONARIOS_FILE, "rb");
     if (!fp)
     {
-        int lista_vazia = (lista_funcionarios == NULL || lista_funcionarios[0].id[0] == '\0');
-        if (lista_vazia)
-        {
-            int total = preencherFuncionariosFicticios(lista_funcionarios);
-            salvarFuncionarios(lista_funcionarios, total);
-            return total;
-        }
-        return 0;
+        printf("Arquivo de funcionarios nao encontrado. Gerando dados ficticios...\n");
+        return gerarFuncionariosPadrao(lista_funcionarios);
+    }
+
+    long file_size = 0;
+    if (fseek(fp, 0, SEEK_END) == 0)
+    {
+        file_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+    }
+
+    if (file_size == 0)
+    {
+        fclose(fp);
+        printf("Arquivo de funcionarios vazio. Gerando dados ficticios...\n");
+        return gerarFuncionariosPadrao(lista_funcionarios);
     }
 
     int total = 0;
@@ -201,6 +216,13 @@ int carregarFuncionarios(struct funcionario lista_funcionarios[])
     }
 
     fclose(fp);
+
+    if (total == 0)
+    {
+        printf("Nenhum funcionario valido encontrado. Gerando dados ficticios...\n");
+        return gerarFuncionariosPadrao(lista_funcionarios);
+    }
+
     return total;
 }
 
