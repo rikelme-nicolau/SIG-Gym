@@ -31,6 +31,7 @@ static bool planoDisponivelNaFaixa(const struct plano *plano, int faixa);
 static int extrairHoraPlano(const char *horario);
 static bool campoVazio(const char *texto);
 static void adicionarCampo(const char *nomeCampo, char *destino, size_t tamanho);
+static int listarDuplicadosCPFEntreModulos(bool exibir);
 static int listarAlunosSemPlano(bool exibir);
 static int listarAlunosDadosIncompletos(bool exibir);
 static int listarFuncionariosDadosIncompletos(bool exibir);
@@ -200,7 +201,7 @@ void relatorioOcupacaoPorHorario(void)
         return;
     }
 
-    const char *labelsFaixa[3] = {"Manha (06h-12h)", "Tarde (12h-18h)", "Noite (18h-22h)"};
+    const char *labelsFaixa[3] = {"Manha (05h-12h)", "Tarde (12h-18h)", "Noite (18h-23h)"};
 
     char linha[UI_INNER + 1];
     snprintf(linha, sizeof(linha), "Total de alunos considerados: %d", totalAlunosConsiderados);
@@ -266,6 +267,7 @@ void relatorioValidacaoCadastros(void)
     totalProblemas += listarFuncionariosDadosIncompletos(true);
     totalProblemas += listarDuplicadosCPFAlunos(true);
     totalProblemas += listarDuplicadosCPFFuncionarios(true);
+    totalProblemas += listarDuplicadosCPFEntreModulos(true);
     totalProblemas += listarEmailsDuplicados(true);
     totalProblemas += listarTelefonesInvalidos(true);
 
@@ -480,7 +482,7 @@ static int faixaPrincipalPlano(const struct plano *plano)
 {
     int inicio = extrairHoraPlano(plano->horario_inicio);
 
-    if (inicio >= 6 && inicio < 12)
+    if (inicio >= 5 && inicio < 12)
     {
         return 0;
     }
@@ -488,7 +490,7 @@ static int faixaPrincipalPlano(const struct plano *plano)
     {
         return 1;
     }
-    if (inicio >= 18 && inicio < 22)
+    if (inicio >= 18 && inicio < 24)
     {
         return 2;
     }
@@ -498,8 +500,8 @@ static int faixaPrincipalPlano(const struct plano *plano)
 
 static bool planoDisponivelNaFaixa(const struct plano *plano, int faixa)
 {
-    static const int faixaInicio[3] = {6, 12, 18};
-    static const int faixaFim[3] = {12, 18, 22};
+    static const int faixaInicio[3] = {5, 12, 18};
+    static const int faixaFim[3] = {12, 18, 24};
 
     if (faixa < 0 || faixa >= 3)
     {
@@ -1053,7 +1055,79 @@ static int consolidarCadastrosInconsistentes(bool exibir)
     total += listarFuncionariosDadosIncompletos(exibir);
     total += listarDuplicadosCPFAlunos(exibir);
     total += listarDuplicadosCPFFuncionarios(exibir);
+    total += listarDuplicadosCPFEntreModulos(exibir);
     total += listarEmailsDuplicados(exibir);
     total += listarTelefonesInvalidos(exibir);
     return total;
+}
+
+static int listarDuplicadosCPFEntreModulos(bool exibir)
+{
+    bool duplicadoAluno[MAX_ALUNOS] = {false};
+    bool duplicadoFunc[MAX_FUNCIONARIOS] = {false};
+
+    for (int i = 0; i < total_alunos; i++)
+    {
+        if (campoVazio(lista_alunos[i].cpf))
+        {
+            continue;
+        }
+        for (int j = 0; j < total_funcionarios; j++)
+        {
+            if (campoVazio(lista_funcionarios[j].cpf))
+            {
+                continue;
+            }
+            if (strcmp(lista_alunos[i].cpf, lista_funcionarios[j].cpf) == 0)
+            {
+                duplicadoAluno[i] = true;
+                duplicadoFunc[j] = true;
+            }
+        }
+    }
+
+    int encontrados = 0;
+    if (exibir)
+    {
+        ui_text_line("-- CPFs duplicados entre alunos e funcionarios");
+    }
+
+    for (int i = 0; i < total_alunos; i++)
+    {
+        if (duplicadoAluno[i])
+        {
+            encontrados++;
+            if (exibir)
+            {
+                char linha[UI_INNER + 1];
+                char nome_buf[64];
+                ui_clip_utf8(lista_alunos[i].nome, 40, nome_buf, sizeof(nome_buf));
+                snprintf(linha, sizeof(linha), "   - (Aluno) [%.12s] %s | CPF: %.14s", lista_alunos[i].id, nome_buf, lista_alunos[i].cpf);
+                ui_text_line(linha);
+            }
+        }
+    }
+
+    for (int j = 0; j < total_funcionarios; j++)
+    {
+        if (duplicadoFunc[j])
+        {
+            encontrados++;
+            if (exibir)
+            {
+                char linha[UI_INNER + 1];
+                char nome_buf[64];
+                ui_clip_utf8(lista_funcionarios[j].nome, 40, nome_buf, sizeof(nome_buf));
+                snprintf(linha, sizeof(linha), "   - (Funcionario) [%.12s] %s | CPF: %.14s", lista_funcionarios[j].id, nome_buf, lista_funcionarios[j].cpf);
+                ui_text_line(linha);
+            }
+        }
+    }
+
+    if (encontrados == 0 && exibir)
+    {
+        ui_text_line("   Nenhuma duplicidade cruzada de CPF encontrada.");
+    }
+
+    return encontrados;
 }

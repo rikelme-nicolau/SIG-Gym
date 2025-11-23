@@ -5,6 +5,8 @@
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
 #include "arquivoFuncionario.h"
+#include "../aluno/cadastrarAluno.h"
+#include "src/ui/utils/geradorDados.h"
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/validarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
@@ -206,10 +208,18 @@ void telaAtualizarFuncionario(void)
                     break;
                 if (validarCPF(buffer))
                 {
-                    strcpy(func_sel->cpf, buffer);
-                    atualizarFuncionarioNoArquivo(*func_sel);
-                    mensagem("Atualizar funcionario", "CPF atualizado com sucesso.");
-                    break;
+                    bool cpfDisponivel = (strcmp(buffer, func_sel->cpf) == 0) ||
+                                         verificarCPFUnico(buffer, lista_alunos, total_alunos,
+                                                           lista_funcionarios, total_funcionarios);
+                    if (cpfDisponivel)
+                    {
+                        strcpy(func_sel->cpf, buffer);
+                        atualizarFuncionarioNoArquivo(*func_sel);
+                        mensagem("Atualizar funcionario", "CPF atualizado com sucesso.");
+                        break;
+                    }
+                    mensagem("Atualizar funcionario", "CPF duplicado. Ja cadastrado para outro registro.");
+                    continue;
                 }
                 mensagem("Atualizar funcionario", "CPF invalido.");
             }
@@ -269,10 +279,18 @@ void telaAtualizarFuncionario(void)
                     break;
                 if (validarEmail(buffer))
                 {
-                    strcpy(func_sel->email, buffer);
-                    atualizarFuncionarioNoArquivo(*func_sel);
-                    mensagem("Atualizar funcionario", "E-mail atualizado com sucesso.");
-                    break;
+                    bool emailDisponivel = (strcmp(buffer, func_sel->email) == 0) ||
+                                           verificarEmailUnico(buffer, lista_alunos, total_alunos,
+                                                               lista_funcionarios, total_funcionarios);
+                    if (emailDisponivel)
+                    {
+                        strcpy(func_sel->email, buffer);
+                        atualizarFuncionarioNoArquivo(*func_sel);
+                        mensagem("Atualizar funcionario", "E-mail atualizado com sucesso.");
+                        break;
+                    }
+                    mensagem("Atualizar funcionario", "E-mail duplicado. Ja cadastrado para outro registro.");
+                    continue;
                 }
                 mensagem("Atualizar funcionario", "E-mail invalido.");
             }

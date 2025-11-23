@@ -5,7 +5,9 @@
 #include "limparTela.h"
 #include "cadastrarFuncionario.h"
 #include "arquivoFuncionario.h"
+#include "../aluno/cadastrarAluno.h"
 #include "../utils/gerarMatricula.h"
+#include "src/ui/utils/geradorDados.h"
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/validarCPF.h"
 #include "src/ui/utils/validarEndereco.h"
@@ -31,7 +33,7 @@ static void rodape_prompt(const char *msg)
 {
     ui_line('-');
     ui_text_line(msg);
-    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_text_line(">>> Digite abaixo e pressione ENTER (0 para cancelar).");
     ui_line('=');
 }
 
@@ -44,6 +46,20 @@ static bool ler_linha(char *dest, size_t size)
     }
     dest[strcspn(dest, "\n")] = '\0';
     return true;
+}
+
+static bool deseja_cancelar(const char *entrada)
+{
+    return strcmp(entrada, "0") == 0;
+}
+
+static void mostrar_cancelamento(void)
+{
+    cabecalho_func("Cadastro cancelado");
+    ui_center_text("Operacao interrompida pelo usuario.");
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
 }
 
 void telaCadastrarFuncionario(void)
@@ -70,6 +86,11 @@ void telaCadastrarFuncionario(void)
         rodape_prompt("Nome:");
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         if (validarNome(buffer))
         {
             strcpy(novo_func.nome, buffer);
@@ -97,6 +118,11 @@ void telaCadastrarFuncionario(void)
         rodape_prompt("Data de nascimento:");
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         if (validarNascimento(buffer))
         {
             strcpy(novo_func.nascimento, buffer);
@@ -125,10 +151,27 @@ void telaCadastrarFuncionario(void)
         rodape_prompt("CPF:");
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         if (validarCPF(buffer))
         {
-            strcpy(novo_func.cpf, buffer);
-            cpfValido = true;
+            bool cpfDisponivel = verificarCPFUnico(buffer, lista_alunos, total_alunos,
+                                                   lista_funcionarios, total_funcionarios);
+            if (cpfDisponivel)
+            {
+                strcpy(novo_func.cpf, buffer);
+                cpfValido = true;
+            }
+            else
+            {
+                cabecalho_func("CPF duplicado");
+                ui_text_line("CPF ja cadastrado para outro registro.");
+                ui_section_title("Pressione <ENTER> para tentar novamente");
+                getchar();
+            }
         }
         else
         {
@@ -148,6 +191,11 @@ void telaCadastrarFuncionario(void)
         rodape_prompt("Telefone:");
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         if (validarTelefone(buffer))
         {
             strcpy(novo_func.telefone, buffer);
@@ -171,6 +219,11 @@ void telaCadastrarFuncionario(void)
         rodape_prompt("Endereco:");
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         if (validarEndereco(buffer))
         {
             strcpy(novo_func.endereco, buffer);
@@ -194,10 +247,27 @@ void telaCadastrarFuncionario(void)
         rodape_prompt("E-mail:");
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         if (validarEmail(buffer))
         {
-            strcpy(novo_func.email, buffer);
-            emailValido = true;
+            bool emailDisponivel = verificarEmailUnico(buffer, lista_alunos, total_alunos,
+                                                       lista_funcionarios, total_funcionarios);
+            if (emailDisponivel)
+            {
+                strcpy(novo_func.email, buffer);
+                emailValido = true;
+            }
+            else
+            {
+                cabecalho_func("E-mail duplicado");
+                ui_text_line("E-mail ja cadastrado para outro registro.");
+                ui_section_title("Pressione <ENTER> para tentar novamente");
+                getchar();
+            }
         }
         else
         {
@@ -220,6 +290,11 @@ void telaCadastrarFuncionario(void)
         ui_line('=');
         if (!ler_linha(buffer, sizeof(buffer)))
             return;
+        if (deseja_cancelar(buffer))
+        {
+            mostrar_cancelamento();
+            return;
+        }
         opcaoCargo = atoi(buffer);
         switch (opcaoCargo)
         {

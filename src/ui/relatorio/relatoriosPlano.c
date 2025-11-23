@@ -713,9 +713,9 @@ static void relatorioOcupacaoHorarioPlano(void)
     };
 
     const char *faixasNome[TOTAL_FAIXAS] = {
-        "MANHA (06:00 - 12:00)",
+        "MANHA (05:00 - 12:00)",
         "TARDE (12:00 - 18:00)",
-        "NOITE (18:00 - 22:00)",
+        "NOITE (18:00 - 23:59)",
         "OUTROS"};
 
     struct PlanoFaixa
@@ -739,7 +739,7 @@ static void relatorioOcupacaoHorarioPlano(void)
         sscanf(lista_planos[i].horario_inicio, "%2d", &inicio);
 
         int faixa = FAIXA_OUTROS;
-        if (inicio >= 6 && inicio < 12)
+        if (inicio >= 5 && inicio < 12)
         {
             faixa = FAIXA_MANHA;
         }
@@ -747,7 +747,7 @@ static void relatorioOcupacaoHorarioPlano(void)
         {
             faixa = FAIXA_TARDE;
         }
-        else if (inicio >= 18 && inicio < 22)
+        else if (inicio >= 18 && inicio < 24)
         {
             faixa = FAIXA_NOITE;
         }

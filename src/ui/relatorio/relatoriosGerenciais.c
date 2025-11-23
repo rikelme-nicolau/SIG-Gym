@@ -354,9 +354,12 @@ void relatorioTop10Alunos(void)
                         alunos++;
                     }
                 }
-                ranks[total].plano = &lista_planos[i];
-                ranks[total].alunos = alunos;
-                total++;
+                if (alunos > 0)
+                {
+                    ranks[total].plano = &lista_planos[i];
+                    ranks[total].alunos = alunos;
+                    total++;
+                }
             }
 
             qsort(ranks, total, sizeof(ranks[0]), compararPlanosPorTotalDesc);
@@ -366,16 +369,23 @@ void relatorioTop10Alunos(void)
             printf("+------+----------------------+----------+-----------+\n");
             printf("| Rank | Plano                | Alunos   | Valor     |\n");
             printf("+------+----------------------+----------+-----------+\n");
-            for (int i = 0; i < limite; i++)
+            if (total == 0)
             {
-                printf("| %4d | %-20.20s | %8d | %9.2f |\n",
-                       i + 1,
-                       ranks[i].plano->nome,
-                       ranks[i].alunos,
-                       ranks[i].plano->valor);
+                printf("| %-60s |\n", "Nenhum plano possui alunos ativos.");
+            }
+            else
+            {
+                for (int i = 0; i < limite; i++)
+                {
+                    printf("| %4d | %-20.20s | %8d | %9.2f |\n",
+                           i + 1,
+                           ranks[i].plano->nome,
+                           ranks[i].alunos,
+                           ranks[i].plano->valor);
+                }
             }
             printf("+------+----------------------+----------+-----------+\n");
-            printf("Total de planos ativos considerados: %d\n", total);
+            printf("Total de planos com alunos considerados: %d\n", total);
         }
         else if (op == '2' || op == '3')
         {
@@ -917,9 +927,15 @@ void relatorioAnaliseFinanceira(void)
         return;
     }
 
-    if (total_alunos > 0)
+    int alunosComPlano = 0;
+    for (int i = 0; i < MAX_PLANOS; i++)
     {
-        ticketMedio = receitaTotal / (double)total_alunos;
+        alunosComPlano += alunosPorPlano[i];
+    }
+
+    if (alunosComPlano > 0)
+    {
+        ticketMedio = receitaTotal / (double)alunosComPlano;
     }
 
     printf("=========================================================================\n");
