@@ -5,12 +5,14 @@
 #include "limparTela.h"
 #include "cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
+#include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "src/ui/utils/validarNome.h"
 #include "src/ui/utils/validarCPF.h"
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarTelefone.h"
 #include "src/ui/utils/validarEndereco.h"
 #include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
+#include "src/ui/utils/geradorDados.h"
 #include "arquivoAluno.h" // <-- persistência
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
@@ -268,8 +270,17 @@ void telaAtualizarAluno(void)
                 buffer[strcspn(buffer, "\n")] = '\0';
                 if (validarCPF(buffer))
                 {
-                    strcpy(aluno_sel->cpf, buffer);
-                    cpfValido = true;
+                    bool cpfDisponivel = (strcmp(buffer, aluno_sel->cpf) == 0) ||
+                                         verificarCPFUnico(buffer, lista_alunos, total_alunos, lista_funcionarios, total_funcionarios);
+                    if (cpfDisponivel)
+                    {
+                        strcpy(aluno_sel->cpf, buffer);
+                        cpfValido = true;
+                    }
+                    else
+                    {
+                        mensagem_comum("CPF duplicado", "CPF ja cadastrado para outro registro.", NULL);
+                    }
                 }
                 else
                 {
@@ -365,8 +376,17 @@ void telaAtualizarAluno(void)
                 // Chama a função de validação de e-mail
                 if (validarEmail(buffer))
                 {
-                    strcpy(aluno_sel->email, buffer); // Copia o novo e-mail válido
-                    emailValido = true;              // Libera a saída do loop
+                    bool emailDisponivel = (strcmp(buffer, aluno_sel->email) == 0) ||
+                                           verificarEmailUnico(buffer, lista_alunos, total_alunos, lista_funcionarios, total_funcionarios);
+                    if (emailDisponivel)
+                    {
+                        strcpy(aluno_sel->email, buffer); // Copia o novo e-mail válido
+                        emailValido = true;               // Libera a saída do loop
+                    }
+                    else
+                    {
+                        mensagem_comum("E-mail duplicado", "E-mail ja cadastrado para outro registro.", NULL);
+                    }
                 }
                 else
                 {
