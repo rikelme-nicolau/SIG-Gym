@@ -280,6 +280,13 @@ int carregarPlanos(struct plano lista_planos[])
         fseek(fp, 0, SEEK_SET);
     }
 
+    if (file_size < 0)
+    {
+        fprintf(stderr, "Erro ao obter tamanho do arquivo de planos; gerando dados padrao.\n");
+        fclose(fp);
+        return gerarPlanosPadrao(lista_planos);
+    }
+
     if (file_size == 0)
     {
         fclose(fp);
@@ -288,11 +295,24 @@ int carregarPlanos(struct plano lista_planos[])
 
     int total = 0;
 
+    if ((file_size % (long)sizeof(struct plano)) != 0 && (file_size % (long)sizeof(struct plano_legacy)) != 0)
+    {
+        fprintf(stderr, "Aviso: formato de arquivo de planos desconhecido; gerando dados padrao.\n");
+        fclose(fp);
+        return gerarPlanosPadrao(lista_planos);
+    }
+
     if (file_size >= 0 && (file_size % (long)sizeof(struct plano)) == 0)
     {
         while (total < MAX_PLANOS && fread(&lista_planos[total], sizeof(struct plano), 1, fp) == 1)
         {
             total++;
+        }
+        if (ferror(fp))
+        {
+            fprintf(stderr, "Erro ao ler arquivo de planos; gerando dados padrao.\n");
+            fclose(fp);
+            return gerarPlanosPadrao(lista_planos);
         }
         fclose(fp);
         if (total == 0)
@@ -313,6 +333,12 @@ int carregarPlanos(struct plano lista_planos[])
             }
             converterPlanoLegacy(&lista_planos[total], &registro_antigo);
             total++;
+        }
+        if (ferror(fp))
+        {
+            fprintf(stderr, "Erro ao ler arquivo legado de planos; gerando dados padrao.\n");
+            fclose(fp);
+            return gerarPlanosPadrao(lista_planos);
         }
         fclose(fp);
         if (total == 0)

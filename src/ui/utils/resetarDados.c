@@ -29,8 +29,14 @@ bool resetarTodosDados(void)
             {
                 fclose(f);
                 sucesso = false;
+                fprintf(stderr, "Falha ao remover arquivo de dados: %s\n", arquivos[i]);
             }
         }
+    }
+
+    if (!sucesso)
+    {
+        return false;
     }
 
     memset(lista_alunos, 0, sizeof(lista_alunos));

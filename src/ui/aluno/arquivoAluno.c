@@ -151,13 +151,32 @@ void salvarAlunos(struct aluno lista_alunos[], int total_alunos)
     {
         if (lista_alunos[i].ativo)
         {
-            fwrite(&lista_alunos[i], sizeof(struct aluno), 1, fp);
+            if (fwrite(&lista_alunos[i], sizeof(struct aluno), 1, fp) != 1)
+            {
+                perror("Erro ao gravar aluno no arquivo temporario");
+                fclose(fp);
+                remove(TMP_FILE);
+                return;
+            }
         }
     }
 
+    if (fflush(fp) != 0 || ferror(fp))
+    {
+        perror("Erro ao finalizar gravacao do arquivo temporario");
+        fclose(fp);
+        remove(TMP_FILE);
+        return;
+    }
+
     fclose(fp);
-    remove(ALUNOS_FILE);
-    rename(TMP_FILE, ALUNOS_FILE);
+
+    if (rename(TMP_FILE, ALUNOS_FILE) != 0)
+    {
+        perror("Erro ao substituir arquivo de alunos");
+        remove(TMP_FILE);
+        return;
+    }
 }
 
 // Carrega todos os alunos do arquivo binario
@@ -176,6 +195,13 @@ int carregarAlunos(struct aluno lista_alunos[])
         fseek(fp, 0, SEEK_SET);
     }
 
+    if (file_size < 0 || (file_size > 0 && (file_size % (long)sizeof(struct aluno)) != 0))
+    {
+        fprintf(stderr, "Aviso: arquivo de alunos corrompido; gerando dados padrao.\n");
+        fclose(fp);
+        return gerarAlunosPadrao(lista_alunos);
+    }
+
     if (file_size == 0)
     {
         fclose(fp);
@@ -187,6 +213,13 @@ int carregarAlunos(struct aluno lista_alunos[])
     while (total < MAX_ALUNOS && fread(&lista_alunos[total], sizeof(struct aluno), 1, fp) == 1)
     {
         total++;
+    }
+
+    if (ferror(fp))
+    {
+        fprintf(stderr, "Erro ao ler arquivo de alunos; gerando dados padrao.\n");
+        fclose(fp);
+        return gerarAlunosPadrao(lista_alunos);
     }
 
     fclose(fp);

@@ -13,6 +13,8 @@
 #include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
 #include "arquivoAluno.h"
 #include "ui/utils/consoleLayout.h"
+#include "../utils/geradorDados.h"
+#include "../funcionario/cadastrarFuncionario.h"
 
 #define MAX_BUFFER 1024
 #define MAX_ALUNOS 1024
@@ -171,8 +173,18 @@ void telaCadastrarAluno(void)
 
         if (validarCPF(buffer))
         {
-            strcpy(novo_aluno.cpf, buffer);
-            cpfValido = true;
+            if (verificarCPFUnico(buffer, lista_alunos, total_alunos, lista_funcionarios, total_funcionarios))
+            {
+                strcpy(novo_aluno.cpf, buffer);
+                cpfValido = true;
+            }
+            else
+            {
+                cabecalho_cadastro("CPF duplicado");
+                ui_text_line("CPF ja cadastrado para outro registro.");
+                ui_section_title("Pressione <ENTER> para tentar novamente");
+                getchar();
+            }
         }
         else
         {
@@ -264,8 +276,18 @@ void telaCadastrarAluno(void)
 
         if (validarEmail(buffer))
         {
-            strcpy(novo_aluno.email, buffer);
-            emailValido = true;
+            if (verificarEmailUnico(buffer, lista_alunos, total_alunos, lista_funcionarios, total_funcionarios))
+            {
+                strcpy(novo_aluno.email, buffer);
+                emailValido = true;
+            }
+            else
+            {
+                cabecalho_cadastro("E-mail duplicado");
+                ui_text_line("E-mail ja cadastrado para outro registro.");
+                ui_section_title("Pressione <ENTER> para tentar novamente");
+                getchar();
+            }
         }
         else
         {
