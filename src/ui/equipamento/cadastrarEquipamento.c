@@ -7,11 +7,8 @@
 #include <stdbool.h>
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
-#include "arquivoEquipamento.h" // Persistência
-
-
-
-#define MAX_BUFFER 1024
+#include "arquivoEquipamento.h"
+#include "ui/utils/consoleLayout.h"
 
 struct equipamento lista_equipamentos[MAX_EQUIPAMENTOS];
 int total_equipamentos = 0;
@@ -22,7 +19,7 @@ void calcularProximaManutencao(const char *data, char *saida)
     struct tm tm_data = {0};
     if (strptime(data, "%d/%m/%Y", &tm_data) == NULL)
     {
-        strcpy(saida, "Inválida");
+        strcpy(saida, "Invalida");
         return;
     }
 
@@ -32,60 +29,74 @@ void calcularProximaManutencao(const char *data, char *saida)
     strftime(saida, 11, "%d/%m/%Y", &tm_data);
 }
 
-void telaCadastrarEquipamento(void)
+static void cabecalho_equip(const char *subtitulo)
 {
     limparTela();
-    printf("=========================================================================\n");
-    printf("===                      CADASTRAR EQUIPAMENTO                        ===\n");
-    printf("=========================================================================\n");
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void rodape_prompt(const char *msg)
+{
+    ui_line('-');
+    ui_text_line(msg);
+    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_line('=');
+}
+
+static bool ler_linha(char *dest, size_t size)
+{
+    if (fgets(dest, size, stdin) == NULL)
+    {
+        dest[0] = '\0';
+        return false;
+    }
+    dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
+
+void telaCadastrarEquipamento(void)
+{
+    cabecalho_equip("Cadastrar equipamento");
 
     if (total_equipamentos >= MAX_EQUIPAMENTOS)
     {
-        printf("=== LIMITE MÁXIMO DE EQUIPAMENTOS ALCANÇADO ===\n");
+        ui_center_text("Limite maximo de equipamentos alcancado.");
+        ui_section_title("Pressione <ENTER> para voltar");
         getchar();
         limparTela();
         return;
     }
 
-    struct equipamento novo;
-
+    struct equipamento novo = {0};
     snprintf(novo.id, sizeof(novo.id), "%d", total_equipamentos + 1);
 
-    // Nome do equipamento
-    printf("Nome do equipamento: ");
-    fgets(novo.nome, sizeof(novo.nome), stdin);
-    novo.nome[strcspn(novo.nome, "\n")] = '\0';
+    ui_text_line("Nome do equipamento.");
+    rodape_prompt("Nome:");
+    if (!ler_linha(novo.nome, sizeof(novo.nome)))
+        return;
 
-    // Última manutenção
-    printf("Data da última manutenção (dd/mm/aaaa): ");
-    fgets(novo.ultima_manutencao, sizeof(novo.ultima_manutencao), stdin);
-    novo.ultima_manutencao[strcspn(novo.ultima_manutencao, "\n")] = '\0';
+    cabecalho_equip("Cadastrar equipamento");
+    ui_text_line("Data da ultima manutencao (dd/mm/aaaa).");
+    rodape_prompt("Data da ultima manutencao:");
+    if (!ler_linha(novo.ultima_manutencao, sizeof(novo.ultima_manutencao)))
+        return;
 
-    // Próxima manutenção
     calcularProximaManutencao(novo.ultima_manutencao, novo.proxima_manutencao);
 
-    // Limpar buffer antes da categoria
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF)
-        ;
+    cabecalho_equip("Cadastrar equipamento");
+    ui_text_line("Categoria (grupo muscular principal).");
+    rodape_prompt("Categoria:");
+    if (!ler_linha(novo.categoria, sizeof(novo.categoria)))
+        return;
 
-    // Categoria
-    printf("Categoria (grupo muscular principal): ");
-    fgets(novo.categoria, sizeof(novo.categoria), stdin);
-    novo.categoria[strcspn(novo.categoria, "\n")] = '\0';
-
-    // Marcar ativo e adicionar
     novo.ativo = true;
     lista_equipamentos[total_equipamentos++] = novo;
-
-    // Salvar automaticamente usando o arquivo de persistência
     salvarEquipamentos(lista_equipamentos, total_equipamentos);
 
-    // Mensagem de sucesso
-    printf("\n=========================================================================\n");
-    printf("===                  EQUIPAMENTO CADASTRADO COM SUCESSO               ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER> para continuar...");
+    cabecalho_equip("Cadastrar equipamento");
+    ui_center_text("Equipamento cadastrado com sucesso.");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }

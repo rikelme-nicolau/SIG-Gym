@@ -9,6 +9,37 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/aluno/cadastrarAluno.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
+
+#define PLAN_COL_ID 8
+#define PLAN_COL_NOME 18
+#define PLAN_COL_STATUS 7
+#define PLAN_COL_VALOR 8
+#define PLAN_COL_ALUNOS 6
+#define PLAN_COL_RECEITA 10
+
+#define RANK_COL_POS 4
+#define RANK_COL_NOME 20
+#define RANK_COL_ALUNOS 8
+#define RANK_COL_PCT 8
+
+#define REC_COL_PLANO 20
+#define REC_COL_ALUNOS 8
+#define REC_COL_MENSAL 12
+#define REC_COL_ANUAL 12
+#define REC_COL_PCT 8
+
+#define ATIV_COL_NOME 24
+#define ATIV_COL_PLANOS 8
+#define ATIV_COL_ALUNOS 10
+#define ATIV_COL_PCT 8
+
+#define TOP_COL_RANK 4
+#define TOP_COL_NOME 16
+#define TOP_COL_ALUNOS 8
+#define TOP_COL_REC_M 10
+#define TOP_COL_REC_A 10
+#define TOP_COL_PCT 8
 
 static void relatorioListagemPlanos(void);
 static void relatorioRankingPopularidade(void);
@@ -35,6 +66,223 @@ static int compararPlanosView(const struct PlanoView *a, const struct PlanoView 
 static int compararStringsInsensitive(const char *a, const char *b);
 static int contarAlunosNoPlano(const struct plano *plano);
 static void quicksortPlanosPorReceita(struct PlanoView *lista, int inicio, int fim);
+static void cabecalho_relatorio(const char *subtitulo);
+static void aguardar_voltar(void);
+static void tabela_planos_header(void);
+static void tabela_planos_row(const struct PlanoView *view);
+static void tabela_rank_header(void);
+static void tabela_rank_row(int pos, const struct PlanoView *view, double percentual);
+static void tabela_receita_header(void);
+static void tabela_receita_row(const struct PlanoView *view, double pct);
+static void tabela_atividades_header(void);
+static void tabela_atividades_row(const char *nome, int planos, int alunos, double pct);
+
+static void cabecalho_relatorio(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void aguardar_voltar(void)
+{
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_planos_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", PLAN_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", PLAN_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", PLAN_COL_STATUS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Valor", PLAN_COL_VALOR);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", PLAN_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Receita", PLAN_COL_RECEITA);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_planos_row(const struct PlanoView *view)
+{
+    if (view == NULL || view->plano == NULL)
+    {
+        return;
+    }
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[32];
+    ui_clip_utf8(view->plano->nome, 18, nomeClip, sizeof(nomeClip));
+    char status[8];
+    strncpy(status, view->plano->ativo ? "Ativo" : "Inativo", sizeof(status));
+    status[sizeof(status) - 1] = '\0';
+    char valor[16];
+    snprintf(valor, sizeof(valor), "R$%.2f", view->plano->valor);
+    char alunos[12];
+    snprintf(alunos, sizeof(alunos), "%d", view->alunosVinculados);
+    char receita[16];
+    snprintf(receita, sizeof(receita), "R$%.2f", view->receita);
+
+    ui_append_col(linha, sizeof(linha), &pos, view->plano->id, PLAN_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, PLAN_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, status, PLAN_COL_STATUS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, valor, PLAN_COL_VALOR);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, alunos, PLAN_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, receita, PLAN_COL_RECEITA);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_rank_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Pos", RANK_COL_POS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", RANK_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", RANK_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "%", RANK_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_rank_row(int posRank, const struct PlanoView *view, double percentual)
+{
+    if (view == NULL || view->plano == NULL)
+    {
+        return;
+    }
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char rankStr[8];
+    snprintf(rankStr, sizeof(rankStr), "%dº", posRank);
+    char nomeClip[32];
+    ui_clip_utf8(view->plano->nome, 20, nomeClip, sizeof(nomeClip));
+    char alunosStr[16];
+    snprintf(alunosStr, sizeof(alunosStr), "%d", view->alunosVinculados);
+    char pctStr[16];
+    snprintf(pctStr, sizeof(pctStr), "%.2f", percentual);
+
+    ui_append_col(linha, sizeof(linha), &pos, rankStr, RANK_COL_POS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, RANK_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, alunosStr, RANK_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctStr, RANK_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_receita_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", REC_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", REC_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Rec. Mensal", REC_COL_MENSAL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Rec. Anual", REC_COL_ANUAL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "% Receita", REC_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_receita_row(const struct PlanoView *view, double pct)
+{
+    if (view == NULL || view->plano == NULL)
+    {
+        return;
+    }
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[40];
+    ui_clip_utf8(view->plano->nome, 20, nomeClip, sizeof(nomeClip));
+    char alunosStr[16];
+    snprintf(alunosStr, sizeof(alunosStr), "%d", view->alunosVinculados);
+    char recMensal[24];
+    snprintf(recMensal, sizeof(recMensal), "R$ %.2f", view->receita);
+    char recAnual[24];
+    snprintf(recAnual, sizeof(recAnual), "R$ %.2f", view->receita * 12.0);
+    char pctStr[16];
+    snprintf(pctStr, sizeof(pctStr), "%.2f", pct);
+
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, REC_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, alunosStr, REC_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, recMensal, REC_COL_MENSAL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, recAnual, REC_COL_ANUAL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctStr, REC_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_atividades_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Atividade", ATIV_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Planos", ATIV_COL_PLANOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", ATIV_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "%", ATIV_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_atividades_row(const char *nome, int planos, int alunos, double pct)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[48];
+    ui_clip_utf8(nome != NULL ? nome : "N/A", 24, nomeClip, sizeof(nomeClip));
+    char planosStr[12];
+    snprintf(planosStr, sizeof(planosStr), "%d", planos);
+    char alunosStr[16];
+    snprintf(alunosStr, sizeof(alunosStr), "%d", alunos);
+    char pctStr[16];
+    snprintf(pctStr, sizeof(pctStr), "%.2f", pct);
+
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, ATIV_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, planosStr, ATIV_COL_PLANOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, alunosStr, ATIV_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctStr, ATIV_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
 
 void moduloRelatoriosPlano(void)
 {
@@ -42,21 +290,22 @@ void moduloRelatoriosPlano(void)
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===                 RELATORIOS DE PLANOS - MENU               ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  LISTAGEM COMPLETA DE PLANOS                         ===\n");
-        printf("===  [2]  RANKING DE POPULARIDADE                             ===\n");
-        printf("===  [3]  ANALISE DE RECEITA POR PLANO                        ===\n");
-        printf("===  [4]  DISTRIBUICAO DE ATIVIDADES                          ===\n");
-        printf("===  [5]  OCUPACAO POR HORARIO DE PLANO                       ===\n");
-        printf("===  [6]  TOP 5 PLANOS MAIS LUCRATIVOS                        ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios de Planos");
+        ui_empty_line();
+        ui_menu_option('1', "Listagem completa de planos");
+        ui_menu_option('2', "Ranking de popularidade");
+        ui_menu_option('3', "Analise de receita por plano");
+        ui_menu_option('4', "Distribuicao de atividades");
+        ui_menu_option('5', "Ocupacao por horario de plano");
+        ui_menu_option('6', "Top 5 planos mais lucrativos");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
         limparTela();
@@ -99,19 +348,12 @@ void moduloRelatoriosPlano(void)
 
 static void relatorioListagemPlanos(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                RELATORIO - LISTAGEM COMPLETA DE PLANOS           ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Listagem completa de planos");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -141,109 +383,59 @@ static void relatorioListagemPlanos(void)
 
     if (totalFiltrados == 0)
     {
-        printf("\nNenhum plano encontrado com os filtros informados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nenhum plano encontrado");
+        ui_text_line("Ajuste os filtros e tente novamente.");
+        aguardar_voltar();
         return;
     }
 
     ordenarPlanos(views, totalFiltrados, ordenacao);
 
-    printf("\nStatus: %s | Ordenacao: ",
-           filtroStatus == '1' ? "Somente ativos" : filtroStatus == '2' ? "Somente inativos"
-                                                                        : "Todos");
-    const char *setaOrdenacaoPlano = (ordenacao == '2' || ordenacao == '3') ? "▼" : "▲";
-    switch (ordenacao)
-    {
-    case '2':
-        printf("Alunos vinculados");
-        break;
-    case '3':
-        printf("Valor do plano");
-        break;
-    case '1':
-    default:
-        printf("Nome");
-        break;
-    }
-    printf(" %s | Termo: %s\n", setaOrdenacaoPlano, termo[0] != '\0' ? termo : "Nenhum");
-    printf(">>> Ordenando por ");
-    switch (ordenacao)
-    {
-    case '2':
-        printf("Alunos vinculados %s\n", setaOrdenacaoPlano);
-        break;
-    case '3':
-        printf("Valor do plano %s\n", setaOrdenacaoPlano);
-        break;
-    case '1':
-    default:
-        printf("Nome %s\n", setaOrdenacaoPlano);
-        break;
-    }
-    printf("-------------------------------------------------------------------------\n");
+    cabecalho_relatorio("Relatorio - Listagem completa de planos");
 
+    ui_section_title("Filtros aplicados");
+    char linha[UI_INNER + 1];
+    const char *statusDesc = filtroStatus == '1' ? "Somente ativos" : (filtroStatus == '2' ? "Somente inativos" : "Todos");
+    snprintf(linha, sizeof(linha), "Status: %s | Ordenacao: %s",
+             statusDesc,
+             ordenacao == '2' ? "Alunos" : (ordenacao == '3' ? "Valor" : "Nome"));
+    ui_text_line(linha);
+    char termoCurto[32];
+    const char *termoOrigem = termo[0] != '\0' ? termo : "Nenhum";
+    ui_clip_utf8(termoOrigem, 28, termoCurto, sizeof(termoCurto));
+    snprintf(linha, sizeof(linha), "Termo: %s", termoCurto);
+    ui_text_line(linha);
+    ui_line('-');
+
+    tabela_planos_header();
     double receitaTotal = 0.0;
     int alunosTotais = 0;
-
     for (int i = 0; i < totalFiltrados; i++)
     {
-        const struct plano *plano = views[i].plano;
-        printf("[%s] %s\n", plano->id, plano->nome);
-        printf("Horario: %s - %s | Valor: R$ %.2f | Status: %s\n",
-               plano->horario_inicio,
-               plano->horario_fim,
-               plano->valor,
-               plano->ativo ? "Ativo" : "Inativo");
-
-        if (plano->total_atividades > 0)
-        {
-            printf("Atividades:\n");
-            for (int j = 0; j < plano->total_atividades; j++)
-            {
-                printf("  - %s\n", plano->atividades[j]);
-            }
-        }
-        else
-        {
-            printf("Atividades: Nenhuma cadastrada.\n");
-        }
-
-        printf("Alunos vinculados: %d | Receita estimada: R$ %.2f\n",
-               views[i].alunosVinculados,
-               views[i].receita);
-        printf("-------------------------------------------------------------------------\n");
-
+        tabela_planos_row(&views[i]);
         alunosTotais += views[i].alunosVinculados;
         receitaTotal += views[i].receita;
     }
+    ui_line('-');
 
-    printf("Total de planos listados: %d\n", totalFiltrados);
-    printf("Total de alunos vinculados: %d\n", alunosTotais);
-    printf("Receita total estimada: R$ %.2f\n", receitaTotal);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_section_title("Totais");
+    snprintf(linha, sizeof(linha), "Planos listados: %d | Alunos vinculados: %d", totalFiltrados, alunosTotais);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Receita total estimada: R$ %.2f", receitaTotal);
+    ui_text_line(linha);
+    ui_line('-');
+
+    aguardar_voltar();
 }
 
 static void relatorioRankingPopularidade(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                  RELATORIO - RANKING DE POPULARIDADE              ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Ranking de popularidade");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -263,11 +455,8 @@ static void relatorioRankingPopularidade(void)
 
     if (totalAlunos == 0)
     {
-        printf("Nenhum aluno vinculado a planos para gerar o ranking.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nenhum aluno vinculado a planos para gerar o ranking.");
+        aguardar_voltar();
         return;
     }
 
@@ -284,38 +473,29 @@ static void relatorioRankingPopularidade(void)
         }
     }
 
+    tabela_rank_header();
     for (int i = 0; i < totalRanking; i++)
     {
         double percentual = totalAlunos > 0 ? ((double)ranking[i].alunosVinculados / totalAlunos) * 100.0 : 0.0;
-        printf("%dº - %s: %d aluno%s (%.2f%%)\n",
-               i + 1,
-               ranking[i].plano->nome,
-               ranking[i].alunosVinculados,
-               ranking[i].alunosVinculados == 1 ? "" : "s",
-               percentual);
+        tabela_rank_row(i + 1, &ranking[i], percentual);
     }
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de alunos vinculados: %d", totalAlunos);
+    ui_text_line(linha);
+    ui_line('-');
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    aguardar_voltar();
 }
 
 static void relatorioReceitaPorPlano(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                RELATORIO - ANALISE DE RECEITA POR PLANO           ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Receita por plano");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -345,20 +525,14 @@ static void relatorioReceitaPorPlano(void)
 
     if (totalViews == 0)
     {
-        printf("Nao ha planos que atendam ao filtro informado.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nenhum plano atende ao filtro");
+        ui_text_line("Ajuste o status e tente novamente.");
+        aguardar_voltar();
         return;
     }
 
     const struct PlanoView *maior = &views[0];
     const struct PlanoView *menor = &views[0];
-
-    printf("+------------------------------+----------+-------------+-------------+-------------+\n");
-    printf("| Plano                        | Alunos   | Rec. Mensal | Rec. Anual  | %% Receita  |\n");
-    printf("+------------------------------+----------+-------------+-------------+-------------+\n");
 
     for (int i = 0; i < totalViews; i++)
     {
@@ -370,44 +544,41 @@ static void relatorioReceitaPorPlano(void)
         {
             menor = &views[i];
         }
-
-        double percentual = receitaTotal > 0.0 ? (views[i].receita / receitaTotal) * 100.0 : 0.0;
-
-        printf("| %-28.28s | %8d | R$ %9.2f | R$ %9.2f | %9.2f |\n",
-               views[i].plano->nome,
-               views[i].alunosVinculados,
-               views[i].receita,
-               views[i].receita * 12.0,
-               percentual);
     }
 
-    printf("+------------------------------+----------+-------------+-------------+-------------+\n");
-    printf("Totais: Receita mensal = R$ %.2f | Receita anual = R$ %.2f\n",
-           receitaTotal,
-           receitaTotal * 12.0);
-    printf("Maior receita: %s (R$ %.2f)\n", maior->plano->nome, maior->receita);
-    printf("Menor receita: %s (R$ %.2f)\n", menor->plano->nome, menor->receita);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    tabela_receita_header();
+    for (int i = 0; i < totalViews; i++)
+    {
+        double percentual = receitaTotal > 0.0 ? (views[i].receita / receitaTotal) * 100.0 : 0.0;
+        tabela_receita_row(&views[i], percentual);
+    }
+    ui_line('-');
+
+    char linha[UI_INNER + 1];
+    ui_section_title("Totais e destaques");
+    snprintf(linha, sizeof(linha), "Receita mensal total: R$ %.2f | Receita anual: R$ %.2f", receitaTotal, receitaTotal * 12.0);
+    ui_text_line(linha);
+    char nomeMaior[48];
+    ui_clip_utf8(maior->plano->nome, 30, nomeMaior, sizeof(nomeMaior));
+    snprintf(linha, sizeof(linha), "Maior receita: %s (R$ %.2f)", nomeMaior, maior->receita);
+    ui_text_line(linha);
+    char nomeMenor[48];
+    ui_clip_utf8(menor->plano->nome, 30, nomeMenor, sizeof(nomeMenor));
+    snprintf(linha, sizeof(linha), "Menor receita: %s (R$ %.2f)", nomeMenor, menor->receita);
+    ui_text_line(linha);
+    ui_line('-');
+
+    aguardar_voltar();
 }
 
 static void relatorioDistribuicaoAtividades(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===            RELATORIO - DISTRIBUICAO DE ATIVIDADES                ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Distribuicao de atividades");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -420,7 +591,6 @@ static void relatorioDistribuicaoAtividades(void)
 
     struct AtividadeView atividades[MAX_PLANOS * MAX_ATIVIDADES];
     int totalAtividades = 0;
-
     char bufferLower[64];
 
     for (int i = 0; i < total_planos; i++)
@@ -435,7 +605,7 @@ static void relatorioDistribuicaoAtividades(void)
         for (int j = 0; j < lista_planos[i].total_atividades; j++)
         {
             const char *atividade = lista_planos[i].atividades[j];
-            if (atividade[0] == '\0')
+            if (atividade == NULL || atividade[0] == '\0')
             {
                 continue;
             }
@@ -481,11 +651,8 @@ static void relatorioDistribuicaoAtividades(void)
 
     if (totalAtividades == 0)
     {
-        printf("Nenhuma atividade cadastrada nos planos.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nenhuma atividade cadastrada nos planos.");
+        aguardar_voltar();
         return;
     }
 
@@ -508,42 +675,31 @@ static void relatorioDistribuicaoAtividades(void)
         totalAlunosAcessando += atividades[i].alunos;
     }
 
-    printf("+------------------------------+------------+-----------+\n");
-    printf("| Atividade                    | Planos     | Alunos    |\n");
-    printf("+------------------------------+------------+-----------+\n");
+    tabela_atividades_header();
     for (int i = 0; i < totalAtividades; i++)
     {
         double percentual = totalAlunosAcessando > 0 ? ((double)atividades[i].alunos / totalAlunosAcessando) * 100.0 : 0.0;
-        printf("| %-28.28s | %10d | %7d (%5.2f%%) |\n",
-               atividades[i].nome,
-               atividades[i].planos,
-               atividades[i].alunos,
-               percentual);
+        tabela_atividades_row(atividades[i].nome, atividades[i].planos, atividades[i].alunos, percentual);
     }
-    printf("+------------------------------+------------+-----------+\n");
-    printf("Total de atividades analisadas: %d\n", totalAtividades);
-    printf("Total de alunos com acesso: %d\n", totalAlunosAcessando);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de atividades analisadas: %d", totalAtividades);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Total de alunos com acesso: %d", totalAlunosAcessando);
+    ui_text_line(linha);
+    ui_line('-');
+
+    aguardar_voltar();
 }
 
 static void relatorioOcupacaoHorarioPlano(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===             RELATORIO - OCUPACAO POR HORARIO DE PLANO            ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Ocupacao por horario de plano");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -610,48 +766,43 @@ static void relatorioOcupacaoHorarioPlano(void)
 
     for (int faixa = 0; faixa < TOTAL_FAIXAS; faixa++)
     {
-        printf("\n%s\n", faixasNome[faixa]);
-        printf("----------------------------------------\n");
+        ui_section_title(faixasNome[faixa]);
 
         if (contadores[faixa] == 0)
         {
-            printf("Nenhum plano nesta faixa.\n");
+            ui_text_line("Nenhum plano nesta faixa.");
+            continue;
         }
 
         for (int i = 0; i < contadores[faixa]; i++)
         {
-            printf("  - %s: %d aluno%s\n",
-                   distribuicao[faixa][i].plano->nome,
-                   distribuicao[faixa][i].alunos,
-                   distribuicao[faixa][i].alunos == 1 ? "" : "s");
+            char linha[UI_INNER + 1];
+            char nomeClip[40];
+            ui_clip_utf8(distribuicao[faixa][i].plano->nome, 28, nomeClip, sizeof(nomeClip));
+            snprintf(linha, sizeof(linha), "- %s: %d aluno%s", nomeClip,
+                     distribuicao[faixa][i].alunos,
+                     distribuicao[faixa][i].alunos == 1 ? "" : "s");
+            ui_text_line(linha);
         }
 
-        printf("  Total: %d aluno%s\n",
-               alunosPorFaixa[faixa],
-               alunosPorFaixa[faixa] == 1 ? "" : "s");
+        char resumo[UI_INNER + 1];
+        snprintf(resumo, sizeof(resumo), "Total na faixa: %d aluno%s",
+                 alunosPorFaixa[faixa], alunosPorFaixa[faixa] == 1 ? "" : "s");
+        ui_text_line(resumo);
+        ui_line('-');
     }
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    aguardar_voltar();
 }
 
 static void relatorioPlanosMaisLucrativos(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===               RELATORIO - TOP 5 PLANOS MAIS LUCRATIVOS           ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Top 5 planos mais lucrativos");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -676,49 +827,85 @@ static void relatorioPlanosMaisLucrativos(void)
 
     if (total == 0)
     {
-        printf("Nao ha planos ativos para calcular receita.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos ativos para calcular receita.");
+        aguardar_voltar();
         return;
     }
 
-    // Ordena por receita decrescente usando quicksort customizado (pivô no meio).
     quicksortPlanosPorReceita(views, 0, total - 1);
 
     int limite = total < 5 ? total : 5;
 
-    printf("+------+----------------------+----------+---------------+---------------+-------------+\n");
-    printf("| Rank | Plano                | Alunos   | Receita Mensal| Receita Anual | %% Receita   |\n");
-    printf("+------+----------------------+----------+---------------+---------------+-------------+\n");
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Rank", TOP_COL_RANK);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", TOP_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", TOP_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Rec. M", TOP_COL_REC_M);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Rec. A", TOP_COL_REC_A);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "%", TOP_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+
     for (int i = 0; i < limite; i++)
     {
         double percentual = receitaTotal > 0.0 ? (views[i].receita / receitaTotal) * 100.0 : 0.0;
-        printf("| %4d | %-20.20s | %8d | %13.2f | %13.2f | %10.2f%% |\n",
-               i + 1,
-               views[i].plano->nome,
-               views[i].alunosVinculados,
-               views[i].receita,
-               views[i].receita * 12.0,
-               percentual);
+        pos = 0;
+        char rankStr[8];
+        snprintf(rankStr, sizeof(rankStr), "%d", i + 1);
+        char nomeClip[32];
+        ui_clip_utf8(views[i].plano->nome, 16, nomeClip, sizeof(nomeClip));
+        char alunosStr[16];
+        snprintf(alunosStr, sizeof(alunosStr), "%d", views[i].alunosVinculados);
+        char recMensal[24];
+        snprintf(recMensal, sizeof(recMensal), "%.2f", views[i].receita);
+        char recAnual[24];
+        snprintf(recAnual, sizeof(recAnual), "%.2f", views[i].receita * 12.0);
+        char pctStr[16];
+        snprintf(pctStr, sizeof(pctStr), "%.2f", percentual);
+
+        ui_append_col(linha, sizeof(linha), &pos, rankStr, TOP_COL_RANK);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, nomeClip, TOP_COL_NOME);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, alunosStr, TOP_COL_ALUNOS);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, recMensal, TOP_COL_REC_M);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, recAnual, TOP_COL_REC_A);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, pctStr, TOP_COL_PCT);
+        linha[pos] = '\0';
+        ui_text_line(linha);
     }
-    printf("+------+----------------------+----------+---------------+---------------+-------------+\n");
-    printf("Total de planos considerados: %d | Receita total mensal: %.2f\n", total, receitaTotal);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "Planos considerados: %d | Receita total mensal: %.2f", total, receitaTotal);
+    ui_text_line(linha);
+    ui_line('-');
+
+    aguardar_voltar();
 }
 
 static char selecionarStatusPlano(void)
 {
     while (1)
     {
-        printf("\nSelecione o status dos planos:\n");
-        printf("[1] Somente ativos\n");
-        printf("[2] Somente inativos\n");
-        printf("[3] Todos\n");
+        cabecalho_relatorio("Filtro - Status dos planos");
+        ui_menu_option('1', "Somente ativos");
+        ui_menu_option('2', "Somente inativos");
+        ui_menu_option('3', "Todos");
+        ui_section_title("Escolha uma opcao");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         char op = lerTecla();
         if (op == '1' || op == '2' || op == '3')
@@ -732,7 +919,11 @@ static char selecionarStatusPlano(void)
 
 static void solicitarTermoPlanos(char *dest, size_t tamanho)
 {
-    printf("\nDigite parte do nome, ID ou atividade para buscar (ENTER para ignorar):\n");
+    cabecalho_relatorio("Filtro - Termo de busca");
+    ui_text_line("Digite parte do nome, ID ou atividade para buscar (ENTER para ignorar):");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
     if (fgets(dest, tamanho, stdin) != NULL)
     {
         dest[strcspn(dest, "\n")] = '\0';
@@ -747,10 +938,14 @@ static char selecionarOrdenacaoPlanos(void)
 {
     while (1)
     {
-        printf("\nSelecione a ordenacao desejada:\n");
-        printf("[1] Nome\n");
-        printf("[2] Quantidade de alunos\n");
-        printf("[3] Valor do plano\n");
+        cabecalho_relatorio("Filtro - Ordenacao de planos");
+        ui_menu_option('1', "Nome");
+        ui_menu_option('2', "Quantidade de alunos");
+        ui_menu_option('3', "Valor do plano");
+        ui_section_title("Escolha uma opcao");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         char op = lerTecla();
         if (op == '1' || op == '2' || op == '3')

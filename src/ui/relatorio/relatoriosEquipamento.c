@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 700
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,22 @@
 #include "relatoriosEquipamento.h"
 #include "src/ui/equipamento/cadastrarEquipamento.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
+
+#define LIST_COL_ID 8
+#define LIST_COL_NOME 18
+#define LIST_COL_CATEG 14
+#define LIST_COL_PROX 12
+#define LIST_COL_STATUS 12
+
+#define CAT_COL_NOME 30
+#define CAT_COL_QTD 10
+#define CAT_COL_PCT 10
+
+#define CRONO_COL_ID 8
+#define CRONO_COL_NOME 18
+#define CRONO_COL_DATA 12
+#define CRONO_COL_STATUS 14
 
 struct EquipamentoView
 {
@@ -34,6 +51,141 @@ static char selecionarFiltroManutencao(void);
 static char selecionarOrdenacaoEquipamentos(void);
 static int compararEquipamentos(const void *a, const void *b);
 static double calcularDiasParaManutencao(const char *data);
+static void cabecalho_relatorio(const char *subtitulo);
+static void aguardar_voltar(void);
+static void tabela_listagem_header(void);
+static void tabela_listagem_row(const struct EquipamentoView *view, const char *status);
+static void tabela_categoria_resumo_header(void);
+static void tabela_categoria_resumo_row(const char *nome, int quantidade, double pct);
+static void tabela_crono_header(const char *titulo);
+static void tabela_crono_row(const struct equipamento *eq, const char *status);
+
+static void cabecalho_relatorio(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void aguardar_voltar(void)
+{
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_listagem_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", LIST_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", LIST_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Categoria", LIST_COL_CATEG);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Prox. Manut", LIST_COL_PROX);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", LIST_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_listagem_row(const struct EquipamentoView *view, const char *status)
+{
+    if (view == NULL || view->equip == NULL)
+    {
+        return;
+    }
+
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, view->equip->id, LIST_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, view->equip->nome, LIST_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, view->equip->categoria, LIST_COL_CATEG);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, view->equip->proxima_manutencao, LIST_COL_PROX);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, status, LIST_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_categoria_resumo_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Categoria", CAT_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Qtd", CAT_COL_QTD);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "%", CAT_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_categoria_resumo_row(const char *nome, int quantidade, double pct)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[48];
+    ui_clip_utf8(nome != NULL ? nome : "N/A", 30, nomeClip, sizeof(nomeClip));
+    char qtdStr[12];
+    snprintf(qtdStr, sizeof(qtdStr), "%d", quantidade);
+    char pctStr[16];
+    snprintf(pctStr, sizeof(pctStr), "%.2f", pct);
+
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, CAT_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, qtdStr, CAT_COL_QTD);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctStr, CAT_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_crono_header(const char *titulo)
+{
+    ui_section_title(titulo);
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", CRONO_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", CRONO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Data", CRONO_COL_DATA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", CRONO_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_crono_row(const struct equipamento *eq, const char *status)
+{
+    if (eq == NULL)
+    {
+        return;
+    }
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, eq->id, CRONO_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->nome, CRONO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->proxima_manutencao, CRONO_COL_DATA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, status, CRONO_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
 
 void moduloRelatoriosEquipamento(void)
 {
@@ -41,22 +193,23 @@ void moduloRelatoriosEquipamento(void)
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===              RELATORIOS DE EQUIPAMENTOS - MENU            ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  LISTAGEM COMPLETA DE EQUIPAMENTOS                   ===\n");
-        printf("===  [2]  EQUIPAMENTOS POR CATEGORIA                          ===\n");
-        printf("===  [3]  CRONOGRAMA DE MANUTENCOES                           ===\n");
-        printf("===  [4]  MANUTENCOES VENCIDAS (URGENTE)                      ===\n");
-        printf("===  [5]  MANUTENCOES PROXIMAS (7/15/30 DIAS)                 ===\n");
-        printf("===  [6]  HISTORICO DE MANUTENCOES                            ===\n");
-        printf("===  [7]  AGRUPADOS POR CATEGORIA (SUMARIO)                   ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios de Equipamentos");
+        ui_empty_line();
+        ui_menu_option('1', "Listagem completa de equipamentos");
+        ui_menu_option('2', "Equipamentos por categoria");
+        ui_menu_option('3', "Cronograma de manutencoes");
+        ui_menu_option('4', "Manutencoes vencidas (urgente)");
+        ui_menu_option('5', "Manutencoes proximas (7/15/30 dias)");
+        ui_menu_option('6', "Historico de manutencoes");
+        ui_menu_option('7', "Agrupados por categoria (sumario)");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
         limparTela();
@@ -96,19 +249,12 @@ void moduloRelatoriosEquipamento(void)
 
 static void relatorioListagemEquipamentos(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===            RELATORIO - LISTAGEM COMPLETA DE EQUIPAMENTOS         ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Listagem completa de equipamentos");
 
     if (total_equipamentos == 0)
     {
-        printf("Nao ha equipamentos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha equipamentos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -159,67 +305,84 @@ static void relatorioListagemEquipamentos(void)
 
     if (totalLista == 0)
     {
-        printf("Nenhum equipamento atende aos filtros informados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nenhum equipamento encontrado");
+        ui_text_line("Ajuste os filtros e tente novamente.");
+        aguardar_voltar();
         return;
     }
 
     qsort(lista, totalLista, sizeof(struct EquipamentoView), compararEquipamentos);
 
-    printf("+----------+----------------------+----------------------+---------------+-----------+\n");
-    printf("| ID       | Nome                 | Categoria            | Prox. Manut.  | Status    |\n");
-    printf("+----------+----------------------+----------------------+---------------+-----------+\n");
+    cabecalho_relatorio("Relatorio - Listagem completa de equipamentos");
+    ui_section_title("Filtros aplicados");
+    char linha[UI_INNER + 1];
+    char catFiltro[24];
+    if (filtroCategoriaSelecionado == '0')
+    {
+        strncpy(catFiltro, "Todas", sizeof(catFiltro));
+    }
+    else
+    {
+        snprintf(catFiltro, sizeof(catFiltro), "Inicial '%c'", filtroCategoriaSelecionado);
+    }
+    const char *statusFiltro = "Todos";
+    switch (filtroManutencaoSelecionado)
+    {
+    case '1':
+        statusFiltro = "Somente vencidas";
+        break;
+    case '2':
+        statusFiltro = "Proximas 7 dias";
+        break;
+    case '3':
+        statusFiltro = "Proximas 15 dias";
+        break;
+    case '4':
+        statusFiltro = "Proximas 30 dias";
+        break;
+    default:
+        statusFiltro = "Todos";
+        break;
+    }
+    const char *ordenacao = criterioOrdenacaoSelecionado == '2' ? "Categoria" : (criterioOrdenacaoSelecionado == '3' ? "Proxima manutencao" : "Nome");
+    snprintf(linha, sizeof(linha), "Categoria: %s | Manutencao: %s", catFiltro, statusFiltro);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Ordenacao: %s", ordenacao);
+    ui_text_line(linha);
+    ui_line('-');
 
+    tabela_listagem_header();
     for (int i = 0; i < totalLista; i++)
     {
-        const struct equipamento *eq = lista[i].equip;
-        double dias = lista[i].diasRestantes;
-        const char *icone = "✓ Em dia";
-
-        if (dias < 0)
+        const struct EquipamentoView *vw = &lista[i];
+        const char *status = "Em dia";
+        if (vw->diasRestantes < 0)
         {
-            icone = "✗ Vencida";
+            status = "Vencida";
         }
-        else if (dias <= 7)
+        else if (vw->diasRestantes <= 7)
         {
-            icone = "⚠ Proxima";
+            status = "Proxima";
         }
-
-        printf("| %-8.8s | %-20.20s | %-20.20s | %-13.13s | %-9.9s |\n",
-               eq->id,
-               eq->nome,
-               eq->categoria,
-               eq->proxima_manutencao,
-               icone);
+        tabela_listagem_row(vw, status);
     }
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "Total listado: %d", totalLista);
+    ui_text_line(linha);
+    ui_text_line("Sugestao: revisar manutencoes pendentes e atualizar o cronograma.");
+    ui_line('-');
 
-    printf("+----------+----------------------+----------------------+---------------+-----------+\n");
-    printf("Total listado: %d\n", totalLista);
-    printf("Sugestao: revisar status de manutencao e vincular acao conforme necessario.\n");
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    aguardar_voltar();
 }
 
 static void relatorioEquipamentosPorCategoria(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===             RELATORIO - EQUIPAMENTOS POR CATEGORIA               ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Equipamentos por categoria");
 
     if (total_equipamentos == 0)
     {
-        printf("Nao ha equipamentos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha equipamentos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -280,11 +443,9 @@ static void relatorioEquipamentosPorCategoria(void)
 
     if (totalCategorias == 0)
     {
-        printf("Nao foi possivel agrupar equipamentos por categoria.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nao foi possivel agrupar");
+        ui_text_line("Nenhum equipamento encontrado.");
+        aguardar_voltar();
         return;
     }
 
@@ -303,43 +464,47 @@ static void relatorioEquipamentosPorCategoria(void)
 
     for (int i = 0; i < totalCategorias; i++)
     {
-        printf("\n%s (%d equipamento%s)\n",
-               categorias[i].nome,
-               categorias[i].total,
-               categorias[i].total == 1 ? "" : "s");
-        printf("--------------------------------------------------------------\n");
+        char titulo[UI_INNER + 1];
+        char nomeClip[48];
+        ui_clip_utf8(categorias[i].nome, 30, nomeClip, sizeof(nomeClip));
+        snprintf(titulo, sizeof(titulo), "%s (%d equipamento%s)",
+                 nomeClip,
+                 categorias[i].total,
+                 categorias[i].total == 1 ? "" : "s");
+        ui_section_title(titulo);
+
+        if (categorias[i].total == 0)
+        {
+            ui_text_line("Nenhum equipamento nesta categoria.");
+            continue;
+        }
 
         for (int j = 0; j < categorias[i].total; j++)
         {
             const struct equipamento *eq = categorias[i].itens[j];
-            printf("  - [%s] %s %s\n",
-                   eq->id,
-                   eq->nome,
-                   eq->ativo ? "" : "(Inativo)");
+            char linha[160];
+            char nomeEq[48];
+            ui_clip_utf8(eq->nome, 38, nomeEq, sizeof(nomeEq));
+            snprintf(linha, sizeof(linha), "- [%s] %s %s",
+                     eq->id,
+                     nomeEq,
+                     eq->ativo ? "" : "(Inativo)");
+            ui_text_line(linha);
         }
     }
 
-    printf("\n=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioEquipamentosAgrupadosPorCategoria(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===         RELATORIO - EQUIPAMENTOS AGRUPADOS POR CATEGORIA         ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Equipamentos agrupados por categoria");
 
     if (total_equipamentos == 0)
     {
-        printf("Nao ha equipamentos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha equipamentos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -393,11 +558,9 @@ static void relatorioEquipamentosAgrupadosPorCategoria(void)
 
     if (totalGrupos == 0 || totalConsiderados == 0)
     {
-        printf("Nao foi possivel agrupar equipamentos por categoria.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nao ha dados suficientes");
+        ui_text_line("Nao foi possivel agrupar equipamentos por categoria.");
+        aguardar_voltar();
         return;
     }
 
@@ -410,14 +573,9 @@ static void relatorioEquipamentosAgrupadosPorCategoria(void)
     {
         for (int j = i + 1; j < totalGrupos; j++)
         {
-            if (grupos[j].quantidade > grupos[i].quantidade)
-            {
-                struct GrupoCategoria tmp = grupos[i];
-                grupos[i] = grupos[j];
-                grupos[j] = tmp;
-            }
-            else if (grupos[j].quantidade == grupos[i].quantidade &&
-                     strcmp(grupos[j].categoria, grupos[i].categoria) < 0)
+            if (grupos[j].quantidade > grupos[i].quantidade ||
+                (grupos[j].quantidade == grupos[i].quantidade &&
+                 strcmp(grupos[j].categoria, grupos[i].categoria) < 0))
             {
                 struct GrupoCategoria tmp = grupos[i];
                 grupos[i] = grupos[j];
@@ -426,39 +584,27 @@ static void relatorioEquipamentosAgrupadosPorCategoria(void)
         }
     }
 
-    printf("\n+------------------------------+------------+-------------+\n");
-    printf("| %-28s | %-10s | %-9s |\n", "Categoria", "Quantidade", "%");
-    printf("+------------------------------+------------+-------------+\n");
+    tabela_categoria_resumo_header();
     for (int i = 0; i < totalGrupos; i++)
     {
-        printf("| %-28.28s | %10d | %9.2f |\n",
-               grupos[i].categoria,
-               grupos[i].quantidade,
-               grupos[i].percentual);
+        tabela_categoria_resumo_row(grupos[i].categoria, grupos[i].quantidade, grupos[i].percentual);
     }
-    printf("+------------------------------+------------+-------------+\n");
-    printf("Total de equipamentos considerados: %d\n", totalConsiderados);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de equipamentos considerados: %d", totalConsiderados);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioCronogramaManutencoes(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===              RELATORIO - CRONOGRAMA DE MANUTENCOES               ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Cronograma de manutencoes");
 
     if (total_equipamentos == 0)
     {
-        printf("Nao ha equipamentos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha equipamentos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -478,110 +624,81 @@ static void relatorioCronogramaManutencoes(void)
 
     if (totalLista == 0)
     {
-        printf("Nao ha manutencoes agendadas.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha manutencoes agendadas.");
+        aguardar_voltar();
         return;
     }
 
     criterioOrdenacaoSelecionado = '3';
     qsort(lista, totalLista, sizeof(struct EquipamentoView), compararEquipamentos);
 
-    printf("PRÓXIMOS 90 DIAS\n");
-    printf("------------------------------\n");
-
-    printf("\nVENCIDAS:\n");
+    tabela_crono_header("Vencidas");
     bool temVencidas = false;
     for (int i = 0; i < totalLista; i++)
     {
         if (lista[i].diasRestantes < 0)
         {
-            printf("  [%s] %s - Vencida ha %.0f dia%s\n",
-                   lista[i].equip->id,
-                   lista[i].equip->nome,
-                   -lista[i].diasRestantes,
-                   (int)(-lista[i].diasRestantes) == 1 ? "" : "s");
+            tabela_crono_row(lista[i].equip, "Vencida");
             temVencidas = true;
         }
     }
     if (!temVencidas)
     {
-        printf("  Nenhuma manutencao vencida.\n");
+        ui_text_line("Nenhuma manutencao vencida.");
     }
 
-    printf("\nESTA SEMANA (proximos 7 dias):\n");
+    tabela_crono_header("Proximos 7 dias");
     bool temSemana = false;
     for (int i = 0; i < totalLista; i++)
     {
         if (lista[i].diasRestantes >= 0 && lista[i].diasRestantes <= 7)
         {
-            printf("  [%s] %s - em %.0f dia%s (%s)\n",
-                   lista[i].equip->id,
-                   lista[i].equip->nome,
-                   lista[i].diasRestantes,
-                   (int)(lista[i].diasRestantes) == 1 ? "" : "s",
-                   lista[i].equip->proxima_manutencao);
+            tabela_crono_row(lista[i].equip, "Ate 7 dias");
             temSemana = true;
         }
     }
     if (!temSemana)
     {
-        printf("  Nenhuma manutencao para esta semana.\n");
+        ui_text_line("Nenhuma manutencao nesta janela.");
     }
 
-    printf("\nPROXIMAS 2 SEMANAS (8-15 dias):\n");
+    tabela_crono_header("8 a 15 dias");
     bool temQuinze = false;
     for (int i = 0; i < totalLista; i++)
     {
         if (lista[i].diasRestantes > 7 && lista[i].diasRestantes <= 15)
         {
-            printf("  [%s] %s - em %.0f dias (%s)\n",
-                   lista[i].equip->id,
-                   lista[i].equip->nome,
-                   lista[i].diasRestantes,
-                   lista[i].equip->proxima_manutencao);
+            tabela_crono_row(lista[i].equip, "8-15 dias");
             temQuinze = true;
         }
     }
     if (!temQuinze)
     {
-        printf("  Nenhuma manutencao entre 8 e 15 dias.\n");
+        ui_text_line("Nenhuma manutencao entre 8 e 15 dias.");
     }
 
-    printf("\nPROXIMOS 90 DIAS:\n");
+    tabela_crono_header("16 a 90 dias");
     bool temNoventa = false;
     for (int i = 0; i < totalLista; i++)
     {
         if (lista[i].diasRestantes > 15 && lista[i].diasRestantes <= 90)
         {
-            printf("  [%s] %s - em %.0f dias (%s)\n",
-                   lista[i].equip->id,
-                   lista[i].equip->nome,
-                   lista[i].diasRestantes,
-                   lista[i].equip->proxima_manutencao);
+            tabela_crono_row(lista[i].equip, "16-90 dias");
             temNoventa = true;
         }
     }
     if (!temNoventa)
     {
-        printf("  Nenhuma manutencao dentro de 90 dias.\n");
+        ui_text_line("Nenhuma manutencao ate 90 dias.");
     }
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioManutencoesVencidas(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===             RELATORIO - MANUTENCOES VENCIDAS (URGENTE)           ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Manutencoes vencidas");
 
     struct EquipamentoView lista[MAX_EQUIPAMENTOS];
     int totalLista = 0;
@@ -599,45 +716,36 @@ static void relatorioManutencoesVencidas(void)
 
     if (totalLista == 0)
     {
-        printf("Nao ha manutencoes vencidas no momento.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha manutencoes vencidas no momento.");
+        aguardar_voltar();
         return;
     }
 
     criterioOrdenacaoSelecionado = '3';
     qsort(lista, totalLista, sizeof(struct EquipamentoView), compararEquipamentos);
 
+    tabela_crono_header("Urgente - vencidas");
     for (int i = 0; i < totalLista; i++)
     {
-        printf("[%-8s] %-20s - Vencida ha %.0f dia%s (prox: %s)\n",
-               lista[i].equip->id,
-               lista[i].equip->nome,
-               -lista[i].diasRestantes,
-               (int)(-lista[i].diasRestantes) == 1 ? "" : "s",
-               lista[i].equip->proxima_manutencao);
+        char status[32];
+        snprintf(status, sizeof(status), "Ha %.0f d", -lista[i].diasRestantes);
+        tabela_crono_row(lista[i].equip, status);
     }
-
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioManutencoesProximas(void)
 {
-    limparTela();
+    cabecalho_relatorio("Relatorio - Manutencoes proximas (7/15/30 dias)");
 
-    printf("=========================================================================\n");
-    printf("===           RELATORIO - MANUTENCOES PROXIMAS (7/15/30 DIAS)        ===\n");
-    printf("=========================================================================\n");
-
-    printf("Escolha o periodo:\n");
-    printf("[1] Proximos 7 dias\n");
-    printf("[2] Proximos 15 dias\n");
-    printf("[3] Proximos 30 dias\n");
+    ui_menu_option('1', "Proximos 7 dias");
+    ui_menu_option('2', "Proximos 15 dias");
+    ui_menu_option('3', "Proximos 30 dias");
+    ui_section_title("Escolha um periodo");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
 
     char op = lerTecla();
     int limiteDias = 7;
@@ -670,52 +778,44 @@ static void relatorioManutencoesProximas(void)
 
     if (totalLista == 0)
     {
-        printf("Nao ha manutencoes previstas nos proximos %d dias.\n", limiteDias);
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        char msg[UI_INNER + 1];
+        snprintf(msg, sizeof(msg), "Nao ha manutencoes previstas nos proximos %d dias.", limiteDias);
+        ui_text_line(msg);
+        aguardar_voltar();
         return;
     }
 
     criterioOrdenacaoSelecionado = '3';
     qsort(lista, totalLista, sizeof(struct EquipamentoView), compararEquipamentos);
 
+    char titulo[UI_INNER + 1];
+    snprintf(titulo, sizeof(titulo), "Proximos %d dias", limiteDias);
+    tabela_crono_header(titulo);
     for (int i = 0; i < totalLista; i++)
     {
-        printf("[%-8s] %-20s - em %.0f dia%s (%s)\n",
-               lista[i].equip->id,
-               lista[i].equip->nome,
-               lista[i].diasRestantes,
-               (int)(lista[i].diasRestantes) == 1 ? "" : "s",
-               lista[i].equip->proxima_manutencao);
+        char status[32];
+        snprintf(status, sizeof(status), "Em %.0f d", lista[i].diasRestantes);
+        tabela_crono_row(lista[i].equip, status);
     }
-
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    aguardar_voltar();
+    aguardar_voltar();
 }
 
 static void relatorioHistoricoManutencoes(void)
 {
-    printf("Historico de manutencoes: funcionalidade em desenvolvimento.\n");
+    cabecalho_relatorio("Historico de manutencoes");
+    ui_center_text("Funcionalidade em desenvolvimento.");
+    aguardar_voltar();
 }
-
-static char selecionarFiltroCategoria(void);
-static char selecionarFiltroManutencao(void);
-static char selecionarOrdenacaoEquipamentos(void);
-static int compararEquipamentosPorNome(const void *a, const void *b);
-static int compararEquipamentosPorCategoria(const void *a, const void *b);
-static int compararEquipamentosPorData(const void *a, const void *b);
-
-static char filtroCategoriaSelecionado;
-static char filtroManutencaoSelecionado;
-static char criterioOrdenacaoSelecionado;
 
 static char selecionarFiltroCategoria(void)
 {
-    printf("Filtrar por categoria? (Digite a letra inicial ou 0 para todas): ");
+    cabecalho_relatorio("Filtro - Categoria");
+    ui_text_line("Digite a letra inicial da categoria ou 0 para todas.");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
     char c = lerTecla();
     if (c == '\n' || c == '0')
     {
@@ -726,12 +826,16 @@ static char selecionarFiltroCategoria(void)
 
 static char selecionarFiltroManutencao(void)
 {
-    printf("\nFiltro de manutencao:\n");
-    printf("[0] Todos\n");
-    printf("[1] Somente vencidas\n");
-    printf("[2] Proximas 7 dias\n");
-    printf("[3] Proximas 15 dias\n");
-    printf("[4] Proximas 30 dias\n");
+    cabecalho_relatorio("Filtro - Status de manutencao");
+    ui_menu_option('0', "Todos");
+    ui_menu_option('1', "Somente vencidas");
+    ui_menu_option('2', "Proximas 7 dias");
+    ui_menu_option('3', "Proximas 15 dias");
+    ui_menu_option('4', "Proximas 30 dias");
+    ui_section_title("Escolha uma opcao");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
 
     char op = lerTecla();
     if (op < '0' || op > '4')
@@ -744,10 +848,14 @@ static char selecionarFiltroManutencao(void)
 
 static char selecionarOrdenacaoEquipamentos(void)
 {
-    printf("\nOrdenacao:\n");
-    printf("[1] Nome\n");
-    printf("[2] Categoria\n");
-    printf("[3] Proxima manutencao\n");
+    cabecalho_relatorio("Filtro - Ordenacao de equipamentos");
+    ui_menu_option('1', "Nome");
+    ui_menu_option('2', "Categoria");
+    ui_menu_option('3', "Proxima manutencao");
+    ui_section_title("Escolha uma opcao");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
 
     char op = lerTecla();
     if (op == '1' || op == '2' || op == '3')

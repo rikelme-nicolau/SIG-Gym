@@ -2,25 +2,26 @@
 #include "limparTela.h"
 #include "telaFuncionario.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 char telaFuncionario(void)
 {
 
     char op;
 
-    printf("\n");
-
-    printf("=========================================================================\n");
-    printf("===                              FUNCIONARIO                          ===\n");
-    printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===  [1]  CADASTRAR                                                   ===\n");
-    printf("===  [2]  VISUALIZAR                                                  ===\n");
-    printf("===  [3]  ATUALIZAR                                                   ===\n");
-    printf("===  [4]  EXCLUIR                                                     ===\n");
-    printf("===  [0]  SAIR                                                        ===\n");
-    printf("===                                                                   ===\n");
-    printf("=========================================================================\n");
-    printf("=========================================================================\n");
+    limparTela();
+    ui_header("SIG-GYM", "Modulo de Funcionarios");
+    ui_empty_line();
+    ui_menu_option('1', "Cadastrar");
+    ui_menu_option('2', "Visualizar");
+    ui_menu_option('3', "Atualizar");
+    ui_menu_option('4', "Excluir");
+    ui_empty_line();
+    ui_menu_option('0', "Voltar");
+    ui_section_title("Escolha uma opcao");
+    ui_text_line("Use as teclas indicadas para navegar.");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
 
     op = lerTecla();
 

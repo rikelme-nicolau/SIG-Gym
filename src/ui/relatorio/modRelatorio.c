@@ -6,6 +6,7 @@
 #include "relatoriosOperacionais.h"
 #include "relatoriosPorModulo.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
 char moduloRelatorio(void)
 {
@@ -13,19 +14,19 @@ char moduloRelatorio(void)
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===                   RELATORIOS - MENU PRINCIPAL             ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  RELATORIOS GERENCIAIS                               ===\n");
-        printf("===  [2]  RELATORIOS OPERACIONAIS                             ===\n");
-        printf("===  [3]  RELATORIOS POR MODULO                               ===\n");
-        printf("===                                                           ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios - Menu Principal");
+        ui_empty_line();
+        ui_menu_option('1', "Relatorios gerenciais");
+        ui_menu_option('2', "Relatorios operacionais");
+        ui_menu_option('3', "Relatorios por modulo");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
 

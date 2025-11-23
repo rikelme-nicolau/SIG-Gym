@@ -9,6 +9,7 @@
 #include "relatoriosEquipamento.h"
 #include "relatoriosFuncionario.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
 void moduloRelatoriosPorModulo(void)
 {
@@ -16,20 +17,21 @@ void moduloRelatoriosPorModulo(void)
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===             RELATORIOS POR MODULO - MENU CENTRAL          ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  RELATORIOS DE ALUNOS                                ===\n");
-        printf("===  [2]  RELATORIOS DE PLANOS                                ===\n");
-        printf("===  [3]  RELATORIOS DE EQUIPAMENTOS                          ===\n");
-        printf("===  [4]  RELATORIOS DE FUNCIONARIOS                          ===\n");
-        printf("===  [5]  RELATORIOS CRUZADOS                                 ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios por Modulo");
+        ui_section_title("Relatorios disponiveis");
+        ui_menu_option('1', "Relatorios de alunos");
+        ui_menu_option('2', "Relatorios de planos");
+        ui_menu_option('3', "Relatorios de equipamentos");
+        ui_menu_option('4', "Relatorios de funcionarios");
+        ui_menu_option('5', "Relatorios cruzados");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
         limparTela();

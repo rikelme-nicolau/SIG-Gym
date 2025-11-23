@@ -20,6 +20,7 @@
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/utils/validarTelefone.h"
+#include "ui/utils/consoleLayout.h"
 
 static void listarManutencoesPorFiltro(char filtro);
 static double obterDiasRestantes(const char *data, time_t agora, int *valida);
@@ -42,25 +43,49 @@ static int listarEquipamentosManutencaoAtencao(bool exibir);
 static int listarAlunosInativosRecentes(bool exibir);
 static int consolidarCadastrosInconsistentes(bool exibir);
 
+static void cabecalho(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void linha_tabela(const int *w, int n, const char **vals)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    for (int i = 0; i < n; i++)
+    {
+        ui_append_col(linha, sizeof(linha), &pos, vals[i], w[i]);
+        if (i < n - 1)
+        {
+            ui_append_sep(linha, sizeof(linha), &pos);
+        }
+    }
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
 void moduloRelatoriosOperacionais(void)
 {
     char op;
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===              RELATORIOS OPERACIONAIS - MENU               ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  MANUTENCOES DE EQUIPAMENTOS                         ===\n");
-        printf("===  [2]  OCUPACAO POR HORARIO                                ===\n");
-        printf("===  [3]  VALIDACAO DE CADASTROS                              ===\n");
-        printf("===  [4]  ALERTAS E PENDENCIAS                                ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios Operacionais");
+        ui_empty_line();
+        ui_menu_option('1', "Manutencoes de equipamentos");
+        ui_menu_option('2', "Ocupacao por horario");
+        ui_menu_option('3', "Validacao de cadastros");
+        ui_menu_option('4', "Alertas e pendencias");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
 
@@ -100,17 +125,18 @@ void relatorioManutencoesEquipamentos(void)
 
     do
     {
-        printf("=================================================================\n");
-        printf("===        MANUTENCOES DE EQUIPAMENTOS - FILTROS              ===\n");
-        printf("=================================================================\n");
-        printf("===  [1]  MANUTENCOES VENCIDAS                                ===\n");
-        printf("===  [2]  PROXIMAS 7 DIAS                                     ===\n");
-        printf("===  [3]  PROXIMAS 15 DIAS                                    ===\n");
-        printf("===  [4]  PROXIMAS 30 DIAS                                    ===\n");
-        printf("===  [5]  TODAS AS MANUTENCOES                                ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("=================================================================\n");
+        cabecalho("Relatorio - Manutencoes de Equipamentos");
+        ui_menu_option('1', "Manutencoes vencidas");
+        ui_menu_option('2', "Proximas 7 dias");
+        ui_menu_option('3', "Proximas 15 dias");
+        ui_menu_option('4', "Proximas 30 dias");
+        ui_menu_option('5', "Todas as manutencoes");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha um filtro");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
         limparTela();
@@ -138,7 +164,7 @@ void relatorioManutencoesEquipamentos(void)
 
 void relatorioOcupacaoPorHorario(void)
 {
-    limparTela();
+    cabecalho("Relatorio - Ocupacao por Horario");
 
     int alunosFaixa[3] = {0};
     int totalAlunosConsiderados = 0;
@@ -165,15 +191,10 @@ void relatorioOcupacaoPorHorario(void)
         }
     }
 
-    printf("=========================================================================\n");
-    printf("===               RELATORIO - OCUPACAO POR HORARIO                   ===\n");
-    printf("=========================================================================\n");
-
     if (totalAlunosConsiderados == 0)
     {
-        printf("Nao ha alunos ativos vinculados a planos com horarios definidos.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
+        ui_text_line("Nao ha alunos ativos vinculados a planos com horarios definidos.");
+        ui_section_title("Pressione <ENTER> para voltar");
         getchar();
         limparTela();
         return;
@@ -181,24 +202,29 @@ void relatorioOcupacaoPorHorario(void)
 
     const char *labelsFaixa[3] = {"Manha (06h-12h)", "Tarde (12h-18h)", "Noite (18h-22h)"};
 
-    printf("Total de alunos considerados: %d\n", totalAlunosConsiderados);
-    printf("+----------------------+--------+---------------+\n");
-    printf("| Faixa                | Alunos | %% Ocupacao   |\n");
-    printf("+----------------------+--------+---------------+\n");
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de alunos considerados: %d", totalAlunosConsiderados);
+    ui_text_line(linha);
+    const int w[3] = {22, 6, 10};
+    const char *cab[3] = {"Faixa", "Alunos", "% Ocupacao"};
+    linha_tabela(w, 3, cab);
     for (int i = 0; i < 3; i++)
     {
         double percentual = totalAlunosConsiderados > 0 ? ((double)alunosFaixa[i] / totalAlunosConsiderados) * 100.0 : 0.0;
-        printf("| %-20.20s | %6d | %11.2f %% |\n",
-               labelsFaixa[i],
-               alunosFaixa[i],
-               percentual);
+        char alunosStr[12], percStr[16];
+        snprintf(alunosStr, sizeof(alunosStr), "%d", alunosFaixa[i]);
+        snprintf(percStr, sizeof(percStr), "%.2f%%", percentual);
+        const char *vals[3] = {labelsFaixa[i], alunosStr, percStr};
+        linha_tabela(w, 3, vals);
     }
-    printf("+----------------------+--------+---------------+\n");
 
-    printf("\nPlanos disponiveis por faixa:\n");
+    ui_line('-');
+    ui_text_line("Planos disponiveis por faixa:");
     for (int faixa = 0; faixa < 3; faixa++)
     {
-        printf("- %s: ", labelsFaixa[faixa]);
+        char buffer[UI_INNER + 1] = "";
+        strncat(buffer, labelsFaixa[faixa], sizeof(buffer) - 1);
+        strncat(buffer, ": ", sizeof(buffer) - strlen(buffer) - 1);
         bool possuiPlano = false;
         for (int i = 0; i < total_planos; i++)
         {
@@ -211,33 +237,28 @@ void relatorioOcupacaoPorHorario(void)
             {
                 if (possuiPlano)
                 {
-                    printf(", ");
+                    strncat(buffer, ", ", sizeof(buffer) - strlen(buffer) - 1);
                 }
-                printf("%s", lista_planos[i].nome);
+                strncat(buffer, lista_planos[i].nome, sizeof(buffer) - strlen(buffer) - 1);
                 possuiPlano = true;
             }
         }
 
         if (!possuiPlano)
         {
-            printf("Nenhum plano disponivel");
+            strncat(buffer, "Nenhum plano disponivel", sizeof(buffer) - strlen(buffer) - 1);
         }
-        printf("\n");
+        ui_text_line(buffer);
     }
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }
 
 void relatorioValidacaoCadastros(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                 RELATORIO - VALIDACAO DE CADASTROS               ===\n");
-    printf("=========================================================================\n");
+    cabecalho("Relatorio - Validacao de Cadastros");
 
     int totalProblemas = 0;
     totalProblemas += listarAlunosSemPlano(true);
@@ -250,18 +271,17 @@ void relatorioValidacaoCadastros(void)
 
     if (totalProblemas == 0)
     {
-        printf("\nNenhuma inconsistência encontrada nos cadastros analisados.\n");
+        ui_text_line("Nenhuma inconsistencia encontrada nos cadastros analisados.");
     }
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }
 
 void relatorioAlertasPendencias(void)
 {
-    limparTela();
+    cabecalho("Relatorio - Alertas e Pendencias");
 
     int urgentes = listarEquipamentosManutencaoUrgente(false);
     int atencaoEquip = listarEquipamentosManutencaoAtencao(false);
@@ -270,29 +290,32 @@ void relatorioAlertasPendencias(void)
 
     int totalAtencao = atencaoEquip + atencaoInativos;
 
-    printf("=========================================================================\n");
-    printf("===                 RELATORIO - ALERTAS E PENDENCIAS                 ===\n");
-    printf("=========================================================================\n");
-    printf("Resumo: [!!!] %d urgentes | [!!] %d de atencao | [!] %d informativos\n",
-           urgentes,
-           totalAtencao,
-           informativos);
-    printf("-------------------------------------------------------------------------\n");
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Resumo: [!!!] %d urgentes | [!!] %d de atencao | [!] %d informativos",
+             urgentes, totalAtencao, informativos);
+    ui_text_line(linha);
+    ui_line('-');
 
-    printf("[!!!] Equipamentos com manutencao vencida (%d)\n", urgentes);
+    snprintf(linha, sizeof(linha), "[!!!] Equipamentos com manutencao vencida (%d)", urgentes);
+    ui_text_line(linha);
     listarEquipamentosManutencaoUrgente(true);
 
-    printf("\n[!!] Equipamentos com manutencao nos proximos 7 dias (%d)\n", atencaoEquip);
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "[!!] Equipamentos com manutencao nos proximos 7 dias (%d)", atencaoEquip);
+    ui_text_line(linha);
     listarEquipamentosManutencaoAtencao(true);
 
-    printf("\n[!!] Alunos inativos nos ultimos 30 dias (%d)\n", atencaoInativos);
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "[!!] Alunos inativos nos ultimos 30 dias (%d)", atencaoInativos);
+    ui_text_line(linha);
     listarAlunosInativosRecentes(true);
 
-    printf("\n[!] Cadastros com dados inconsistentes (%d)\n", informativos);
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "[!] Cadastros com dados inconsistentes (%d)", informativos);
+    ui_text_line(linha);
     consolidarCadastrosInconsistentes(true);
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }
@@ -303,12 +326,10 @@ static void listarManutencoesPorFiltro(char filtro)
     const char *titulo = descricaoFiltroManutencao(filtro);
     int registros = 0;
 
-    printf("=========================================================================\n");
-    printf("=== %s\n", titulo);
-    printf("=========================================================================\n");
-    printf("+--------+------------------------------+----------------------+----------------------+----------------------+-----------------+\n");
-    printf("| ID     | Nome                         | Categoria            | Ultima Manutencao    | Proxima Manutencao   | Dias Restantes  |\n");
-    printf("+--------+------------------------------+----------------------+----------------------+----------------------+-----------------+\n");
+    cabecalho(titulo);
+    const int w[6] = {8, 20, 14, 12, 12, 6};
+    const char *cab[6] = {"ID", "Nome", "Categoria", "Ultima", "Proxima", "Dias"};
+    linha_tabela(w, 6, cab);
 
     for (int i = 0; i < total_equipamentos; i++)
     {
@@ -365,28 +386,36 @@ static void listarManutencoesPorFiltro(char filtro)
             reset = ANSI_RESET;
         }
 
-        printf("%s| %-8.8s | %-30.30s | %-22.22s | %-20.20s | %-20.20s | %15.0f |%s\n",
-               cor,
-               lista_equipamentos[i].id,
-               lista_equipamentos[i].nome,
-               lista_equipamentos[i].categoria,
-               lista_equipamentos[i].ultima_manutencao,
-               lista_equipamentos[i].proxima_manutencao,
-               diasRestantes,
-               reset);
+        (void)cor;
+        (void)reset;
+
+        char nome[64];
+        char categoria[64];
+        char dias[16];
+        ui_clip_utf8(lista_equipamentos[i].nome, w[1], nome, sizeof(nome));
+        ui_clip_utf8(lista_equipamentos[i].categoria, w[2], categoria, sizeof(categoria));
+        snprintf(dias, sizeof(dias), "%.0f", diasRestantes);
+        const char *vals[6] = {
+            lista_equipamentos[i].id,
+            nome,
+            categoria,
+            lista_equipamentos[i].ultima_manutencao,
+            lista_equipamentos[i].proxima_manutencao,
+            dias};
+        linha_tabela(w, 6, vals);
 
         registros++;
     }
 
     if (registros == 0)
     {
-        printf("| %-121s |\n", "Nenhum equipamento atende ao filtro selecionado.");
+        ui_text_line("Nenhum equipamento atende ao filtro selecionado.");
     }
 
-    printf("+--------+------------------------------+----------------------+----------------------+----------------------+-----------------+\n");
-    printf("Total listado: %d\n", registros);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total listado: %d", registros);
+    ui_text_line(linha);
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }
@@ -543,7 +572,7 @@ static int listarAlunosSemPlano(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- Alunos sem plano definido --------------------------------------------\n");
+        ui_text_line("-- Alunos sem plano definido");
     }
     for (int i = 0; i < total_alunos; i++)
     {
@@ -551,14 +580,16 @@ static int listarAlunosSemPlano(bool exibir)
         {
             if (exibir)
             {
-                printf("   - [%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
+                char linha[UI_INNER + 1];
+                snprintf(linha, sizeof(linha), "   - [%s] %s", lista_alunos[i].id, lista_alunos[i].nome);
+                ui_text_line(linha);
             }
             encontrados++;
         }
     }
     if (encontrados == 0 && exibir)
     {
-        printf("   Nenhum aluno com plano pendente.\n");
+        ui_text_line("   Nenhum aluno com plano pendente.");
     }
     return encontrados;
 }
@@ -568,7 +599,7 @@ static int listarAlunosDadosIncompletos(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- Alunos com dados obrigatorios faltando --------------------------------\n");
+        ui_text_line("-- Alunos com dados obrigatorios faltando");
     }
     for (int i = 0; i < total_alunos; i++)
     {
@@ -598,14 +629,16 @@ static int listarAlunosDadosIncompletos(bool exibir)
         {
             if (exibir)
             {
-                printf("   - [%s] %s -> Campos: %s\n", lista_alunos[i].id, lista_alunos[i].nome, faltantes);
+                char linha[UI_INNER + 1];
+                snprintf(linha, sizeof(linha), "   - [%s] %s -> Campos: %s", lista_alunos[i].id, lista_alunos[i].nome, faltantes);
+                ui_text_line(linha);
             }
             encontrados++;
         }
     }
     if (encontrados == 0 && exibir)
     {
-        printf("   Nenhum registro com dados faltando.\n");
+        ui_text_line("   Nenhum registro com dados faltando.");
     }
     return encontrados;
 }
@@ -615,7 +648,7 @@ static int listarFuncionariosDadosIncompletos(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- Funcionarios com dados incompletos ------------------------------------\n");
+        ui_text_line("-- Funcionarios com dados incompletos");
     }
     for (int i = 0; i < total_funcionarios; i++)
     {
@@ -649,14 +682,16 @@ static int listarFuncionariosDadosIncompletos(bool exibir)
         {
             if (exibir)
             {
-                printf("   - [%s] %s -> Campos: %s\n", lista_funcionarios[i].id, lista_funcionarios[i].nome, faltantes);
+                char linha[UI_INNER + 1];
+                snprintf(linha, sizeof(linha), "   - [%s] %s -> Campos: %s", lista_funcionarios[i].id, lista_funcionarios[i].nome, faltantes);
+                ui_text_line(linha);
             }
             encontrados++;
         }
     }
     if (encontrados == 0 && exibir)
     {
-        printf("   Nenhum funcionario com pendencias de dados.\n");
+        ui_text_line("   Nenhum funcionario com pendencias de dados.");
     }
     return encontrados;
 }
@@ -687,22 +722,26 @@ static int listarDuplicadosCPFAlunos(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- CPFs duplicados entre alunos ------------------------------------------\n");
+        ui_text_line("-- CPFs duplicados entre alunos");
     }
     for (int i = 0; i < total_alunos; i++)
     {
-        if (duplicado[i])
-        {
-            if (exibir)
+            if (duplicado[i])
             {
-                printf("   - [%s] %s | CPF: %s\n", lista_alunos[i].id, lista_alunos[i].nome, lista_alunos[i].cpf);
+                if (exibir)
+                {
+                    char linha[UI_INNER + 1];
+                    char nome_buf[64];
+                    ui_clip_utf8(lista_alunos[i].nome, 40, nome_buf, sizeof(nome_buf));
+                    snprintf(linha, sizeof(linha), "   - [%.12s] %s | CPF: %.14s", lista_alunos[i].id, nome_buf, lista_alunos[i].cpf);
+                    ui_text_line(linha);
+                }
+                encontrados++;
             }
-            encontrados++;
         }
-    }
     if (encontrados == 0 && exibir)
     {
-        printf("   Nenhuma duplicidade encontrada.\n");
+        ui_text_line("   Nenhuma duplicidade encontrada.");
     }
     return encontrados;
 }
@@ -733,22 +772,26 @@ static int listarDuplicadosCPFFuncionarios(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- CPFs duplicados entre funcionarios ------------------------------------\n");
+        ui_text_line("-- CPFs duplicados entre funcionarios");
     }
     for (int i = 0; i < total_funcionarios; i++)
     {
-        if (duplicado[i])
-        {
-            if (exibir)
+            if (duplicado[i])
             {
-                printf("   - [%s] %s | CPF: %s\n", lista_funcionarios[i].id, lista_funcionarios[i].nome, lista_funcionarios[i].cpf);
+                if (exibir)
+                {
+                    char linha[UI_INNER + 1];
+                    char nome_buf[64];
+                    ui_clip_utf8(lista_funcionarios[i].nome, 40, nome_buf, sizeof(nome_buf));
+                    snprintf(linha, sizeof(linha), "   - [%.12s] %s | CPF: %.14s", lista_funcionarios[i].id, nome_buf, lista_funcionarios[i].cpf);
+                    ui_text_line(linha);
+                }
+                encontrados++;
             }
-            encontrados++;
         }
-    }
     if (encontrados == 0 && exibir)
     {
-        printf("   Nenhuma duplicidade encontrada.\n");
+        ui_text_line("   Nenhuma duplicidade encontrada.");
     }
     return encontrados;
 }
@@ -810,7 +853,7 @@ static int listarEmailsDuplicados(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- Emails duplicados -----------------------------------------------------\n");
+        ui_text_line("-- Emails duplicados");
     }
     for (int i = 0; i < totalRegistros; i++)
     {
@@ -818,14 +861,16 @@ static int listarEmailsDuplicados(bool exibir)
         {
             if (exibir)
             {
-                printf("   - (%s) [%s] %s | Email: %s\n", registros[i].tipo, registros[i].id, registros[i].nome, registros[i].email);
+                char linha[UI_INNER + 1];
+                snprintf(linha, sizeof(linha), "   - (%s) [%s] %s | Email: %s", registros[i].tipo, registros[i].id, registros[i].nome, registros[i].email);
+                ui_text_line(linha);
             }
             encontrados++;
         }
     }
     if (encontrados == 0 && exibir)
     {
-        printf("   Nenhuma duplicidade de email encontrada.\n");
+        ui_text_line("   Nenhuma duplicidade de email encontrada.");
     }
     return encontrados;
 }
@@ -835,7 +880,7 @@ static int listarTelefonesInvalidos(bool exibir)
     int encontrados = 0;
     if (exibir)
     {
-        printf("\n-- Telefones invalidos ---------------------------------------------------\n");
+        ui_text_line("-- Telefones invalidos");
     }
 
     for (int i = 0; i < total_alunos; i++)
@@ -848,7 +893,9 @@ static int listarTelefonesInvalidos(bool exibir)
         {
             if (exibir)
             {
-                printf("   - (Aluno) [%s] %s | Telefone: %s\n", lista_alunos[i].id, lista_alunos[i].nome, lista_alunos[i].telefone);
+                char linha[UI_INNER + 1];
+                snprintf(linha, sizeof(linha), "   - (Aluno) [%s] %s | Telefone: %s", lista_alunos[i].id, lista_alunos[i].nome, lista_alunos[i].telefone);
+                ui_text_line(linha);
             }
             encontrados++;
         }
@@ -864,7 +911,9 @@ static int listarTelefonesInvalidos(bool exibir)
         {
             if (exibir)
             {
-                printf("   - (Funcionario) [%s] %s | Telefone: %s\n", lista_funcionarios[i].id, lista_funcionarios[i].nome, lista_funcionarios[i].telefone);
+                char linha[UI_INNER + 1];
+                snprintf(linha, sizeof(linha), "   - (Funcionario) [%s] %s | Telefone: %s", lista_funcionarios[i].id, lista_funcionarios[i].nome, lista_funcionarios[i].telefone);
+                ui_text_line(linha);
             }
             encontrados++;
         }
@@ -872,7 +921,7 @@ static int listarTelefonesInvalidos(bool exibir)
 
     if (encontrados == 0 && exibir)
     {
-        printf("   Todos os telefones preenchidos passaram na validacao.\n");
+        ui_text_line("   Todos os telefones preenchidos passaram na validacao.");
     }
     return encontrados;
 }
@@ -884,10 +933,10 @@ static int listarEquipamentosManutencaoUrgente(bool exibir)
 
     if (exibir)
     {
-        printf("   Tabela de equipamentos com manutencao vencida:\n");
-        printf("   +--------+------------------------------+----------------------+----------------------+----------------------+---------------+\n");
-        printf("   | ID     | Nome                         | Categoria            | Ultima               | Proxima              | Dias Rest.    |\n");
-        printf("   +--------+------------------------------+----------------------+----------------------+----------------------+---------------+\n");
+        const int w[6] = {8, 20, 14, 12, 12, 6};
+        const char *cab[6] = {"ID", "Nome", "Categoria", "Ultima", "Proxima", "Dias"};
+        ui_text_line("   Equipamentos com manutencao vencida:");
+        linha_tabela(w, 6, cab);
     }
 
     for (int i = 0; i < total_equipamentos; i++)
@@ -905,13 +954,19 @@ static int listarEquipamentosManutencaoUrgente(bool exibir)
         encontrados++;
         if (exibir)
         {
-            printf("   | %-8.8s | %-30.30s | %-20.20s | %-20.20s | %-20.20s | %11.0f |\n",
-                   lista_equipamentos[i].id,
-                   lista_equipamentos[i].nome,
-                   lista_equipamentos[i].categoria,
-                   lista_equipamentos[i].ultima_manutencao,
-                   lista_equipamentos[i].proxima_manutencao,
-                   dias);
+            const int w[6] = {8, 20, 14, 12, 12, 6};
+            char nome[64], categoria[64], diasStr[16];
+            ui_clip_utf8(lista_equipamentos[i].nome, 20, nome, sizeof(nome));
+            ui_clip_utf8(lista_equipamentos[i].categoria, 14, categoria, sizeof(categoria));
+            snprintf(diasStr, sizeof(diasStr), "%.0f", dias);
+            const char *vals[6] = {
+                lista_equipamentos[i].id,
+                nome,
+                categoria,
+                lista_equipamentos[i].ultima_manutencao,
+                lista_equipamentos[i].proxima_manutencao,
+                diasStr};
+            linha_tabela(w, 6, vals);
         }
     }
 
@@ -919,9 +974,8 @@ static int listarEquipamentosManutencaoUrgente(bool exibir)
     {
         if (encontrados == 0)
         {
-            printf("   | %-121s |\n", "Nenhum equipamento consta com manutencao vencida.");
+            ui_text_line("   Nenhum equipamento consta com manutencao vencida.");
         }
-        printf("   +--------+------------------------------+----------------------+----------------------+----------------------+---------------+\n");
     }
 
     return encontrados;
@@ -934,10 +988,10 @@ static int listarEquipamentosManutencaoAtencao(bool exibir)
 
     if (exibir)
     {
-        printf("   Tabela de equipamentos com manutencao nos proximos 7 dias:\n");
-        printf("   +--------+------------------------------+----------------------+----------------------+----------------------+---------------+\n");
-        printf("   | ID     | Nome                         | Categoria            | Ultima               | Proxima              | Dias Rest.    |\n");
-        printf("   +--------+------------------------------+----------------------+----------------------+----------------------+---------------+\n");
+        const int w[6] = {8, 20, 14, 12, 12, 6};
+        const char *cab[6] = {"ID", "Nome", "Categoria", "Ultima", "Proxima", "Dias"};
+        ui_text_line("   Equipamentos com manutencao nos proximos 7 dias:");
+        linha_tabela(w, 6, cab);
     }
 
     for (int i = 0; i < total_equipamentos; i++)
@@ -955,13 +1009,19 @@ static int listarEquipamentosManutencaoAtencao(bool exibir)
         encontrados++;
         if (exibir)
         {
-            printf("   | %-8.8s | %-30.30s | %-20.20s | %-20.20s | %-20.20s | %11.0f |\n",
-                   lista_equipamentos[i].id,
-                   lista_equipamentos[i].nome,
-                   lista_equipamentos[i].categoria,
-                   lista_equipamentos[i].ultima_manutencao,
-                   lista_equipamentos[i].proxima_manutencao,
-                   dias);
+            const int w[6] = {8, 20, 14, 12, 12, 6};
+            char nome[64], categoria[64], diasStr[16];
+            ui_clip_utf8(lista_equipamentos[i].nome, 20, nome, sizeof(nome));
+            ui_clip_utf8(lista_equipamentos[i].categoria, 14, categoria, sizeof(categoria));
+            snprintf(diasStr, sizeof(diasStr), "%.0f", dias);
+            const char *vals[6] = {
+                lista_equipamentos[i].id,
+                nome,
+                categoria,
+                lista_equipamentos[i].ultima_manutencao,
+                lista_equipamentos[i].proxima_manutencao,
+                diasStr};
+            linha_tabela(w, 6, vals);
         }
     }
 
@@ -969,9 +1029,8 @@ static int listarEquipamentosManutencaoAtencao(bool exibir)
     {
         if (encontrados == 0)
         {
-            printf("   | %-121s |\n", "Nenhum equipamento previsto para manutencao nos proximos 7 dias.");
+            ui_text_line("   Nenhum equipamento previsto para manutencao nos proximos 7 dias.");
         }
-        printf("   +--------+------------------------------+----------------------+----------------------+----------------------+---------------+\n");
     }
 
     return encontrados;
@@ -981,7 +1040,7 @@ static int listarAlunosInativosRecentes(bool exibir)
 {
     if (exibir)
     {
-        printf("   Informacao indisponivel: nao ha registro da data de inativacao dos alunos.\n");
+        ui_text_line("   Informacao indisponivel: nao ha registro da data de inativacao dos alunos.");
     }
     return 0;
 }

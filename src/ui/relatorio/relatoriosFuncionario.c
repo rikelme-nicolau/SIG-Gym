@@ -9,6 +9,18 @@
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "src/ui/aluno/cadastrarAluno.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
+
+#define LIST_COL_ID 7
+#define LIST_COL_NOME 18
+#define LIST_COL_CARGO 15
+#define LIST_COL_IDADE 5
+#define LIST_COL_TEL 15
+
+#define CARGO_COL_NOME 22
+#define CARGO_COL_QTD 8
+#define CARGO_COL_MEDIA 10
+#define CARGO_COL_RANGE 18
 
 static char criterioOrdenacaoFuncionario;
 
@@ -20,6 +32,124 @@ static char selecionarFiltroStatusFuncionario(void);
 static void solicitarFiltroCargo(char *dest, size_t tamanho);
 static char selecionarOrdenacaoFuncionario(void);
 static int compararFuncionarios(const void *a, const void *b);
+static void cabecalho_relatorio(const char *subtitulo);
+static void aguardar_voltar(void);
+static void tabela_listagem_header(void);
+static void tabela_listagem_row(const struct funcionario *f);
+static void tabela_cargo_header(void);
+static void tabela_cargo_row(const char *nome, int total, double media, int minIdade, int maxIdade);
+
+static void cabecalho_relatorio(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void aguardar_voltar(void)
+{
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_listagem_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", LIST_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", LIST_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Cargo", LIST_COL_CARGO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Idade", LIST_COL_IDADE);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Telefone", LIST_COL_TEL);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_listagem_row(const struct funcionario *f)
+{
+    if (f == NULL)
+    {
+        return;
+    }
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[32];
+    ui_clip_utf8(f->nome, 18, nomeClip, sizeof(nomeClip));
+    char cargoClip[28];
+    ui_clip_utf8(f->cargo, 15, cargoClip, sizeof(cargoClip));
+    char idadeStr[8];
+    snprintf(idadeStr, sizeof(idadeStr), "%d", f->idade);
+    char telClip[24];
+    ui_clip_utf8(f->telefone, 15, telClip, sizeof(telClip));
+
+    ui_append_col(linha, sizeof(linha), &pos, f->id, LIST_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, LIST_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, cargoClip, LIST_COL_CARGO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, idadeStr, LIST_COL_IDADE);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, telClip, LIST_COL_TEL);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_cargo_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Cargo", CARGO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Qtd", CARGO_COL_QTD);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Idade media", CARGO_COL_MEDIA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Min/Max", CARGO_COL_RANGE);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_cargo_row(const char *nome, int total, double media, int minIdade, int maxIdade)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[40];
+    ui_clip_utf8(nome != NULL ? nome : "N/A", 22, nomeClip, sizeof(nomeClip));
+    char qtd[12];
+    snprintf(qtd, sizeof(qtd), "%d", total);
+    char mediaStr[16];
+    snprintf(mediaStr, sizeof(mediaStr), "%.1f", media);
+    char range[24];
+    if (minIdade >= 0 && maxIdade >= 0)
+    {
+        snprintf(range, sizeof(range), "%d - %d", minIdade, maxIdade);
+    }
+    else
+    {
+        strncpy(range, "N/A", sizeof(range));
+        range[sizeof(range) - 1] = '\0';
+    }
+
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, CARGO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, qtd, CARGO_COL_QTD);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, mediaStr, CARGO_COL_MEDIA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, range, CARGO_COL_RANGE);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
 
 void moduloRelatoriosFuncionario(void)
 {
@@ -27,19 +157,20 @@ void moduloRelatoriosFuncionario(void)
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===             RELATORIOS DE FUNCIONARIOS - MENU             ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  LISTAGEM COMPLETA DE FUNCIONARIOS                   ===\n");
-        printf("===  [2]  FUNCIONARIOS POR CARGO                              ===\n");
-        printf("===  [3]  DISTRIBUICAO POR FAIXA ETARIA                       ===\n");
-        printf("===  [4]  ANALISE DE EQUIPE                                   ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios de Funcionarios");
+        ui_empty_line();
+        ui_menu_option('1', "Listagem completa de funcionarios");
+        ui_menu_option('2', "Funcionarios por cargo");
+        ui_menu_option('3', "Distribuicao por faixa etaria");
+        ui_menu_option('4', "Analise de equipe");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
         limparTela();
@@ -75,19 +206,12 @@ void moduloRelatoriosFuncionario(void)
 
 static void relatorioListagemFuncionarios(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===           RELATORIO - LISTAGEM COMPLETA DE FUNCIONARIOS          ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Listagem de funcionarios");
 
     if (total_funcionarios == 0)
     {
-        printf("Nao ha funcionarios cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha funcionarios cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -119,84 +243,74 @@ static void relatorioListagemFuncionarios(void)
 
     if (totalLista == 0)
     {
-        printf("Nenhum funcionario atende aos filtros informados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nenhum funcionario encontrado");
+        ui_text_line("Ajuste os filtros e tente novamente.");
+        aguardar_voltar();
         return;
     }
 
     qsort(lista, totalLista, sizeof(const struct funcionario *), compararFuncionarios);
 
-    const char *setaNome = (criterioOrdenacaoFuncionario == '1' || criterioOrdenacaoFuncionario == '4') ? "▲" : "";
-    const char *setaCargo = (criterioOrdenacaoFuncionario == '2' || criterioOrdenacaoFuncionario == '4') ? "▲" : "";
-    const char *setaIdade = (criterioOrdenacaoFuncionario == '3' || criterioOrdenacaoFuncionario == '5') ? "▲" : (criterioOrdenacaoFuncionario == '6' ? "▼" : "");
-    printf(">>> Ordenando por ");
+    cabecalho_relatorio("Relatorio - Listagem de funcionarios");
+    ui_section_title("Filtros aplicados");
+    char linha[UI_INNER + 1];
+    const char *statusDesc = filtroStatus == '1' ? "Somente ativos" : (filtroStatus == '2' ? "Somente inativos" : "Todos");
+    snprintf(linha, sizeof(linha), "Status: %s", statusDesc);
+    ui_text_line(linha);
+    char cargoCurto[32];
+    const char *cargoOrigem = cargoFiltro[0] != '\0' ? cargoFiltro : "Todos";
+    ui_clip_utf8(cargoOrigem, 22, cargoCurto, sizeof(cargoCurto));
+    snprintf(linha, sizeof(linha), "Cargo: %s", cargoCurto);
+    ui_text_line(linha);
+    const char *ordDesc;
     switch (criterioOrdenacaoFuncionario)
     {
     case '2':
-        printf("Cargo %s\n", setaCargo);
+        ordDesc = "Cargo";
         break;
     case '3':
-        printf("Idade %s\n", setaIdade);
+        ordDesc = "Idade";
         break;
     case '4':
-        printf("Cargo %s com desempate por Nome %s\n", setaCargo, setaNome);
+        ordDesc = "Cargo + Nome";
         break;
     case '5':
-        printf("Idade %s (crescente)\n", setaIdade);
+        ordDesc = "Idade (crescente)";
         break;
     case '6':
-        printf("Idade %s (decrescente)\n", setaIdade);
+        ordDesc = "Idade (decrescente)";
         break;
     case '1':
     default:
-        printf("Nome %s\n", setaNome);
+        ordDesc = "Nome";
         break;
     }
+    snprintf(linha, sizeof(linha), "Ordenacao: %s", ordDesc);
+    ui_text_line(linha);
+    ui_line('-');
 
-    printf("+-----------+----------------------+----------------------+-------+----------------------+\n");
-    printf("| ID        | Nome %-15s | Cargo %-15s | Idade %-1s | Telefone             |\n",
-           setaNome,
-           setaCargo,
-           setaIdade);
-    printf("+-----------+----------------------+----------------------+-------+----------------------+\n");
-
+    tabela_listagem_header();
     for (int i = 0; i < totalLista; i++)
     {
-        const struct funcionario *f = lista[i];
-        printf("| %-9.9s | %-20.20s | %-20.20s | %5d | %-20.20s |\n",
-               f->id,
-               f->nome,
-               f->cargo,
-               f->idade,
-               f->telefone);
+        tabela_listagem_row(lista[i]);
     }
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "Total listado: %d", totalLista);
+    ui_text_line(linha);
+    ui_text_line("Sugestao: revise contatos e distribuicao de cargos.");
+    ui_line('-');
 
-    printf("+-----------+----------------------+----------------------+-------+----------------------+\n");
-    printf("Total listado: %d\n", totalLista);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    aguardar_voltar();
 }
 
 static void relatorioFuncionariosPorCargo(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===              RELATORIO - FUNCIONARIOS POR CARGO                  ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Funcionarios por cargo");
 
     if (total_funcionarios == 0)
     {
-        printf("Nao ha funcionarios cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha funcionarios cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -247,11 +361,9 @@ static void relatorioFuncionariosPorCargo(void)
 
     if (totalCargos == 0)
     {
-        printf("Nenhum cargo informado para os funcionarios.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Nenhum cargo informado");
+        ui_text_line("Nao foi possivel agrupar funcionarios por cargo.");
+        aguardar_voltar();
         return;
     }
 
@@ -268,6 +380,7 @@ static void relatorioFuncionariosPorCargo(void)
         }
     }
 
+    tabela_cargo_header();
     for (int i = 0; i < totalCargos; i++)
     {
         double media = cargos[i].total > 0 ? (double)cargos[i].somaIdade / cargos[i].total : 0.0;
@@ -286,48 +399,22 @@ static void relatorioFuncionariosPorCargo(void)
             }
         }
 
-        printf("\n%s (%d funcionario%s)\n",
-               cargos[i].nome,
-               cargos[i].total,
-               cargos[i].total == 1 ? "" : "s");
-        printf("--------------------------------------------------------------\n");
-        for (int j = 0; j < cargos[i].total; j++)
-        {
-            printf("  - [%s] %s (%d anos)\n",
-                   cargos[i].lista[j]->id,
-                   cargos[i].lista[j]->nome,
-                   cargos[i].lista[j]->idade);
-        }
-        printf("  Subtotal: %d | Idade media: %.0f | Mais novo: %s (%d) | Mais velho: %s (%d)\n",
-               cargos[i].total,
-               media,
-               maisNovo->nome,
-               maisNovo->idade,
-               maisVelho->nome,
-               maisVelho->idade);
+        tabela_cargo_row(cargos[i].nome, cargos[i].total, media, maisNovo->idade, maisVelho->idade);
     }
-
-    printf("\n=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    ui_text_line("Dica: avalie distribuicao de senioridade por cargo.");
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioDistribuicaoFaixaEtaria(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===        RELATORIO - DISTRIBUICAO POR FAIXA ETARIA (FUNCIONARIOS)   ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Faixa etaria (funcionarios)");
 
     if (total_funcionarios == 0)
     {
-        printf("Nao ha funcionarios cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha funcionarios cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -386,11 +473,9 @@ static void relatorioDistribuicaoFaixaEtaria(void)
 
     if (totalConsiderados == 0)
     {
-        printf("Nao foi possivel calcular idades validas para os funcionarios.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Dados insuficientes");
+        ui_text_line("Nao foi possivel calcular idades validas para os funcionarios.");
+        aguardar_voltar();
         return;
     }
 
@@ -407,59 +492,50 @@ static void relatorioDistribuicaoFaixaEtaria(void)
     double percentualPredominante = (double)contadores[faixaPredominante] / totalConsiderados * 100.0;
     bool desequilibrio = percentualPredominante > 60.0;
 
-    printf("\nDistribuicao por faixa:\n");
+    ui_section_title("Distribuicao por faixa");
     for (int i = 0; i < TOTAL_FAIXAS; i++)
     {
         double percentual = (double)contadores[i] / totalConsiderados * 100.0;
-        printf("%-12s: %3d funcionario%s (%.2f%%)\n",
-               labels[i],
-               contadores[i],
-               contadores[i] == 1 ? "" : "s",
-               percentual);
+        char linha[UI_INNER + 1];
+        snprintf(linha, sizeof(linha), "%-12s: %3d func (%.2f%%)",
+                 labels[i],
+                 contadores[i],
+                 percentual);
+        ui_text_line(linha);
         if (contadores[i] > 0)
         {
-            printf("  Nomes:\n");
             for (int j = 0; j < contadores[i]; j++)
             {
-                printf("    - %s (%d anos)\n",
-                       faixas[i][j]->nome,
-                       faixas[i][j]->idade);
+                char nomeClip[48];
+                ui_clip_utf8(faixas[i][j]->nome, 40, nomeClip, sizeof(nomeClip));
+                char item[UI_INNER + 1];
+                snprintf(item, sizeof(item), "  - %s (%d anos)", nomeClip, faixas[i][j]->idade);
+                ui_text_line(item);
             }
         }
     }
 
-    printf("\nFaixa predominante: %s (%.2f%%)\n", labels[faixaPredominante], percentualPredominante);
-    printf("Idade media da equipe: %.1f anos\n", idadeMedia);
-    if (desequilibrio)
-    {
-        printf("Aviso: ha concentracao significativa em %s. Avalie diversidade etaria.\n", labels[faixaPredominante]);
-    }
-    else
-    {
-        printf("Distribuicao etaria equilibrada.\n");
-    }
-    printf("Total considerado: %d funcionario%s\n", totalConsiderados, totalConsiderados == 1 ? "" : "s");
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    char resumo[UI_INNER + 1];
+    snprintf(resumo, sizeof(resumo), "Faixa predominante: %s (%.2f%%)", labels[faixaPredominante], percentualPredominante);
+    ui_line('-');
+    ui_text_line(resumo);
+    snprintf(resumo, sizeof(resumo), "Idade media da equipe: %.1f anos", idadeMedia);
+    ui_text_line(resumo);
+    ui_text_line(desequilibrio ? "Aviso: concentracao alta em uma faixa." : "Distribuicao etaria equilibrada.");
+    snprintf(resumo, sizeof(resumo), "Total considerado: %d funcionario%s", totalConsiderados, totalConsiderados == 1 ? "" : "s");
+    ui_text_line(resumo);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioAnaliseEquipe(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                    RELATORIO - ANALISE DE EQUIPE                 ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Analise de equipe");
 
     if (total_funcionarios == 0)
     {
-        printf("Nao ha funcionarios cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha funcionarios cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -521,48 +597,42 @@ static void relatorioAnaliseEquipe(void)
         }
     }
 
-    printf("Funcionarios ativos: %d | Inativos: %d\n", ativos, inativos);
-    printf("Distribuicao por cargo:\n");
+    ui_section_title("Status geral");
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Ativos: %d | Inativos: %d", ativos, inativos);
+    ui_text_line(linha);
+    double taxaRetencao = total_funcionarios > 0 ? ((double)ativos / total_funcionarios) * 100.0 : 0.0;
+    snprintf(linha, sizeof(linha), "Taxa de retencao: %.2f%%", taxaRetencao);
+    ui_text_line(linha);
+    ui_line('-');
 
-    for (int i = 0; i < totalCargos; i++)
+    if (totalCargos > 0)
     {
-        double percentual = (double)cargos[i].total / total_funcionarios * 100.0;
-        double media = cargos[i].total > 0 ? (double)cargos[i].somaIdade / cargos[i].total : 0.0;
-        printf("  - %s: %d funcionario%s (%.2f%%) | Idade media: %.1f\n",
-               cargos[i].nome,
-               cargos[i].total,
-               cargos[i].total == 1 ? "" : "s",
-               percentual,
-               media);
-    }
-
-    double proporcao = ativos > 0 ? (double)total_alunos / ativos : 0.0;
-    printf("\nProporcao alunos/funcionario: 1 : %.2f\n", proporcao);
-    if (proporcao > 30.0)
-    {
-        printf(">>> Alerta: proporcao elevada. Avalie contratar mais funcionarios.\n");
-    }
-
-    for (int i = 0; i < totalCargos; i++)
-    {
-        if (cargos[i].total <= 1)
+        ui_section_title("Distribuicao por cargo");
+        tabela_cargo_header();
+        for (int i = 0; i < totalCargos; i++)
         {
-            printf(">>> Atenção: cargo '%s' com apenas %d profissional.\n", cargos[i].nome, cargos[i].total);
+            double media = cargos[i].total > 0 ? (double)cargos[i].somaIdade / cargos[i].total : 0.0;
+            tabela_cargo_row(cargos[i].nome, cargos[i].total, media, -1, -1);
         }
+        ui_line('-');
     }
 
-    printf("\n=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_text_line("Revise gaps de cargos e distribuicao de senioridade.");
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static char selecionarFiltroStatusFuncionario(void)
 {
-    printf("Filtro de status:\n");
-    printf("[1] Somente ativos\n");
-    printf("[2] Somente inativos\n");
-    printf("[3] Todos\n");
+    cabecalho_relatorio("Filtro - Status dos funcionarios");
+    ui_menu_option('1', "Somente ativos");
+    ui_menu_option('2', "Somente inativos");
+    ui_menu_option('3', "Todos");
+    ui_section_title("Escolha uma opcao");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
 
     char op = lerTecla();
     if (op == '1' || op == '2' || op == '3')
@@ -576,7 +646,11 @@ static char selecionarFiltroStatusFuncionario(void)
 
 static void solicitarFiltroCargo(char *dest, size_t tamanho)
 {
-    printf("Filtrar por cargo? (ENTER para todos): ");
+    cabecalho_relatorio("Filtro - Cargo");
+    ui_text_line("Digite o cargo para filtrar (ENTER para todos).");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
     if (fgets(dest, tamanho, stdin) != NULL)
     {
         dest[strcspn(dest, "\n")] = '\0';
@@ -585,22 +659,28 @@ static void solicitarFiltroCargo(char *dest, size_t tamanho)
 
 static char selecionarOrdenacaoFuncionario(void)
 {
-    printf("Ordenacao:\n");
-    printf("[1] Nome\n");
-    printf("[2] Cargo\n");
-    printf("[3] Idade\n");
-    printf("[4] Cargo + Nome\n");
-    printf("[5] Idade (crescente)\n");
-    printf("[6] Idade (decrescente)\n");
-
-    char op = lerTecla();
-    if (op >= '1' && op <= '6')
+    while (1)
     {
-        return op;
-    }
+        cabecalho_relatorio("Filtro - Ordenacao de funcionarios");
+        ui_menu_option('1', "Nome");
+        ui_menu_option('2', "Cargo");
+        ui_menu_option('3', "Idade");
+        ui_menu_option('4', "Cargo + Nome");
+        ui_menu_option('5', "Idade (crescente)");
+        ui_menu_option('6', "Idade (decrescente)");
+        ui_section_title("Escolha uma opcao");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
-    opInvalida();
-    return selecionarOrdenacaoFuncionario();
+        char op = lerTecla();
+        if (op >= '1' && op <= '6')
+        {
+            return op;
+        }
+
+        opInvalida();
+    }
 }
 
 static int compararFuncionarios(const void *a, const void *b)

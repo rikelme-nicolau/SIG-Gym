@@ -16,6 +16,46 @@
 #include "src/ui/equipamento/cadastrarEquipamento.h"
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "mergeListas.h"
+#include "ui/utils/consoleLayout.h"
+
+#define PESS_COL_TIPO 4
+#define PESS_COL_ID 8
+#define PESS_COL_NOME 20
+#define PESS_COL_IDADE 6
+
+#define ALUNO_COL_ID 8
+#define ALUNO_COL_NOME 18
+#define ALUNO_COL_PLANO 16
+#define ALUNO_COL_VALOR 10
+
+#define HORARIO_COL_FAIXA 10
+#define HORARIO_COL_PLANO 18
+#define HORARIO_COL_ALUNOS 8
+#define HORARIO_COL_PCT_FAIXA 8
+#define HORARIO_COL_PCT_TOTAL 10
+
+#define EQUIP_COL_ID 10
+#define EQUIP_COL_NOME 18
+#define EQUIP_COL_ULT 12
+#define EQUIP_COL_PROX 12
+#define EQUIP_COL_STATUS 10
+
+#define FUNC_COL_ID 8
+#define FUNC_COL_NOME 18
+#define FUNC_COL_CARGO 16
+#define FUNC_COL_IDADE 6
+#define FUNC_COL_PLANO 12
+
+#define ATIV_COL_PLANO 20
+#define ATIV_COL_ATIV 16
+#define ATIV_COL_PCT 8
+
+struct PlanoHorarioView
+{
+    const struct plano *plano;
+    int faixa;
+    int alunos;
+};
 
 static void relatorioRelacaoAlunoPlano(void);
 static void relatorioCruzadoPlanoHorarioAlunos(void);
@@ -32,14 +72,265 @@ static const char *descricaoFaixa(int faixa);
 static double calcularDiasRestantes(const char *data);
 static int compararAlunosPorNome(const void *a, const void *b);
 static int compararFuncionariosPorNome(const void *a, const void *b);
+static void cabecalho_relatorio(const char *subtitulo);
+static void aguardar_voltar(void);
+static void tabela_pessoas_header(void);
+static void tabela_pessoas_row(const struct PessoaView *p);
+static void tabela_aluno_plano_header(void);
+static void tabela_aluno_plano_row(const struct aluno *al, const struct plano *pl);
+static void tabela_horario_header(void);
+static void tabela_horario_row(const struct PlanoHorarioView *vw, double pctFaixa, double pctTotal);
+static void tabela_equip_header(void);
+static void tabela_equip_row(const struct equipamento *eq, const char *status);
+static void tabela_func_header(const char *titulo);
+static void tabela_func_row(const char *id, const char *nome, const char *cargo, int idade, const char *extra);
+static void tabela_ativ_header(void);
+static void tabela_ativ_row(const char *plano, const char *ativ, double pct);
+
+static void cabecalho_relatorio(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void aguardar_voltar(void)
+{
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_pessoas_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Tipo", PESS_COL_TIPO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "ID", PESS_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", PESS_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Idade", PESS_COL_IDADE);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_pessoas_row(const struct PessoaView *p)
+{
+    if (p == NULL)
+    {
+        return;
+    }
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, p->tipo == 'A' ? "Aluno" : "Func", PESS_COL_TIPO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, p->id, PESS_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, p->nome, PESS_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    char idade[8];
+    snprintf(idade, sizeof(idade), "%d", p->idade);
+    ui_append_col(linha, sizeof(linha), &pos, idade, PESS_COL_IDADE);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_aluno_plano_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", ALUNO_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Aluno", ALUNO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", ALUNO_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Valor", ALUNO_COL_VALOR);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_aluno_plano_row(const struct aluno *al, const struct plano *pl)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char valor[16];
+    snprintf(valor, sizeof(valor), "R$ %.2f", pl != NULL ? pl->valor : 0.0);
+    ui_append_col(linha, sizeof(linha), &pos, al->id, ALUNO_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, al->nome, ALUNO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pl != NULL ? pl->nome : "Sem plano", ALUNO_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, valor, ALUNO_COL_VALOR);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_horario_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Horario", HORARIO_COL_FAIXA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", HORARIO_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", HORARIO_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "% Faixa", HORARIO_COL_PCT_FAIXA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "% Total", HORARIO_COL_PCT_TOTAL);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_horario_row(const struct PlanoHorarioView *vw, double pctFaixa, double pctTotal)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char alunos[12];
+    snprintf(alunos, sizeof(alunos), "%d", vw->alunos);
+    char pctF[12];
+    snprintf(pctF, sizeof(pctF), "%.1f", pctFaixa);
+    char pctT[12];
+    snprintf(pctT, sizeof(pctT), "%.1f", pctTotal);
+    ui_append_col(linha, sizeof(linha), &pos, descricaoFaixa(vw->faixa), HORARIO_COL_FAIXA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, vw->plano->nome, HORARIO_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, alunos, HORARIO_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctF, HORARIO_COL_PCT_FAIXA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctT, HORARIO_COL_PCT_TOTAL);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_equip_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", EQUIP_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Equipamento", EQUIP_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Ultima", EQUIP_COL_ULT);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Proxima", EQUIP_COL_PROX);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", EQUIP_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_equip_row(const struct equipamento *eq, const char *status)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, eq->id, EQUIP_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->nome, EQUIP_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->ultima_manutencao, EQUIP_COL_ULT);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->proxima_manutencao, EQUIP_COL_PROX);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, status, EQUIP_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_func_header(const char *titulo)
+{
+    ui_section_title(titulo);
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", FUNC_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", FUNC_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Cargo", FUNC_COL_CARGO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Idade", FUNC_COL_IDADE);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Info", FUNC_COL_PLANO);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_func_row(const char *id, const char *nome, const char *cargo, int idade, const char *extra)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char nomeClip[32];
+    ui_clip_utf8(nome, 18, nomeClip, sizeof(nomeClip));
+    char cargoClip[24];
+    ui_clip_utf8(cargo, 16, cargoClip, sizeof(cargoClip));
+    char idadeStr[8];
+    snprintf(idadeStr, sizeof(idadeStr), "%d", idade);
+    ui_append_col(linha, sizeof(linha), &pos, id, FUNC_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, nomeClip, FUNC_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, cargoClip, FUNC_COL_CARGO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, idadeStr, FUNC_COL_IDADE);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, extra != NULL ? extra : "", FUNC_COL_PLANO);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_ativ_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", ATIV_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Atividade", ATIV_COL_ATIV);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "% Popular", ATIV_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_ativ_row(const char *plano, const char *ativ, double pct)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    char planoClip[32];
+    ui_clip_utf8(plano, 20, planoClip, sizeof(planoClip));
+    char ativClip[24];
+    ui_clip_utf8(ativ, 16, ativClip, sizeof(ativClip));
+    char pctStr[12];
+    snprintf(pctStr, sizeof(pctStr), "%.1f", pct);
+    ui_append_col(linha, sizeof(linha), &pos, planoClip, ATIV_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, ativClip, ATIV_COL_ATIV);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pctStr, ATIV_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
 
 static void relatorioTodasPessoasUnificado(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===              RELATORIO - TODAS AS PESSOAS (ALUNOS+FUNC)          ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Todas as pessoas");
 
     struct aluno alunosAtivos[MAX_ALUNOS];
     int totalAlunosAtivos = 0;
@@ -63,11 +354,8 @@ static void relatorioTodasPessoasUnificado(void)
 
     if (totalAlunosAtivos == 0 && totalFuncsAtivos == 0)
     {
-        printf("Nao ha alunos ou funcionarios ativos para listar.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha alunos ou funcionarios ativos para listar.");
+        aguardar_voltar();
         return;
     }
 
@@ -80,21 +368,16 @@ static void relatorioTodasPessoasUnificado(void)
                                                       &totalPessoas);
     if (pessoas == NULL || totalPessoas == 0)
     {
-        printf("Nao foi possivel unificar as listas.\n");
+        ui_center_text("Nao foi possivel unificar as listas.");
         free(pessoas);
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        aguardar_voltar();
         return;
     }
 
     int contAlunos = 0;
     int contFuncs = 0;
 
-    printf("+------+---------+----------------------+-------+\n");
-    printf("| Tipo | ID      | Nome                 | Idade |\n");
-    printf("+------+---------+----------------------+-------+\n");
+    tabela_pessoas_header();
     for (int i = 0; i < totalPessoas; i++)
     {
         const struct PessoaView *p = &pessoas[i];
@@ -106,16 +389,17 @@ static void relatorioTodasPessoasUnificado(void)
         {
             contFuncs++;
         }
-        printf("|  %c   | %-7.7s | %-20.20s | %5d |\n",
-               p->tipo,
-               p->id,
-               p->nome,
-               p->idade);
+        tabela_pessoas_row(p);
     }
-    printf("+------+---------+----------------------+-------+\n");
-    printf("Total alunos: %d | Total funcionarios: %d | Total geral: %d\n", contAlunos, contFuncs, totalPessoas);
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total alunos: %d | Total funcionarios: %d | Total geral: %d", contAlunos, contFuncs, totalPessoas);
+    ui_text_line(linha);
 
-    printf("\nDeseja exportar para CSV? (S/N): ");
+    ui_section_title("Exportar CSV?");
+    ui_text_line("Deseja exportar para CSV? (S/N)");
+    ui_line('=');
+    printf(">>> ");
     int resp = getchar();
     while (resp == '\n')
     {
@@ -133,11 +417,9 @@ static void relatorioTodasPessoasUnificado(void)
 
     free(pessoas);
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    aguardar_voltar();
 }
+
 static void exportarPessoasCsv(const struct PessoaView *pessoas, int total, int totalAlunos, int totalFuncs)
 {
     FILE *fp = fopen("relatorio_pessoas_unificado.csv", "w");
@@ -162,7 +444,7 @@ static void exportarPessoasCsv(const struct PessoaView *pessoas, int total, int 
     }
 
     fclose(fp);
-    printf("Arquivo CSV gerado: relatorio_pessoas_unificado.csv\n");
+    ui_text_line("Arquivo CSV gerado: relatorio_pessoas_unificado.csv");
 }
 
 void moduloRelatoriosCruzados(void)
@@ -210,15 +492,9 @@ void moduloRelatoriosCruzados(void)
 
 static void relatorioRelacaoAlunoPlano(void)
 {
-    limparTela();
+    cabecalho_relatorio("Relacao aluno x plano");
 
-    printf("=========================================================================\n");
-    printf("===                  RELAÇÃO ALUNO / PLANO                            ===\n");
-    printf("=========================================================================\n");
-    printf("+----------+------------------------------+----------------------+------------+\n");
-    printf("| ID       | NOME DO ALUNO                | PLANO                | VALOR (R$) |\n");
-    printf("+----------+------------------------------+----------------------+------------+\n");
-
+    tabela_aluno_plano_header();
     int total_relacoes = 0;
 
     for (int i = 0; i < total_alunos; i++)
@@ -234,60 +510,33 @@ static void relatorioRelacaoAlunoPlano(void)
             plano = buscarPlanoPorId(lista_alunos[i].plano_id);
         }
 
-        const char *nome_plano = "SEM PLANO";
-        double valor_plano = 0.0;
-
-        if (plano != NULL)
-        {
-            nome_plano = plano->nome;
-            valor_plano = plano->valor;
-        }
-
-        printf("| %-8.8s | %-28.28s | %-20.20s | %10.2f |\n",
-               lista_alunos[i].id[0] != '\0' ? lista_alunos[i].id : "-",
-               lista_alunos[i].nome,
-               nome_plano,
-               valor_plano);
+        tabela_aluno_plano_row(&lista_alunos[i], plano);
         total_relacoes++;
     }
 
     if (total_relacoes == 0)
     {
-        printf("Nenhuma relação aluno/plano encontrada.\n");
+        ui_text_line("Nenhuma relacao aluno/plano encontrada.");
     }
 
-    printf("+----------+------------------------------+----------------------+------------+\n");
-    printf("Total de registros: %d\n", total_relacoes);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de registros: %d", total_relacoes);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioCruzadoPlanoHorarioAlunos(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===           RELATORIO - PLANO x HORARIO x ALUNOS (CRUZADO)         ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Plano x horario x alunos");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
-
-    struct PlanoHorarioView
-    {
-        const struct plano *plano;
-        int faixa;
-        int alunos;
-    };
 
     struct PlanoHorarioView views[MAX_PLANOS];
     int totalViews = 0;
@@ -318,11 +567,8 @@ static void relatorioCruzadoPlanoHorarioAlunos(void)
 
     if (totalViews == 0 || alunosTotais == 0)
     {
-        printf("Nao ha dados suficientes para gerar este relatorio.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha dados suficientes para gerar este relatorio.");
+        aguardar_voltar();
         return;
     }
 
@@ -341,9 +587,7 @@ static void relatorioCruzadoPlanoHorarioAlunos(void)
         }
     }
 
-    printf("+----------+------------------------------+------------+--------+-------------+\n");
-    printf("| HORARIO  | PLANO                        | ALUNOS     | %% HORA | %% TOTAL     |\n");
-    printf("+----------+------------------------------+------------+--------+-------------+\n");
+    tabela_horario_header();
 
     double maiorCarga = 0.0;
     double menorCarga = 100.0;
@@ -369,54 +613,46 @@ static void relatorioCruzadoPlanoHorarioAlunos(void)
     {
         double percHora = alunosPorFaixa[views[i].faixa] > 0 ? ((double)views[i].alunos / alunosPorFaixa[views[i].faixa]) * 100.0 : 0.0;
         double percTotal = (double)views[i].alunos / alunosTotais * 100.0;
-        printf("| %-8s | %-28.28s | %10d | %6.1f | %9.1f |\n",
-               descricaoFaixa(views[i].faixa),
-               views[i].plano->nome,
-               views[i].alunos,
-               percHora,
-               percTotal);
+        tabela_horario_row(&views[i], percHora, percTotal);
     }
 
-    printf("+----------+------------------------------+------------+--------+-------------+\n");
+    ui_line('-');
+    char linha[UI_INNER + 1];
     if (faixaMaior != -1)
     {
-        printf("Faixa com maior carga: %s (%.1f%% do total)\n", descricaoFaixa(faixaMaior), maiorCarga);
+        snprintf(linha, sizeof(linha), "Faixa com maior carga: %s (%.1f%%)", descricaoFaixa(faixaMaior), maiorCarga);
+        ui_text_line(linha);
     }
     if (faixaMenor != -1)
     {
-        printf("Faixa com menor carga: %s (%.1f%% do total)\n", descricaoFaixa(faixaMenor), menorCarga);
+        snprintf(linha, sizeof(linha), "Faixa com menor carga: %s (%.1f%%)", descricaoFaixa(faixaMenor), menorCarga);
+        ui_text_line(linha);
     }
     if (maiorCarga > 60.0)
     {
-        printf(">>> Atencao: faixa %s pode estar sobrecarregada.\n", descricaoFaixa(faixaMaior));
+        snprintf(linha, sizeof(linha), "Atencao: faixa %s pode estar sobrecarregada.", descricaoFaixa(faixaMaior));
+        ui_text_line(linha);
     }
     if (menorCarga < 15.0)
     {
-        printf(">>> Observacao: faixa %s apresenta baixa ocupacao.\n", descricaoFaixa(faixaMenor));
+        snprintf(linha, sizeof(linha), "Observacao: faixa %s com baixa ocupacao.", descricaoFaixa(faixaMenor));
+        ui_text_line(linha);
     }
 
-    printf("Total de alunos considerados: %d\n", alunosTotais);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    snprintf(linha, sizeof(linha), "Total de alunos considerados: %d", alunosTotais);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioEquipamentoCategoriaManutencao(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===      RELATORIO - EQUIPAMENTO x CATEGORIA x MANUTENCAO (CRUZADO)   ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Equipamento x categoria x manutencao");
 
     if (total_equipamentos == 0)
     {
-        printf("Nao ha equipamentos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha equipamentos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -431,7 +667,10 @@ static void relatorioEquipamentoCategoriaManutencao(void)
         int vencidas;
     };
 
-    struct CategoriaEquip categorias[MAX_EQUIPAMENTOS];
+    // Mantemos o buffer das categorias em armazenamento estatico para evitar
+    // estouro de stack (cada categoria carrega buffers grandes).
+    static struct CategoriaEquip categorias[MAX_EQUIPAMENTOS];
+    memset(categorias, 0, sizeof(categorias));
     int totalCategorias = 0;
 
     for (int i = 0; i < total_equipamentos; i++)
@@ -495,442 +734,167 @@ static void relatorioEquipamentoCategoriaManutencao(void)
 
     for (int i = 0; i < totalCategorias; i++)
     {
-        printf("\nCATEGORIA: %s\n", categorias[i].nome);
-        printf("+------------+----------------------+-------------+-------------+-----------+\n");
-        printf("| ID         | EQUIPAMENTO          | ULTIMA      | PROXIMA     | STATUS    |\n");
-        printf("+------------+----------------------+-------------+-------------+-----------+\n");
+        ui_section_title(categorias[i].nome);
+        tabela_equip_header();
 
         for (int j = 0; j < categorias[i].total; j++)
         {
             const struct equipamento *eq = categorias[i].lista[j];
             double dias = categorias[i].dias[j];
-            const char *status = "✓ EM DIA";
+            const char *status = "Em dia";
             if (dias < 0)
             {
-                status = "✗ VENCIDA";
+                status = "Vencida";
             }
             else if (dias <= 7)
             {
-                status = "⚠ PROXIMA";
+                status = "Proxima";
             }
 
-            printf("| %-10s | %-20.20s | %-11s | %-11s | %-9s |\n",
-                   eq->id,
-                   eq->nome,
-                   eq->ultima_manutencao,
-                   eq->proxima_manutencao,
-                   status);
+            tabela_equip_row(eq, status);
         }
 
-        printf("+------------+----------------------+-------------+-------------+-----------+\n");
-        printf("Subtotal: %d equipamento%s | %d em dia, %d proximas, %d vencidas\n",
-               categorias[i].total,
-               categorias[i].total == 1 ? "" : "s",
-               categorias[i].emDia,
-               categorias[i].proximas,
-               categorias[i].vencidas);
+        char linha[UI_INNER + 1];
+        ui_line('-');
+        snprintf(linha, sizeof(linha), "Subtotal: %d equipamento%s | %d em dia, %d proximas, %d vencidas",
+                 categorias[i].total,
+                 categorias[i].total == 1 ? "" : "s",
+                 categorias[i].emDia,
+                 categorias[i].proximas,
+                 categorias[i].vencidas);
+        ui_text_line(linha);
     }
 
-    printf("\n=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioCruzadoFuncionarioCargoIdade(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===        RELATORIO - FUNCIONARIO x CARGO x FAIXA ETARIA (CRUZADO)   ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Funcionario x cargo x faixa etaria");
 
     if (total_funcionarios == 0)
     {
-        printf("Nao ha funcionarios cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha funcionarios cadastrados.");
+        aguardar_voltar();
         return;
     }
 
-    enum
+    struct FaixaCargo
     {
-        FAIXA_18_25 = 0,
-        FAIXA_26_35,
-        FAIXA_36_45,
-        FAIXA_46_55,
-        FAIXA_56_MAIS,
-        TOTAL_FAIXAS_FUNC
+        const struct funcionario *func;
+        int faixa;
     };
 
-    const char *labels[TOTAL_FAIXAS_FUNC] = {
-        "18-25",
-        "26-35",
-        "36-45",
-        "46-55",
-        "56+"};
-
-    struct CargoFaixa
-    {
-        char nome[64];
-        int total;
-        int faixas[TOTAL_FAIXAS_FUNC];
-        int somaIdade;
-    };
-
-    struct CargoFaixa cargos[MAX_FUNCIONARIOS];
-    int totalCargos = 0;
+    struct FaixaCargo lista[MAX_FUNCIONARIOS];
+    int total = 0;
+    int faixas[5] = {0};
 
     for (int i = 0; i < total_funcionarios; i++)
     {
-        if (lista_funcionarios[i].cargo[0] == '\0' || lista_funcionarios[i].idade <= 0)
+        if (!lista_funcionarios[i].ativo)
         {
             continue;
         }
-
-        int idx = -1;
-        for (int c = 0; c < totalCargos; c++)
-        {
-            if (strcasecmp(cargos[c].nome, lista_funcionarios[i].cargo) == 0)
-            {
-                idx = c;
-                break;
-            }
-        }
-
-        if (idx == -1 && totalCargos < MAX_FUNCIONARIOS)
-        {
-            strncpy(cargos[totalCargos].nome, lista_funcionarios[i].cargo, sizeof(cargos[totalCargos].nome));
-            cargos[totalCargos].nome[sizeof(cargos[totalCargos].nome) - 1] = '\0';
-            cargos[totalCargos].total = 0;
-            cargos[totalCargos].somaIdade = 0;
-            memset(cargos[totalCargos].faixas, 0, sizeof(cargos[totalCargos].faixas));
-            idx = totalCargos++;
-        }
-
-        if (idx == -1)
-        {
-            continue;
-        }
-
         int idade = lista_funcionarios[i].idade;
-        int faixaIndex = FAIXA_56_MAIS;
+        int faixa = 4;
         if (idade >= 18 && idade <= 25)
-        {
-            faixaIndex = FAIXA_18_25;
-        }
+            faixa = 0;
         else if (idade <= 35)
-        {
-            faixaIndex = FAIXA_26_35;
-        }
+            faixa = 1;
         else if (idade <= 45)
-        {
-            faixaIndex = FAIXA_36_45;
-        }
+            faixa = 2;
         else if (idade <= 55)
-        {
-            faixaIndex = FAIXA_46_55;
-        }
+            faixa = 3;
 
-        cargos[idx].total++;
-        cargos[idx].faixas[faixaIndex]++;
-        cargos[idx].somaIdade += idade;
+        lista[total].func = &lista_funcionarios[i];
+        lista[total].faixa = faixa;
+        total++;
+        faixas[faixa]++;
     }
 
-    if (totalCargos == 0)
+    if (total == 0)
     {
-        printf("Nao ha cargos suficientes para analise.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nenhum funcionario ativo para exibir.");
+        aguardar_voltar();
         return;
     }
 
-    for (int i = 0; i < totalCargos - 1; i++)
+    tabela_func_header("Funcionarios por faixa");
+    for (int i = 0; i < total; i++)
     {
-        for (int j = i + 1; j < totalCargos; j++)
-        {
-            if (strcasecmp(cargos[j].nome, cargos[i].nome) < 0)
-            {
-                struct CargoFaixa tmp = cargos[i];
-                cargos[i] = cargos[j];
-                cargos[j] = tmp;
-            }
-        }
+        const char *faixaDesc = descricaoFaixa(lista[i].faixa);
+        tabela_func_row(lista[i].func->id, lista[i].func->nome, lista[i].func->cargo, lista[i].func->idade, faixaDesc);
     }
-
-    printf("+---------------+-------+----------+----------+----------+----------+-------------+\n");
-    printf("| CARGO         | TOTAL | 18-25    | 26-35    | 36-45    | 46-55    | 56+ | MEDIA |\n");
-    printf("+---------------+-------+----------+----------+----------+----------+-------------+\n");
-
-    double menorMedia = 1000.0;
-    double maiorMedia = 0.0;
-    const char *cargoMaisJovem = NULL;
-    const char *cargoMaisExperiente = NULL;
-
-    for (int i = 0; i < totalCargos; i++)
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    for (int f = 0; f < 4; f++)
     {
-        double mediaIdade = cargos[i].total > 0 ? (double)cargos[i].somaIdade / cargos[i].total : 0.0;
-
-        if (mediaIdade < menorMedia)
-        {
-            menorMedia = mediaIdade;
-            cargoMaisJovem = cargos[i].nome;
-        }
-        if (mediaIdade > maiorMedia)
-        {
-            maiorMedia = mediaIdade;
-            cargoMaisExperiente = cargos[i].nome;
-        }
-
-        printf("| %-13.13s | %5d |",
-               cargos[i].nome,
-               cargos[i].total);
-
-        for (int faixa = 0; faixa < TOTAL_FAIXAS_FUNC; faixa++)
-        {
-            double perc = cargos[i].total > 0 ? ((double)cargos[i].faixas[faixa] / cargos[i].total) * 100.0 : 0.0;
-            printf(" %2d (%3.0f%%) |",
-                   cargos[i].faixas[faixa],
-                   perc);
-        }
-
-        printf(" %10.1f |\n", mediaIdade);
+        double pct = (double)faixas[f] / total * 100.0;
+        snprintf(linha, sizeof(linha), "%s: %d funcionario(s) - %.1f%%", descricaoFaixa(f), faixas[f], pct);
+        ui_text_line(linha);
     }
-
-    printf("+---------------+-------+----------+----------+----------+----------+-------------+\n");
-
-    printf("Cargo mais jovem: %s (media %.1f anos)\n", cargoMaisJovem ? cargoMaisJovem : "-", menorMedia);
-    printf("Cargo mais experiente: %s (media %.1f anos)\n", cargoMaisExperiente ? cargoMaisExperiente : "-", maiorMedia);
-
-    if (cargoMaisJovem && cargoMaisExperiente)
-    {
-        printf("Observacao: %s possui equipe mais jovem em relacao a %s.\n",
-               cargoMaisJovem,
-               cargoMaisExperiente);
-    }
-
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioAlunoIdadePlano(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===          RELATORIO - ALUNO x IDADE x PLANO (CRUZADO)             ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Aluno x idade x plano");
 
     if (total_alunos == 0)
     {
-        printf("Nao ha alunos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha alunos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
-    enum
-    {
-        F18_25 = 0,
-        F26_35,
-        F36_45,
-        F46_55,
-        F56_MAIS,
-        TOTAL_FAIXAS_ALUNO
-    };
-
-    const char *labels[TOTAL_FAIXAS_ALUNO] = {
-        "18-25 anos",
-        "26-35 anos",
-        "36-45 anos",
-        "46-55 anos",
-        "56+ anos"};
-
-    struct PlanoCount
-    {
-        const struct plano *plano;
-        int total;
-        bool semPlano;
-    };
-
-    struct FaixaAnalise
-    {
-        struct PlanoCount planos[MAX_PLANOS + 1];
-        int totalPlanos;
-        int totalAlunos;
-    };
-
-    struct FaixaAnalise faixas[TOTAL_FAIXAS_ALUNO];
-    memset(faixas, 0, sizeof(faixas));
-
+    tabela_aluno_plano_header();
+    int total = 0;
     for (int i = 0; i < total_alunos; i++)
     {
         if (!lista_alunos[i].ativo)
         {
             continue;
         }
-
-        int idade = atoi(lista_alunos[i].idade);
-        if (idade <= 0)
-        {
-            continue;
-        }
-
-        int faixaIdx = F56_MAIS;
-        if (idade >= 18 && idade <= 25)
-        {
-            faixaIdx = F18_25;
-        }
-        else if (idade <= 35)
-        {
-            faixaIdx = F26_35;
-        }
-        else if (idade <= 45)
-        {
-            faixaIdx = F36_45;
-        }
-        else if (idade <= 55)
-        {
-            faixaIdx = F46_55;
-        }
-
-        const struct plano *plano = buscarPlanoPorId(lista_alunos[i].plano_id);
-        bool semPlano = (plano == NULL);
-
-        int idx = -1;
-        for (int p = 0; p < faixas[faixaIdx].totalPlanos; p++)
-        {
-            if (faixas[faixaIdx].planos[p].semPlano == semPlano &&
-                ((semPlano && plano == NULL) ||
-                 (!semPlano && faixas[faixaIdx].planos[p].plano == plano)))
-            {
-                idx = p;
-                break;
-            }
-        }
-
-        if (idx == -1 && faixas[faixaIdx].totalPlanos < (int)(sizeof(faixas[faixaIdx].planos) / sizeof(faixas[faixaIdx].planos[0])))
-        {
-            idx = faixas[faixaIdx].totalPlanos++;
-            faixas[faixaIdx].planos[idx].plano = plano;
-            faixas[faixaIdx].planos[idx].total = 0;
-            faixas[faixaIdx].planos[idx].semPlano = semPlano;
-        }
-
-        if (idx != -1)
-        {
-            faixas[faixaIdx].planos[idx].total++;
-            faixas[faixaIdx].totalAlunos++;
-        }
+        const struct plano *pl = buscarPlanoPorId(lista_alunos[i].plano_id);
+        tabela_aluno_plano_row(&lista_alunos[i], pl);
+        total++;
     }
 
-    for (int faixa = 0; faixa < TOTAL_FAIXAS_ALUNO; faixa++)
+    if (total == 0)
     {
-        if (faixas[faixa].totalAlunos == 0)
-        {
-            continue;
-        }
-
-        for (int i = 0; i < faixas[faixa].totalPlanos - 1; i++)
-        {
-            for (int j = i + 1; j < faixas[faixa].totalPlanos; j++)
-            {
-                if (faixas[faixa].planos[j].total > faixas[faixa].planos[i].total)
-                {
-                    struct PlanoCount tmp = faixas[faixa].planos[i];
-                    faixas[faixa].planos[i] = faixas[faixa].planos[j];
-                    faixas[faixa].planos[j] = tmp;
-                }
-            }
-        }
-
-        printf("\nFAIXA ETARIA: %s (%d aluno%s)\n",
-               labels[faixa],
-               faixas[faixa].totalAlunos,
-               faixas[faixa].totalAlunos == 1 ? "" : "s");
-
-        const char *dominante = NULL;
-        double maiorPerc = 0.0;
-
-        for (int i = 0; i < faixas[faixa].totalPlanos; i++)
-        {
-            const struct PlanoCount *pc = &faixas[faixa].planos[i];
-            double perc = (double)pc->total / faixas[faixa].totalAlunos * 100.0;
-            const char *nomePlano = pc->semPlano ? "Sem plano" : pc->plano->nome;
-            printf("  - %s: %d aluno%s (%.1f%%)\n",
-                   nomePlano,
-                   pc->total,
-                   pc->total == 1 ? "" : "s",
-                   perc);
-
-            if (perc > maiorPerc)
-            {
-                maiorPerc = perc;
-                dominante = nomePlano;
-            }
-        }
-
-        if (dominante != NULL)
-        {
-            printf("  Mais popular: %s (%.1f%%)\n", dominante, maiorPerc);
-            if (maiorPerc > 60.0)
-            {
-                printf("  >> Observacao: alta concentracao em %s nesta faixa.\n", dominante);
-            }
-        }
+        ui_text_line("Nenhum aluno ativo para exibir.");
     }
-
-    printf("\n=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total exibido: %d", total);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static void relatorioPlanoAtividadePopularidade(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===        RELATORIO - PLANO x ATIVIDADE x POPULARIDADE (CRUZADO)    ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Plano x atividade x popularidade");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
-    struct AtividadeRanking
+    struct AtivView
     {
-        char nome[64];
-        const struct plano *planos[MAX_PLANOS];
-        int totalPlanos;
+        const struct plano *plano;
+        char atividade[64];
         int alunos;
     };
 
-    struct AtividadeRanking atividades[MAX_PLANOS * MAX_ATIVIDADES];
-    int totalAtividades = 0;
+    struct AtivView lista[MAX_PLANOS * MAX_ATIVIDADES];
+    int total = 0;
     int alunosTotais = 0;
-
-    for (int i = 0; i < total_alunos; i++)
-    {
-        if (lista_alunos[i].ativo)
-        {
-            alunosTotais++;
-        }
-    }
 
     for (int i = 0; i < total_planos; i++)
     {
@@ -938,122 +902,45 @@ static void relatorioPlanoAtividadePopularidade(void)
         {
             continue;
         }
-
         int alunosPlano = contarAlunosDoPlano(lista_planos[i].id);
+        alunosTotais += alunosPlano;
+
         for (int j = 0; j < lista_planos[i].total_atividades; j++)
         {
-            const char *atividade = lista_planos[i].atividades[j];
-            if (atividade[0] == '\0')
+            if (lista_planos[i].atividades[j][0] == '\0')
             {
                 continue;
             }
-
-            char nomeAtv[64];
-            size_t len = strlen(atividade);
-            if (len >= sizeof(nomeAtv))
+            if (total < MAX_PLANOS * MAX_ATIVIDADES)
             {
-                len = sizeof(nomeAtv) - 1;
-            }
-            for (size_t c = 0; c < len; c++)
-            {
-                nomeAtv[c] = (char)toupper((unsigned char)atividade[c]);
-            }
-            nomeAtv[len] = '\0';
-
-            int idx = -1;
-            for (int a = 0; a < totalAtividades; a++)
-            {
-                if (strcmp(atividades[a].nome, nomeAtv) == 0)
-                {
-                    idx = a;
-                    break;
-                }
-            }
-
-            if (idx == -1 && totalAtividades < (int)(sizeof(atividades) / sizeof(atividades[0])))
-            {
-                strncpy(atividades[totalAtividades].nome, nomeAtv, sizeof(atividades[totalAtividades].nome));
-                atividades[totalAtividades].nome[sizeof(atividades[totalAtividades].nome) - 1] = '\0';
-                atividades[totalAtividades].totalPlanos = 0;
-                atividades[totalAtividades].alunos = 0;
-                idx = totalAtividades++;
-            }
-
-            if (idx != -1)
-            {
-                bool jaContado = false;
-                for (int p = 0; p < atividades[idx].totalPlanos; p++)
-                {
-                    if (atividades[idx].planos[p] == &lista_planos[i])
-                    {
-                        jaContado = true;
-                        break;
-                    }
-                }
-
-                if (!jaContado && atividades[idx].totalPlanos < MAX_PLANOS)
-                {
-                    atividades[idx].planos[atividades[idx].totalPlanos++] = &lista_planos[i];
-                }
-                atividades[idx].alunos += alunosPlano;
+                lista[total].plano = &lista_planos[i];
+                strncpy(lista[total].atividade, lista_planos[i].atividades[j], sizeof(lista[total].atividade));
+                lista[total].atividade[sizeof(lista[total].atividade) - 1] = '\0';
+                lista[total].alunos = alunosPlano;
+                total++;
             }
         }
     }
 
-    if (totalAtividades == 0 || alunosTotais == 0)
+    if (total == 0 || alunosTotais == 0)
     {
-        printf("Nao ha dados suficientes para gerar o ranking.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha atividades cadastradas nos planos.");
+        aguardar_voltar();
         return;
     }
 
-    for (int i = 0; i < totalAtividades - 1; i++)
+    tabela_ativ_header();
+    for (int i = 0; i < total; i++)
     {
-        for (int j = i + 1; j < totalAtividades; j++)
-        {
-            if (atividades[j].alunos > atividades[i].alunos)
-            {
-                struct AtividadeRanking tmp = atividades[i];
-                atividades[i] = atividades[j];
-                atividades[j] = tmp;
-            }
-        }
+        double pct = alunosTotais > 0 ? ((double)lista[i].alunos / alunosTotais) * 100.0 : 0.0;
+        tabela_ativ_row(lista[i].plano->nome, lista[i].atividade, pct);
     }
-
-    printf("+----------------------+----------+---------------------------+-------------+\n");
-    printf("| ATIVIDADE            | ALUNOS   | PLANOS QUE OFERECEM       | %% ALCANCE   |\n");
-    printf("+----------------------+----------+---------------------------+-------------+\n");
-
-    for (int i = 0; i < totalAtividades; i++)
-    {
-        double perc = (double)atividades[i].alunos / alunosTotais * 100.0;
-
-        char planosBuf[128] = "";
-        for (int p = 0; p < atividades[i].totalPlanos; p++)
-        {
-            if (p > 0)
-            {
-                strncat(planosBuf, ", ", sizeof(planosBuf) - strlen(planosBuf) - 1);
-            }
-            strncat(planosBuf, atividades[i].planos[p]->nome, sizeof(planosBuf) - strlen(planosBuf) - 1);
-        }
-
-        printf("| %-20.20s | %8d | %-25.25s | %11.2f |\n",
-               atividades[i].nome,
-               atividades[i].alunos,
-               planosBuf[0] != '\0' ? planosBuf : "Nenhum",
-               perc);
-    }
-
-    printf("+----------------------+----------+---------------------------+-------------+\n");
-    printf("Total de atividades analisadas: %d | Alunos considerados: %d\n", totalAtividades, alunosTotais);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de alunos considerados: %d", alunosTotais);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static const struct plano *buscarPlanoPorId(const char *id)

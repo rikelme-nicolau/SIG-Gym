@@ -12,31 +12,102 @@
 #include "src/ui/utils/validarEmail.h"
 #include "src/ui/utils/validarTelefone.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
+#define FC_COL_ID 10
+#define FC_COL_NOME 22
+#define FC_COL_CARGO 14
+#define FC_COL_STATUS 8
 #define MAX_BUFFER 1024
+
+static void cabecalho_atualizar(const char *sub)
+{
+    limparTela();
+    ui_header("SIG-GYM", sub);
+    ui_empty_line();
+}
+
+static bool ler_linha(char *dest, size_t size)
+{
+    if (fgets(dest, size, stdin) == NULL)
+    {
+        dest[0] = '\0';
+        return false;
+    }
+    dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
+
+static void mensagem(const char *sub, const char *texto)
+{
+    cabecalho_atualizar(sub);
+    ui_text_line(texto);
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", FC_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", FC_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Cargo", FC_COL_CARGO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", FC_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_row(const struct funcionario *f)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, f->id, FC_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, f->nome, FC_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, f->cargo, FC_COL_CARGO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, f->ativo ? "Ativo" : "Inativo", FC_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
 
 void telaAtualizarFuncionario(void)
 {
     if (total_funcionarios == 0)
     {
-        limparTela();
-        printf("=== ATUALIZAR FUNCIONÁRIO ===\nNenhum funcionário cadastrado.\n");
-        getchar();
+        mensagem("Atualizar funcionario", "Nenhum funcionario cadastrado.");
         return;
     }
 
-    limparTela();
-    printf("=== ATUALIZAR FUNCIONÁRIO ===\nFuncionários disponíveis:\n");
+    cabecalho_atualizar("Atualizar funcionario");
+    ui_text_line("Funcionarios ativos (selecione pelo ID):");
+    tabela_header();
     for (int i = 0; i < total_funcionarios; i++)
     {
         if (lista_funcionarios[i].ativo)
-            printf("[%s] %s\n", lista_funcionarios[i].id, lista_funcionarios[i].nome);
+        {
+            tabela_row(&lista_funcionarios[i]);
+        }
     }
 
-    printf("Digite o ID do funcionário: ");
+    ui_line('-');
+    ui_text_line("Digite o ID do funcionario que deseja atualizar.");
+    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_line('=');
     char id_busca[MAX_BUFFER];
-    fgets(id_busca, sizeof(id_busca), stdin);
-    id_busca[strcspn(id_busca, "\n")] = '\0';
+    if (!ler_linha(id_busca, sizeof(id_busca)))
+    {
+        limparTela();
+        return;
+    }
 
     int encontrado = -1;
     for (int i = 0; i < total_funcionarios; i++)
@@ -50,8 +121,7 @@ void telaAtualizarFuncionario(void)
 
     if (encontrado == -1)
     {
-        printf("ID não encontrado! Pressione ENTER para continuar...");
-        getchar();
+        mensagem("Atualizar funcionario", "ID nao encontrado ou inativo.");
         return;
     }
 
@@ -61,123 +131,166 @@ void telaAtualizarFuncionario(void)
 
     do
     {
-        limparTela();
-        printf("=== ATUALIZAR FUNCIONÁRIO ===\n");
-        printf("Funcionário selecionado: %s (%s)\n", func_sel->nome, func_sel->id);
-        printf("Escolha o campo para atualizar:\n");
-        printf("[1] Nome\n[2] Data de nascimento\n[3] CPF\n[4] Telefone\n[5] Endereço\n[6] E-mail\n[7] Cargo\n[0] Voltar\n>>> ");
+        cabecalho_atualizar("Atualizar funcionario");
+        char linha_sel[UI_INNER + 1];
+        snprintf(linha_sel, sizeof(linha_sel), "Funcionario: %s (%s)", func_sel->nome, func_sel->id);
+        ui_text_line(linha_sel);
+        ui_empty_line();
+        ui_menu_option('1', "Nome");
+        ui_menu_option('2', "Data de nascimento");
+        ui_menu_option('3', "CPF");
+        ui_menu_option('4', "Telefone");
+        ui_menu_option('5', "Endereco");
+        ui_menu_option('6', "E-mail");
+        ui_menu_option('7', "Cargo");
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        printf(">>> ");
+        fflush(stdout);
         opcao = lerTecla();
 
         switch (opcao)
         {
         case '1': // Nome
-            do
+            while (true)
             {
-                printf("Nome atual: %s\nDigite o novo nome: ", func_sel->nome);
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "Nome atual: %s", func_sel->nome);
+                ui_text_line(linha_sel);
+                ui_text_line("Digite o novo nome:");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 if (validarNome(buffer))
                 {
                     strcpy(func_sel->nome, buffer);
                     atualizarFuncionarioNoArquivo(*func_sel);
+                    mensagem("Atualizar funcionario", "Nome atualizado com sucesso.");
                     break;
                 }
-                printf("Nome inválido! Pressione ENTER para tentar novamente...");
-                getchar();
-            } while (true);
+                mensagem("Atualizar funcionario", "Nome invalido. Use apenas letras e espacos.");
+            }
             break;
 
         case '2': // Nascimento
-            do
+            while (true)
             {
-                printf("Data atual: %s\nDigite a nova data (DD/MM/AAAA): ", func_sel->nascimento);
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "Data atual: %s", func_sel->nascimento);
+                ui_text_line(linha_sel);
+                ui_text_line("Digite a nova data (DD/MM/AAAA):");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 if (validarNascimento(buffer))
                 {
                     strcpy(func_sel->nascimento, buffer);
                     func_sel->idade = calcularIdade(buffer);
                     atualizarFuncionarioNoArquivo(*func_sel);
+                    mensagem("Atualizar funcionario", "Data atualizada com sucesso.");
                     break;
                 }
-                printf("Data inválida! Pressione ENTER para tentar novamente...");
-                getchar();
-            } while (true);
+                mensagem("Atualizar funcionario", "Data invalida. Formato DD/MM/AAAA.");
+            }
             break;
 
         case '3': // CPF
-            do
+            while (true)
             {
-                printf("CPF atual: %s\nDigite o novo CPF: ", func_sel->cpf);
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "CPF atual: %s", func_sel->cpf);
+                ui_text_line(linha_sel);
+                ui_text_line("Digite o novo CPF:");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 if (validarCPF(buffer))
                 {
                     strcpy(func_sel->cpf, buffer);
                     atualizarFuncionarioNoArquivo(*func_sel);
+                    mensagem("Atualizar funcionario", "CPF atualizado com sucesso.");
                     break;
                 }
-                printf("CPF inválido! Pressione ENTER para tentar novamente...");
-                getchar();
-            } while (true);
+                mensagem("Atualizar funcionario", "CPF invalido.");
+            }
             break;
 
         case '4': // Telefone
-            do
+            while (true)
             {
-                printf("Telefone atual: %s\nDigite o novo telefone: ", func_sel->telefone);
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "Telefone atual: %s", func_sel->telefone);
+                ui_text_line(linha_sel);
+                ui_text_line("Digite o novo telefone:");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 if (validarTelefone(buffer))
                 {
                     strcpy(func_sel->telefone, buffer);
                     atualizarFuncionarioNoArquivo(*func_sel);
+                    mensagem("Atualizar funcionario", "Telefone atualizado com sucesso.");
                     break;
                 }
-                printf("Telefone inválido! Pressione ENTER para tentar novamente...");
-                getchar();
-            } while (true);
+                mensagem("Atualizar funcionario", "Telefone invalido.");
+            }
             break;
 
-        case '5': // Endereço
-            do
+        case '5': // Endereco
+            while (true)
             {
-                printf("Endereço atual: %s\nDigite o novo endereço: ", func_sel->endereco);
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "Endereco atual: %s", func_sel->endereco);
+                ui_text_line(linha_sel);
+                ui_text_line("Digite o novo endereco:");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 if (validarEndereco(buffer))
                 {
                     strcpy(func_sel->endereco, buffer);
                     atualizarFuncionarioNoArquivo(*func_sel);
+                    mensagem("Atualizar funcionario", "Endereco atualizado com sucesso.");
                     break;
                 }
-                printf("Endereço inválido! Pressione ENTER para tentar novamente...");
-                getchar();
-            } while (true);
+                mensagem("Atualizar funcionario", "Endereco invalido.");
+            }
             break;
 
         case '6': // E-mail
-            do
+            while (true)
             {
-                printf("E-mail atual: %s\nDigite o novo e-mail: ", func_sel->email);
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "E-mail atual: %s", func_sel->email);
+                ui_text_line(linha_sel);
+                ui_text_line("Digite o novo e-mail:");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 if (validarEmail(buffer))
                 {
                     strcpy(func_sel->email, buffer);
                     atualizarFuncionarioNoArquivo(*func_sel);
+                    mensagem("Atualizar funcionario", "E-mail atualizado com sucesso.");
                     break;
                 }
-                printf("E-mail inválido! Pressione ENTER para tentar novamente...");
-                getchar();
-            } while (true);
+                mensagem("Atualizar funcionario", "E-mail invalido.");
+            }
             break;
 
         case '7': // Cargo
-            do
+            while (true)
             {
-                printf("Cargo atual: %s\nEscolha o novo cargo:\n1 - Atendente\n2 - Personal\n3 - Gerente\n>>> ", func_sel->cargo);
-                fgets(buffer, sizeof(buffer), stdin);
+                cabecalho_atualizar("Atualizar funcionario");
+                snprintf(linha_sel, sizeof(linha_sel), "Cargo atual: %s", func_sel->cargo);
+                ui_text_line(linha_sel);
+                ui_text_line("Escolha o novo cargo:");
+                ui_menu_option('1', "Atendente");
+                ui_menu_option('2', "Personal");
+                ui_menu_option('3', "Gerente");
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
                 int escolha = atoi(buffer);
                 if (escolha == 1)
                     strcpy(func_sel->cargo, "Atendente");
@@ -187,26 +300,24 @@ void telaAtualizarFuncionario(void)
                     strcpy(func_sel->cargo, "Gerente");
                 else
                 {
-                    printf("Opção inválida! Pressione ENTER para tentar novamente...");
-                    getchar();
+                    mensagem("Atualizar funcionario", "Opcao invalida. Use 1, 2 ou 3.");
                     continue;
                 }
                 atualizarFuncionarioNoArquivo(*func_sel);
+                mensagem("Atualizar funcionario", "Cargo atualizado com sucesso.");
                 break;
-            } while (true);
+            }
             break;
 
         case '0':
-            return;
+            break;
 
         default:
-            printf("Opção inválida! Pressione ENTER para continuar...");
-            getchar();
+            mensagem("Atualizar funcionario", "Opcao invalida. Use o menu.");
             break;
         }
 
-        printf("Campo atualizado com sucesso! Pressione ENTER para continuar...");
-        getchar();
+    } while (opcao != '0');
 
-    } while (true);
+    limparTela();
 }

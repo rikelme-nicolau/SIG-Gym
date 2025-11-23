@@ -15,6 +15,7 @@
 #include "opInvalida.h"
 #include "relatoriosGerenciais.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
 #include "src/ui/aluno/cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
@@ -621,52 +622,62 @@ void relatorioDashboardExecutivo(void)
         }
     }
 
-    printf("=========================================================================\n");
-    printf("===                 DASHBOARD EXECUTIVO - VISAO GERAL                ===\n");
-    printf("=========================================================================\n");
-    printf("===  ALUNOS: TOTAL %4d | ATIVOS %4d | INATIVOS %4d                   ===\n", total_alunos, alunosAtivos, alunosInativos);
-    printf("===  PLANOS ATIVOS: %4d                                            ===\n", planosAtivos);
-    printf("===  RECEITA MENSAL ESTIMADA: R$ %10.2f                          ===\n", receitaMensal);
-    printf("===  TAXA DE RETENCAO: %6.2f %%                                      ===\n", taxaRetencao);
+    ui_header("Dashboard Executivo", "Visao Geral");
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Alunos: total %d | ativos %d | inativos %d", total_alunos, alunosAtivos, alunosInativos);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Planos ativos: %d", planosAtivos);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Receita mensal estimada: R$ %.2f", receitaMensal);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Taxa de retencao: %.2f %%", taxaRetencao);
+    ui_text_line(linha);
     if (adesoesPlanoPopular > 0)
     {
-        printf("===  PLANO MAIS POPULAR: %-30.30s (%2d alunos)        ===\n", planoPopular, adesoesPlanoPopular);
+        snprintf(linha, sizeof(linha), "Plano mais popular: %s (%d alunos)", planoPopular, adesoesPlanoPopular);
     }
     else
     {
-        printf("===  PLANO MAIS POPULAR: Sem alunos vinculados                  ===\n");
+        snprintf(linha, sizeof(linha), "Plano mais popular: Sem alunos vinculados");
     }
-    printf("=========================================================================\n");
-    printf("===                FUNCIONARIOS POR CARGO (ATIVOS)                 ===\n");
+    ui_text_line(linha);
+
+    ui_section_title("Funcionarios por cargo (ativos)");
     if (totalCargosResumo == 0)
     {
-        printf("===    Nenhum funcionario ativo cadastrado.                        ===\n");
+        ui_text_line("Nenhum funcionario ativo cadastrado.");
     }
     else
     {
         for (int i = 0; i < totalCargosResumo; i++)
         {
-            printf("===    - %-20.20s : %3d                                    ===\n", cargosResumo[i].cargo, cargosResumo[i].total);
+            char cargo_buf[64];
+            ui_clip_utf8(cargosResumo[i].cargo, 40, cargo_buf, sizeof(cargo_buf));
+            snprintf(linha, sizeof(linha), "- %s: %d", cargo_buf, cargosResumo[i].total);
+            ui_text_line(linha);
         }
     }
-    printf("=========================================================================\n");
-    printf("===        EQUIPAMENTOS COM MANUTENCAO NOS PROXIMOS 7 DIAS         ===\n");
+
+    ui_section_title("Equipamentos com manutencao nos proximos 7 dias");
     if (totalEquipUrgentes == 0)
     {
-        printf("===    Nenhum equipamento exige manutencao imediata.               ===\n");
+        ui_text_line("Nenhum equipamento exige manutencao imediata.");
     }
     else
     {
         for (int i = 0; i < totalEquipUrgentes; i++)
         {
-            printf("===    - [%s] %-20.20s ate %s                     ===\n",
-                   equipUrgentes[i]->id,
-                   equipUrgentes[i]->nome,
-                   equipUrgentes[i]->proxima_manutencao);
+            char nome_buf[64];
+            ui_clip_utf8(equipUrgentes[i]->nome, 30, nome_buf, sizeof(nome_buf));
+            snprintf(linha, sizeof(linha), "- [%.12s] %-24s ate %.12s",
+                     equipUrgentes[i]->id,
+                     nome_buf,
+                     equipUrgentes[i]->proxima_manutencao);
+            ui_text_line(linha);
         }
     }
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
+
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }

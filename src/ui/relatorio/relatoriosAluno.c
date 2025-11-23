@@ -14,6 +14,33 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "ui/utils/lerTecla.h"
 #include "src/ui/utils/validarNascimento.h"
+#include "ui/utils/consoleLayout.h"
+
+#define LIST_COL_ID 8
+#define LIST_COL_NOME 18
+#define LIST_COL_PLANO 14
+#define LIST_COL_STATUS 8
+#define LIST_COL_REGIAO 12
+
+#define SEM_PLANO_COL_ID 8
+#define SEM_PLANO_COL_NOME 18
+#define SEM_PLANO_COL_TEL 14
+#define SEM_PLANO_COL_EMAIL 14
+#define SEM_PLANO_COL_STATUS 6
+
+#define STATUS_COL_ID 8
+#define STATUS_COL_NOME 30
+#define STATUS_COL_PLANO 28
+
+#define PLANO_COL_NOME 20
+#define PLANO_COL_HORARIO 12
+#define PLANO_COL_ALUNOS 8
+#define PLANO_COL_VALOR 10
+#define PLANO_COL_RECEITA 10
+
+#define REGIAO_COL_NOME 40
+#define REGIAO_COL_QTD 12
+#define REGIAO_COL_PCT 14
 
 void relatorioListagemCompleta(void);
 void relatorioAlunosPorPlano(void);
@@ -65,28 +92,261 @@ static char cacheTermo[256] = "";
 static time_t cacheTimestampOrdenacao = 0;
 static bool cacheOrdenacaoValido = false;
 
+static void cabecalho_relatorio(const char *subtitulo);
+static void aguardar_voltar(void);
+static void tabela_listagem_header(void);
+static void tabela_listagem_row(const struct aluno *aluno, const struct plano *plano);
+static void mostrar_filtros_ativos(const struct FiltrosAluno *filtros);
+static void exibir_listagem_paginada(const struct aluno_view *lista, int total);
+static void tabela_sem_plano_header(void);
+static void tabela_sem_plano_row(const struct aluno *aluno);
+static void tabela_status_header(const char *titulo);
+static void tabela_status_row(const struct aluno *aluno);
+
+static void cabecalho_relatorio(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void aguardar_voltar(void)
+{
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_listagem_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", LIST_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", LIST_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", LIST_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", LIST_COL_STATUS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Regiao", LIST_COL_REGIAO);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_listagem_row(const struct aluno *aluno, const struct plano *plano)
+{
+    char linha[UI_INNER + 1];
+    char regiao[64];
+    extrairRegiao(aluno->endereco, regiao, sizeof(regiao));
+
+    char planoInfo[96];
+    char planoNome[40];
+    char planoId[24];
+    const char *planoOrigem = plano != NULL ? plano->nome : "Sem plano";
+    const char *planoCodigo = aluno->plano_id[0] != '\0' ? aluno->plano_id : "N/A";
+    ui_clip_utf8(planoOrigem, 28, planoNome, sizeof(planoNome));
+    ui_clip_utf8(planoCodigo, 16, planoId, sizeof(planoId));
+    snprintf(planoInfo, sizeof(planoInfo), "%s (%s)", planoNome, planoId);
+
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, aluno->id, LIST_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, aluno->nome, LIST_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, planoInfo, LIST_COL_PLANO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, aluno->ativo ? "Ativo" : "Inativo", LIST_COL_STATUS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, regiao, LIST_COL_REGIAO);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void mostrar_filtros_ativos(const struct FiltrosAluno *filtros)
+{
+    ui_section_title("Filtros ativos");
+    bool temFiltro = false;
+    char linha[UI_INNER + 1];
+
+    if (filtros->filtrarStatus)
+    {
+        snprintf(linha, sizeof(linha), "Status: %s", descricaoStatusAluno(filtros->status));
+        ui_text_line(linha);
+        temFiltro = true;
+    }
+    if (filtros->filtrarPlano && filtros->planoId[0] != '\0')
+    {
+        snprintf(linha, sizeof(linha), "Plano: %s", filtros->planoId);
+        ui_text_line(linha);
+        temFiltro = true;
+    }
+    if (filtros->filtrarIdadeMin)
+    {
+        snprintf(linha, sizeof(linha), "Idade minima: %d", filtros->idadeMin);
+        ui_text_line(linha);
+        temFiltro = true;
+    }
+    if (filtros->filtrarIdadeMax)
+    {
+        snprintf(linha, sizeof(linha), "Idade maxima: %d", filtros->idadeMax);
+        ui_text_line(linha);
+        temFiltro = true;
+    }
+    if (filtros->filtrarRegiao && filtros->regiao[0] != '\0')
+    {
+        snprintf(linha, sizeof(linha), "Regiao: %s", filtros->regiao);
+        ui_text_line(linha);
+        temFiltro = true;
+    }
+
+    if (!temFiltro)
+    {
+        ui_center_text("Nenhum filtro ativo.");
+    }
+    ui_line('-');
+}
+
+static void exibir_listagem_paginada(const struct aluno_view *lista, int total)
+{
+    const int porPagina = 10;
+    int totalPaginas = (total + porPagina - 1) / porPagina;
+
+    for (int pagina = 0; pagina < totalPaginas; pagina++)
+    {
+        char titulo[64];
+        snprintf(titulo, sizeof(titulo), "Pagina %d de %d", pagina + 1, totalPaginas);
+        ui_section_title(titulo);
+        tabela_listagem_header();
+
+        int inicio = pagina * porPagina;
+        int fim = inicio + porPagina;
+        if (fim > total)
+        {
+            fim = total;
+        }
+
+        for (int i = inicio; i < fim; i++)
+        {
+            tabela_listagem_row(lista[i].aluno, lista[i].plano);
+        }
+
+        ui_line('-');
+
+        if (pagina < totalPaginas - 1)
+        {
+            ui_section_title("Pressione <ENTER> para continuar");
+            getchar();
+        }
+    }
+}
+
+static void tabela_sem_plano_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", SEM_PLANO_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", SEM_PLANO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Telefone", SEM_PLANO_COL_TEL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Email", SEM_PLANO_COL_EMAIL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", SEM_PLANO_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_sem_plano_row(const struct aluno *aluno)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, aluno->id, SEM_PLANO_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, aluno->nome, SEM_PLANO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos,
+                  aluno->telefone[0] != '\0' ? aluno->telefone : "Nao informado",
+                  SEM_PLANO_COL_TEL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos,
+                  aluno->email[0] != '\0' ? aluno->email : "Nao informado",
+                  SEM_PLANO_COL_EMAIL);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, aluno->ativo ? "Ativo" : "Inativo", SEM_PLANO_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void tabela_status_header(const char *titulo)
+{
+    ui_section_title(titulo);
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", STATUS_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", STATUS_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", STATUS_COL_PLANO);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_status_row(const struct aluno *aluno)
+{
+    char linha[UI_INNER + 1];
+    char planoInfo[96] = "Nao informado";
+    if (aluno->plano_id[0] != '\0')
+    {
+        const struct plano *plano = buscarPlanoPorIdLocal(aluno->plano_id);
+        const char *nomeOrigem = plano != NULL ? plano->nome : aluno->plano_id;
+        char nomeClip[40];
+        char codigoClip[24];
+        ui_clip_utf8(nomeOrigem, 28, nomeClip, sizeof(nomeClip));
+        ui_clip_utf8(aluno->plano_id, 16, codigoClip, sizeof(codigoClip));
+        snprintf(planoInfo, sizeof(planoInfo), "%s (%s)", nomeClip, codigoClip);
+    }
+
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, aluno->id, STATUS_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, aluno->nome, STATUS_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, planoInfo, STATUS_COL_PLANO);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
 void moduloRelatoriosAluno(void)
 {
     char op;
 
     do
     {
-        printf("\n");
-        printf("=================================================================\n");
-        printf("===                 RELATORIOS DE ALUNOS - MENU               ===\n");
-        printf("=================================================================\n");
-        printf("===                                                           ===\n");
-        printf("===  [1]  LISTAGEM COMPLETA (COM FILTROS)                     ===\n");
-        printf("===  [2]  ALUNOS POR PLANO                                    ===\n");
-        printf("===  [3]  ALUNOS POR FAIXA ETARIA                             ===\n");
-        printf("===  [4]  ALUNOS POR REGIAO                                   ===\n");
-        printf("===  [5]  ALUNOS ATIVOS VS INATIVOS                           ===\n");
-        printf("===  [6]  ALUNOS SEM PLANO DEFINIDO                           ===\n");
-        printf("===  [7]  FILTRO AVANCADO (MULTIPLOS FILTROS)                 ===\n");
-        printf("===                                                           ===\n");
-        printf("===  [0]  VOLTAR                                              ===\n");
-        printf("===                                                           ===\n");
-        printf("=================================================================\n");
+        limparTela();
+        ui_header("SIG-GYM", "Relatorios de Alunos");
+        ui_empty_line();
+        ui_menu_option('1', "Listagem completa (com filtros)");
+        ui_menu_option('2', "Alunos por plano");
+        ui_menu_option('3', "Alunos por faixa etaria");
+        ui_menu_option('4', "Alunos por regiao");
+        ui_menu_option('5', "Alunos ativos vs inativos");
+        ui_menu_option('6', "Alunos sem plano definido");
+        ui_menu_option('7', "Filtro avancado (multiplos filtros)");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_text_line("Use as teclas indicadas para navegar.");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         op = lerTecla();
         limparTela();
@@ -134,12 +394,7 @@ void moduloRelatoriosAluno(void)
 
 void relatorioListagemCompleta(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===            RELATORIO - LISTAGEM COMPLETA DE ALUNOS               ===\n");
-    printf("=========================================================================\n");
-
+    cabecalho_relatorio("Relatorio - Listagem completa de alunos");
     char filtroStatus = selecionarFiltroStatus();
     char ordenacao = selecionarOrdenacao();
 
@@ -164,11 +419,9 @@ void relatorioListagemCompleta(void)
 
     if (totalFiltrados == 0)
     {
-        printf("\nNenhum aluno encontrado com os filtros informados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER> para voltar...");
-        getchar();
-        limparTela();
+        ui_section_title("Nenhum aluno encontrado");
+        ui_text_line("Ajuste os filtros e tente novamente.");
+        aguardar_voltar();
         return;
     }
 
@@ -178,7 +431,6 @@ void relatorioListagemCompleta(void)
                            cacheTotalOrdenados == totalFiltrados &&
                            strcmp(cacheTermo, termo) == 0;
 
-    // Cache simples: se filtros/ordenacao iguais, reaproveita lista ordenada da última execução
     if (reutilizarCache)
     {
         memcpy(resultados, cacheResultadosOrdenados, sizeof(struct aluno_view) * cacheTotalOrdenados);
@@ -195,6 +447,8 @@ void relatorioListagemCompleta(void)
         cacheTimestampOrdenacao = time(NULL);
         cacheOrdenacaoValido = true;
     }
+
+    cabecalho_relatorio("Relatorio - Listagem completa de alunos");
 
     int somaIdades = 0;
     int idadesValidas = 0;
@@ -258,47 +512,23 @@ void relatorioListagemCompleta(void)
         }
     }
 
-    printf("\nStatus: %s | Ordenacao: %s | Termo: %s\n",
-           descricaoStatusAluno(filtroStatus),
-           descricaoOrdenacao(ordenacao),
-           termo[0] != '\0' ? termo : "Nenhum");
+    ui_section_title("Filtros aplicados");
+    char linha[UI_INNER + 1];
+    char termoCurto[32];
+    const char *termoOrigem = termo[0] != '\0' ? termo : "Nenhum";
+    ui_clip_utf8(termoOrigem, 28, termoCurto, sizeof(termoCurto));
+    snprintf(linha, sizeof(linha), "Status: %s | Ordenacao: %s",
+             descricaoStatusAluno(filtroStatus),
+             descricaoOrdenacao(ordenacao));
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Termo: %s", termoCurto);
+    ui_text_line(linha);
     const char *setaOrdenacao = (ordenacao == '4' || ordenacao == '6') ? "▼" : "▲";
-    printf(">>> Ordenando por %s %s\n", descricaoOrdenacao(ordenacao), setaOrdenacao);
-    printf("-------------------------------------------------------------------------\n");
+    snprintf(linha, sizeof(linha), "Ordenando por %s %s", descricaoOrdenacao(ordenacao), setaOrdenacao);
+    ui_text_line(linha);
+    ui_line('-');
 
-    const int porPagina = 10;
-    int totalPaginas = (totalFiltrados + porPagina - 1) / porPagina;
-
-    for (int pagina = 0; pagina < totalPaginas; pagina++)
-    {
-        int inicio = pagina * porPagina;
-        int fim = inicio + porPagina;
-        if (fim > totalFiltrados)
-        {
-            fim = totalFiltrados;
-        }
-
-        printf("\n--- Pagina %d de %d ----------------------------------------------\n", pagina + 1, totalPaginas);
-
-        for (int i = inicio; i < fim; i++)
-        {
-            const struct aluno *aluno = resultados[i].aluno;
-            const char *planoNome = resultados[i].plano != NULL ? resultados[i].plano->nome : "Sem plano";
-            const char *planoId = (aluno->plano_id[0] != '\0') ? aluno->plano_id : "N/A";
-
-            printf("[%s] %s\n", aluno->id, aluno->nome);
-            printf("    Plano: %s (%s) | Status: %s\n",
-                   planoNome,
-                   planoId,
-                   aluno->ativo ? "Ativo" : "Inativo");
-        }
-
-        if (pagina < totalPaginas - 1)
-        {
-            printf("\n>>> Pressione <ENTER> para ver a proxima página...");
-            getchar();
-        }
-    }
+    exibir_listagem_paginada(resultados, totalFiltrados);
 
     double idadeMedia = idadesValidas > 0 ? (double)somaIdades / idadesValidas : 0.0;
     const char *planoMaisComum = "N/A";
@@ -312,25 +542,27 @@ void relatorioListagemCompleta(void)
         }
     }
 
-    printf("\n-------------------------------------------------------------------------\n");
-    printf("+-----------------------------------------------------------------------+\n");
-    printf("|                     ESTATISTICAS DOS RESULTADOS                       |\n");
-    printf("+-----------------------------------------------------------------------+\n");
-    printf("| Total exibido: %-55d |\n", totalFiltrados);
+    ui_section_title("Estatisticas dos resultados");
+    snprintf(linha, sizeof(linha), "Total exibido: %d | Ativos: %d | Inativos: %d", totalFiltrados, ativos, inativos);
+    ui_text_line(linha);
     if (idadesValidas > 0)
     {
-        printf("| Idade media: %-6.2f | Idade minima: %-3d | Idade maxima: %-3d               |\n", idadeMedia, idadeMin, idadeMax);
+        snprintf(linha, sizeof(linha), "Idade media: %.2f | Minima: %d | Maxima: %d", idadeMedia, idadeMin, idadeMax);
+        ui_text_line(linha);
     }
     else
     {
-        printf("| Idade media: N/A   | Idade minima: N/A | Idade maxima: N/A               |\n");
+        ui_text_line("Idade media: N/A | Minima: N/A | Maxima: N/A");
     }
-    printf("| Plano mais comum: %-20.20s (%-3d)                               |\n", planoMaisComum, qtdPlanoMaisComum);
-    printf("| Status: Ativos %-4d | Inativos %-4d                                      |\n", ativos, inativos);
-    printf("+-----------------------------------------------------------------------+\n");
-    printf("-------------------------------------------------------------------------\n");
+    snprintf(linha, sizeof(linha), "Plano mais comum: %s (%d)", planoMaisComum, qtdPlanoMaisComum);
+    ui_text_line(linha);
+    ui_line('-');
 
-    printf("Deseja exportar o resultado para CSV? (S/N): ");
+    ui_section_title("Exportar resultado");
+    ui_text_line("Deseja exportar o resultado para CSV? (S/N)");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
     int resposta = getchar();
     while (resposta == '\n')
     {
@@ -347,10 +579,7 @@ void relatorioListagemCompleta(void)
         // limpar buffer
     }
 
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER> para voltar...");
-    getchar();
-    limparTela();
+    aguardar_voltar();
 }
 
 void relatorioAlunosFiltroAvancado(void)
@@ -360,54 +589,25 @@ void relatorioAlunosFiltroAvancado(void)
 
     while (1)
     {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===         RELATORIO - ALUNOS COM FILTROS AVANCADOS                 ===\n");
-        printf("=========================================================================\n");
-
-        printf("Filtros ativos:\n");
-        bool temFiltro = false;
-        if (filtros.filtrarStatus)
-        {
-            printf(" - Status: %s\n", filtros.status == '1' ? "Ativos" : (filtros.status == '2' ? "Inativos" : "Todos"));
-            temFiltro = true;
-        }
-        if (filtros.filtrarPlano && filtros.planoId[0] != '\0')
-        {
-            printf(" - Plano: %s\n", filtros.planoId);
-            temFiltro = true;
-        }
-        if (filtros.filtrarIdadeMin)
-        {
-            printf(" - Idade minima: %d\n", filtros.idadeMin);
-            temFiltro = true;
-        }
-        if (filtros.filtrarIdadeMax)
-        {
-            printf(" - Idade maxima: %d\n", filtros.idadeMax);
-            temFiltro = true;
-        }
-        if (filtros.filtrarRegiao && filtros.regiao[0] != '\0')
-        {
-            printf(" - Regiao: %s\n", filtros.regiao);
-            temFiltro = true;
-        }
-        if (!temFiltro)
-        {
-            printf(" Nenhum filtro ativo.\n");
-        }
-
-        printf("\nSelecione uma opcao:\n");
-        printf("[1] Adicionar filtro de status\n");
-        printf("[2] Adicionar filtro de plano\n");
-        printf("[3] Adicionar filtro de idade minima\n");
-        printf("[4] Adicionar filtro de idade maxima\n");
-        printf("[5] Adicionar filtro de regiao\n");
-        printf("[6] Limpar todos os filtros\n");
-        printf("[7] Aplicar filtros e gerar relatorio\n");
-        printf("[0] Voltar\n");
+        cabecalho_relatorio("Relatorio - Alunos com filtros avancados");
+        mostrar_filtros_ativos(&filtros);
+        ui_menu_option('1', "Adicionar filtro de status");
+        ui_menu_option('2', "Adicionar filtro de plano");
+        ui_menu_option('3', "Adicionar filtro de idade minima");
+        ui_menu_option('4', "Adicionar filtro de idade maxima");
+        ui_menu_option('5', "Adicionar filtro de regiao");
+        ui_menu_option('6', "Limpar todos os filtros");
+        ui_menu_option('7', "Aplicar filtros e gerar relatorio");
+        ui_empty_line();
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         char op = lerTecla();
+        limparTela();
+
         switch (op)
         {
         case '1':
@@ -416,7 +616,11 @@ void relatorioAlunosFiltroAvancado(void)
             break;
         case '2':
         {
-            printf("\nDigite o ID do plano (deixe vazio para remover o filtro): ");
+            cabecalho_relatorio("Filtro - Plano");
+            ui_text_line("Digite o ID do plano (vazio para remover o filtro).");
+            ui_line('=');
+            printf(">>> ");
+            fflush(stdout);
             char buffer[32];
             if (fgets(buffer, sizeof(buffer), stdin) != NULL)
             {
@@ -437,7 +641,11 @@ void relatorioAlunosFiltroAvancado(void)
         }
         case '3':
         {
-            printf("\nInforme a idade minima (vazio para remover o filtro): ");
+            cabecalho_relatorio("Filtro - Idade minima");
+            ui_text_line("Informe a idade minima (vazio para remover o filtro).");
+            ui_line('=');
+            printf(">>> ");
+            fflush(stdout);
             char buffer[32];
             if (fgets(buffer, sizeof(buffer), stdin) != NULL)
             {
@@ -457,7 +665,11 @@ void relatorioAlunosFiltroAvancado(void)
         }
         case '4':
         {
-            printf("\nInforme a idade maxima (vazio para remover o filtro): ");
+            cabecalho_relatorio("Filtro - Idade maxima");
+            ui_text_line("Informe a idade maxima (vazio para remover o filtro).");
+            ui_line('=');
+            printf(">>> ");
+            fflush(stdout);
             char buffer[32];
             if (fgets(buffer, sizeof(buffer), stdin) != NULL)
             {
@@ -477,7 +689,11 @@ void relatorioAlunosFiltroAvancado(void)
         }
         case '5':
         {
-            printf("\nInforme a regiao (vazio para remover o filtro): ");
+            cabecalho_relatorio("Filtro - Regiao");
+            ui_text_line("Informe a regiao (vazio para remover o filtro).");
+            ui_line('=');
+            printf(">>> ");
+            fflush(stdout);
             char buffer[128];
             if (fgets(buffer, sizeof(buffer), stdin) != NULL)
             {
@@ -498,7 +714,9 @@ void relatorioAlunosFiltroAvancado(void)
         }
         case '6':
             inicializarFiltrosAluno(&filtros);
-            printf("\nFiltros limpos. Pressione <ENTER> para continuar...");
+            cabecalho_relatorio("Relatorio - Alunos com filtros avancados");
+            ui_center_text("Todos os filtros foram limpos.");
+            ui_section_title("Pressione <ENTER> para continuar");
             getchar();
             break;
         case '7':
@@ -506,73 +724,24 @@ void relatorioAlunosFiltroAvancado(void)
             struct aluno_view resultados[MAX_ALUNOS];
             int total = aplicarFiltrosAluno(&filtros, resultados, MAX_ALUNOS);
 
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                 RESULTADO - FILTROS AVANCADOS                    ===\n");
-            printf("=========================================================================\n");
+            cabecalho_relatorio("Resultado - Filtros avancados");
             if (total == 0)
             {
-                printf("Nenhum aluno encontrado com os filtros atuais.\n");
+                ui_section_title("Nenhum aluno encontrado");
+                ui_text_line("Ajuste os filtros e tente novamente.");
+                ui_section_title("Pressione <ENTER> para voltar");
+                getchar();
+                limparTela();
+                break;
             }
-            else
-            {
-                const int porPagina = 10;
-                int totalPaginas = (total + porPagina - 1) / porPagina;
 
-                for (int pagina = 0; pagina < totalPaginas; pagina++)
-                {
-                    int inicio = pagina * porPagina;
-                    int fim = inicio + porPagina;
-                    if (fim > total)
-                    {
-                        fim = total;
-                    }
-
-                    printf("\n--- Pagina %d de %d ----------------------------------------------\n", pagina + 1, totalPaginas);
-                    for (int i = inicio; i < fim; i++)
-                    {
-                        const struct aluno *aluno = resultados[i].aluno;
-                        const struct plano *plano = resultados[i].plano;
-                        int idade = calcularIdade(aluno->idade);
-                        char idadeStr[16];
-                        if (idade > 0)
-                        {
-                            snprintf(idadeStr, sizeof(idadeStr), "%d", idade);
-                        }
-                        else
-                        {
-                            strncpy(idadeStr, "N/A", sizeof(idadeStr));
-                            idadeStr[sizeof(idadeStr) - 1] = '\0';
-                        }
-                        char regiaoAluno[128];
-                        extrairRegiao(aluno->endereco, regiaoAluno, sizeof(regiaoAluno));
-
-                        printf("[%s] %s\n", aluno->id, aluno->nome);
-                        printf("    Status: %s | Idade: %s | Regiao: %s\n",
-                               aluno->ativo ? "Ativo" : "Inativo",
-                               idadeStr,
-                               regiaoAluno);
-                        printf("    Plano: %s (%s)\n",
-                               plano != NULL ? plano->nome : "Sem plano",
-                               (aluno->plano_id[0] != '\0') ? aluno->plano_id : "N/A");
-                    }
-
-                    if (pagina < totalPaginas - 1)
-                    {
-                        printf("\nPressione ENTER para proxima pagina...");
-                        getchar();
-                    }
-                }
-                printf("\nFim dos resultados\n");
-            }
-            printf("\nTotal de alunos listados: %d\n", total);
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para voltar ao menu de filtros...");
+            exibir_listagem_paginada(resultados, total);
+            ui_section_title("Pressione <ENTER> para voltar aos filtros");
             getchar();
+            limparTela();
             break;
         }
         case '0':
-            limparTela();
             return;
         default:
             opInvalida();
@@ -583,24 +752,34 @@ void relatorioAlunosFiltroAvancado(void)
 
 void relatorioAlunosPorPlano(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                 RELATORIO - ALUNOS POR PLANO                     ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Alunos por plano");
 
     if (total_planos == 0)
     {
-        printf("Nao ha planos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha planos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
     double receitaTotal = 0.0;
     int totalAlunos = 0;
+
+    ui_section_title("Resumo por plano");
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", PLANO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Horario", PLANO_COL_HORARIO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Alunos", PLANO_COL_ALUNOS);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Valor", PLANO_COL_VALOR);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Receita", PLANO_COL_RECEITA);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
 
     for (int i = 0; i < total_planos; i++)
     {
@@ -610,12 +789,61 @@ void relatorioAlunosPorPlano(void)
         }
 
         int alunosPlano = 0;
-        printf("\nPlano: %s (R$ %.2f) - %s às %s\n",
-               lista_planos[i].nome,
-               lista_planos[i].valor,
-               lista_planos[i].horario_inicio,
-               lista_planos[i].horario_fim);
+        for (int j = 0; j < total_alunos; j++)
+        {
+            if (!lista_alunos[j].ativo)
+            {
+                continue;
+            }
+            if (strcmp(lista_alunos[j].plano_id, lista_planos[i].id) == 0)
+            {
+                alunosPlano++;
+            }
+        }
 
+        double receitaPlano = alunosPlano * lista_planos[i].valor;
+        receitaTotal += receitaPlano;
+        totalAlunos += alunosPlano;
+
+        char horario[32];
+        snprintf(horario, sizeof(horario), "%s-%s", lista_planos[i].horario_inicio, lista_planos[i].horario_fim);
+        char alunosStr[16];
+        snprintf(alunosStr, sizeof(alunosStr), "%d", alunosPlano);
+        char valorStr[32];
+        snprintf(valorStr, sizeof(valorStr), "R$ %.2f", lista_planos[i].valor);
+        char receitaStr[32];
+        snprintf(receitaStr, sizeof(receitaStr), "R$ %.2f", receitaPlano);
+
+        pos = 0;
+        ui_append_col(linha, sizeof(linha), &pos, lista_planos[i].nome, PLANO_COL_NOME);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, horario, PLANO_COL_HORARIO);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, alunosStr, PLANO_COL_ALUNOS);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, valorStr, PLANO_COL_VALOR);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        ui_append_col(linha, sizeof(linha), &pos, receitaStr, PLANO_COL_RECEITA);
+        linha[pos] = '\0';
+        ui_text_line(linha);
+    }
+
+    ui_line('-');
+    ui_section_title("Detalhamento por plano");
+
+    for (int i = 0; i < total_planos; i++)
+    {
+        if (!lista_planos[i].ativo)
+        {
+            continue;
+        }
+
+        ui_section_title(lista_planos[i].nome);
+        char info[UI_INNER + 1];
+        snprintf(info, sizeof(info), "Valor: R$ %.2f | Horario: %s - %s", lista_planos[i].valor, lista_planos[i].horario_inicio, lista_planos[i].horario_fim);
+        ui_text_line(info);
+
+        int alunosPlano = 0;
         for (int j = 0; j < total_alunos; j++)
         {
             if (!lista_alunos[j].ativo)
@@ -625,41 +853,45 @@ void relatorioAlunosPorPlano(void)
 
             if (strcmp(lista_alunos[j].plano_id, lista_planos[i].id) == 0)
             {
-                printf("  - [%s] %s\n", lista_alunos[j].id, lista_alunos[j].nome);
+                if (alunosPlano == 0)
+                {
+                    ui_text_line("Alunos vinculados:");
+                }
+                char alunoLinha[128];
+                char nomeAlunoClip[64];
+                ui_clip_utf8(lista_alunos[j].nome, 60, nomeAlunoClip, sizeof(nomeAlunoClip));
+                snprintf(alunoLinha, sizeof(alunoLinha), "- [%.16s] %.60s", lista_alunos[j].id, nomeAlunoClip);
+                ui_text_line(alunoLinha);
                 alunosPlano++;
             }
         }
 
-        double receitaPlano = alunosPlano * lista_planos[i].valor;
-        receitaTotal += receitaPlano;
-        totalAlunos += alunosPlano;
+        if (alunosPlano == 0)
+        {
+            ui_text_line("Nenhum aluno vinculado a este plano.");
+        }
 
-        printf("  Subtotal: %d aluno(s) | Receita: R$ %.2f\n", alunosPlano, receitaPlano);
+        ui_line('-');
     }
 
-    printf("\n=========================================================================\n");
-    printf("TOTAL GERAL: %d aluno(s) | Receita total estimada: R$ %.2f\n", totalAlunos, receitaTotal);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_section_title("Totais gerais");
+    snprintf(linha, sizeof(linha), "Total de alunos vinculados: %d", totalAlunos);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Receita total estimada: R$ %.2f", receitaTotal);
+    ui_text_line(linha);
+    ui_line('-');
+
+    aguardar_voltar();
 }
 
 void relatorioAlunosPorFaixaEtaria(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===             RELATORIO - ALUNOS POR FAIXA ETARIA                  ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Alunos por faixa etaria");
 
     if (total_alunos == 0)
     {
-        printf("Nao ha alunos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha alunos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -685,7 +917,10 @@ void relatorioAlunosPorFaixaEtaria(void)
 
     bool listarNomes = false;
 
-    printf("Deseja listar os nomes em cada faixa? (S/N): ");
+    ui_text_line("Deseja listar os nomes em cada faixa? (S/N)");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
     int resposta = getchar();
     if (resposta == 's' || resposta == 'S')
     {
@@ -745,65 +980,65 @@ void relatorioAlunosPorFaixaEtaria(void)
 
     if (alunosValidos == 0)
     {
-        printf("Nao foi possivel calcular idades validas para os alunos.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Dados insuficientes");
+        ui_text_line("Nao foi possivel calcular idades validas para os alunos.");
+        aguardar_voltar();
         return;
     }
 
-    printf("\nDistribuicao por faixa:\n");
+    ui_section_title("Distribuicao por faixa");
     for (int i = 0; i < TOTAL_FAIXAS; i++)
     {
         double percentual = (double)contadores[i] / alunosValidos * 100.0;
         int barras = (int)(percentual / 5); // barra maxima 20 caracteres
-        printf("%-10s: ", labels[i]);
-        for (int b = 0; b < barras; b++)
+        if (barras > 20)
         {
-            printf("█");
+            barras = 20;
         }
-        for (int b = barras; b < 20; b++)
+        char grafico[21];
+        for (int b = 0; b < 20; b++)
         {
-            printf("░");
+            grafico[b] = b < barras ? '=' : '.';
         }
-        printf(" (%d aluno%s - %.2f%%)\n",
-               contadores[i],
-               contadores[i] == 1 ? "" : "s",
-               percentual);
+        grafico[20] = '\0';
+
+        char linha[UI_INNER + 1];
+        snprintf(linha, sizeof(linha), "%-10s: %s (%d aluno%s - %.2f%%)",
+                 labels[i],
+                 grafico,
+                 contadores[i],
+                 contadores[i] == 1 ? "" : "s",
+                 percentual);
+        ui_text_line(linha);
 
         if (listarNomes && contadores[i] > 0)
         {
-            printf("  Nomes:\n");
+            ui_text_line("Nomes:");
             for (int j = 0; j < contadores[i]; j++)
             {
-                printf("    - %s\n", nomesFaixa[i][j]);
+                char nomeLinha[UI_INNER + 1];
+                snprintf(nomeLinha, sizeof(nomeLinha), "- %s", nomesFaixa[i][j]);
+                ui_text_line(nomeLinha);
             }
         }
     }
 
-    printf("\nTotal de alunos considerados: %d\n", alunosValidos);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    char resumo[UI_INNER + 1];
+    snprintf(resumo, sizeof(resumo), "Total de alunos considerados: %d", alunosValidos);
+    ui_line('-');
+    ui_text_line(resumo);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 void relatorioAlunosPorRegiao(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                 RELATORIO - ALUNOS POR REGIAO                     ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Alunos por regiao");
 
     if (total_alunos == 0)
     {
-        printf("Nao ha alunos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha alunos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -854,11 +1089,9 @@ void relatorioAlunosPorRegiao(void)
 
     if (totalConsiderados == 0)
     {
-        printf("Nao foi possivel identificar regioes nos enderecos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_section_title("Dados insuficientes");
+        ui_text_line("Nao foi possivel identificar regioes nos enderecos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -877,40 +1110,51 @@ void relatorioAlunosPorRegiao(void)
         }
     }
 
-    printf("\n+------------------------------+------------+-------------+\n");
-    printf("| %-28s | %-10s | %-9s |\n", "Regiao", "Quantidade", "%");
-    printf("+------------------------------+------------+-------------+\n");
+    ui_section_title("Distribuicao por regiao");
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "Regiao", REGIAO_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Quantidade", REGIAO_COL_QTD);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "%", REGIAO_COL_PCT);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+
     for (int i = 0; i < totalRegioes; i++)
     {
         double percentual = (double)regioes[i].quantidade / totalConsiderados * 100.0;
-        printf("| %-28.28s | %10d | %9.2f |\n",
-               regioes[i].nome,
-               regioes[i].quantidade,
-               percentual);
+        pos = 0;
+        ui_append_col(linha, sizeof(linha), &pos, regioes[i].nome, REGIAO_COL_NOME);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        char qtdStr[16];
+        snprintf(qtdStr, sizeof(qtdStr), "%d", regioes[i].quantidade);
+        ui_append_col(linha, sizeof(linha), &pos, qtdStr, REGIAO_COL_QTD);
+        ui_append_sep(linha, sizeof(linha), &pos);
+        char pctStr[16];
+        snprintf(pctStr, sizeof(pctStr), "%.2f", percentual);
+        ui_append_col(linha, sizeof(linha), &pos, pctStr, REGIAO_COL_PCT);
+        linha[pos] = '\0';
+        ui_text_line(linha);
     }
-    printf("+------------------------------+------------+-------------+\n");
-    printf("Total de alunos considerados: %d\n", totalConsiderados);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+
+    ui_line('-');
+    snprintf(linha, sizeof(linha), "Total de alunos considerados: %d", totalConsiderados);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 void relatorioAlunosAtivosVsInativos(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===             RELATORIO - ALUNOS ATIVOS VS INATIVOS                ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Alunos ativos vs inativos");
 
     if (total_alunos == 0)
     {
-        printf("Nao ha alunos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha alunos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
@@ -934,106 +1178,86 @@ void relatorioAlunosAtivosVsInativos(void)
     double taxaRetencao = total_alunos > 0 ? ((double)totalAtivos / total_alunos) * 100.0 : 0.0;
     double taxaCancelamento = total_alunos > 0 ? ((double)totalInativos / total_alunos) * 100.0 : 0.0;
 
-    printf("ALUNOS ATIVOS (%d)                |  ALUNOS INATIVOS (%d)\n", totalAtivos, totalInativos);
-    printf("---------------------------------|----------------------------------------\n");
-
-    int maxLinhas = totalAtivos > totalInativos ? totalAtivos : totalInativos;
-
-    for (int i = 0; i < maxLinhas; i++)
+    tabela_status_header("Alunos ativos");
+    if (totalAtivos == 0)
     {
-        char colunaEsquerda[80] = "";
-        char colunaDireita[80] = "";
-
-        if (i < totalAtivos)
-        {
-            const struct aluno *alAtivo = ativos[i];
-            snprintf(colunaEsquerda, sizeof(colunaEsquerda), "[%-10.10s] %-20.20s | Plano: %-15.15s",
-                     alAtivo->id,
-                     alAtivo->nome,
-                     alAtivo->plano_id[0] != '\0' ? alAtivo->plano_id : "Nao informado");
-        }
-
-        if (i < totalInativos)
-        {
-            const struct aluno *alInativo = inativos[i];
-            snprintf(colunaDireita, sizeof(colunaDireita), "[%-10.10s] %-20.20s | Ultimo plano: %-15.15s",
-                     alInativo->id,
-                     alInativo->nome,
-                     alInativo->plano_id[0] != '\0' ? alInativo->plano_id : "Nao informado");
-        }
-
-        printf("%-33.33s | %-40.40s\n", colunaEsquerda, colunaDireita);
+        ui_center_text("Nenhum aluno ativo.");
+    }
+    for (int i = 0; i < totalAtivos; i++)
+    {
+        tabela_status_row(ativos[i]);
     }
 
-    printf("\nTotal ativos : %d (%.2f%%)\n", totalAtivos, taxaRetencao);
-    printf("Total inativos : %d (%.2f%%)\n", totalInativos, taxaCancelamento);
-    printf("Taxa de retencao: %.2f%%\n", taxaRetencao);
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    tabela_status_header("Alunos inativos");
+    if (totalInativos == 0)
+    {
+        ui_center_text("Nenhum aluno inativo.");
+    }
+    for (int i = 0; i < totalInativos; i++)
+    {
+        tabela_status_row(inativos[i]);
+    }
+
+    ui_section_title("Resumo");
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Ativos: %d | Inativos: %d", totalAtivos, totalInativos);
+    ui_text_line(linha);
+    snprintf(linha, sizeof(linha), "Taxa de retencao: %.2f%% | Taxa de cancelamento: %.2f%%", taxaRetencao, taxaCancelamento);
+    ui_text_line(linha);
+    ui_line('-');
+    aguardar_voltar();
 }
 
 void relatorioAlunosSemPlano(void)
 {
-    limparTela();
-
-    printf("=========================================================================\n");
-    printf("===                RELATORIO - ALUNOS SEM PLANO DEFINIDO             ===\n");
-    printf("=========================================================================\n");
+    cabecalho_relatorio("Relatorio - Alunos sem plano definido");
 
     if (total_alunos == 0)
     {
-        printf("Nao ha alunos cadastrados.\n");
-        printf("=========================================================================\n");
-        printf(">>> Pressione <ENTER>");
-        getchar();
-        limparTela();
+        ui_center_text("Nao ha alunos cadastrados.");
+        aguardar_voltar();
         return;
     }
 
     int encontrados = 0;
 
-    printf("+---------+----------------------+----------------------+----------------------+----------+\n");
-    printf("| ID      | Nome                 | Telefone             | Email                | Status   |\n");
-    printf("+---------+----------------------+----------------------+----------------------+----------+\n");
+    tabela_sem_plano_header();
 
     for (int i = 0; i < total_alunos; i++)
     {
         if (lista_alunos[i].plano_id[0] == '\0' || strcmp(lista_alunos[i].plano_id, "0") == 0)
         {
-            printf("| %-7.7s | %-20.20s | %-20.20s | %-20.20s | %-8s |\n",
-                   lista_alunos[i].id,
-                   lista_alunos[i].nome,
-                   lista_alunos[i].telefone[0] != '\0' ? lista_alunos[i].telefone : "Nao informado",
-                   lista_alunos[i].email[0] != '\0' ? lista_alunos[i].email : "Nao informado",
-                   lista_alunos[i].ativo ? "Ativo" : "Inativo");
+            tabela_sem_plano_row(&lista_alunos[i]);
             encontrados++;
         }
     }
 
     if (encontrados == 0)
     {
-        printf("| %-78s |\n", "Todos os alunos estao vinculados a algum plano.");
+        ui_text_line("Todos os alunos estao vinculados a algum plano.");
     }
 
-    printf("+---------+----------------------+----------------------+----------------------+----------+\n");
-    printf("Total de alunos sem plano: %d\n", encontrados);
-    printf("Sugestao: revisar o cadastro e vincular cada aluno a um plano apropriado.\n");
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER>");
-    getchar();
-    limparTela();
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    snprintf(linha, sizeof(linha), "Total de alunos sem plano: %d", encontrados);
+    ui_text_line(linha);
+    ui_text_line("Sugestao: revisar o cadastro e vincular cada aluno a um plano apropriado.");
+    ui_line('-');
+    aguardar_voltar();
 }
 
 static char selecionarFiltroStatus(void)
 {
     while (1)
     {
-        printf("\nSelecione o status dos alunos:\n");
-        printf("[1] Somente ativos\n");
-        printf("[2] Somente inativos\n");
-        printf("[3] Todos\n");
+        cabecalho_relatorio("Filtro - Status dos alunos");
+        ui_menu_option('1', "Somente ativos");
+        ui_menu_option('2', "Somente inativos");
+        ui_menu_option('3', "Todos");
+        ui_section_title("Escolha uma opcao");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
         char op = lerTecla();
 
         if (op == '1' || op == '2' || op == '3')
@@ -1047,7 +1271,11 @@ static char selecionarFiltroStatus(void)
 
 static void solicitarTermoBusca(char *dest, size_t tamanho)
 {
-    printf("\nDigite parte do nome, ID ou plano para buscar (ENTER para ignorar):\n");
+    cabecalho_relatorio("Filtro - Termo de busca");
+    ui_text_line("Digite parte do nome, ID ou plano para buscar (ENTER para ignorar):");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
     if (fgets(dest, tamanho, stdin) != NULL)
     {
         dest[strcspn(dest, "\n")] = '\0';
@@ -1062,13 +1290,17 @@ static char selecionarOrdenacao(void)
 {
     while (1)
     {
-        printf("\nSelecione a ordenacao desejada:\n");
-        printf("[1] Nome\n");
-        printf("[2] ID\n");
-        printf("[3] Plano\n");
-        printf("[4] Nome (ordem reversa Z-A)\n");
-        printf("[5] Idade (menor para maior)\n");
-        printf("[6] Idade (maior para menor)\n");
+        cabecalho_relatorio("Filtro - Ordenacao");
+        ui_menu_option('1', "Nome (A-Z)");
+        ui_menu_option('2', "ID");
+        ui_menu_option('3', "Plano");
+        ui_menu_option('4', "Nome (Z-A)");
+        ui_menu_option('5', "Idade (menor para maior)");
+        ui_menu_option('6', "Idade (maior para menor)");
+        ui_section_title("Escolha uma opcao");
+        ui_line('=');
+        printf(">>> ");
+        fflush(stdout);
 
         char op = lerTecla();
         if (op >= '1' && op <= '6')
@@ -1436,7 +1668,7 @@ static void exportarAlunosCsv(const struct aluno_view *lista, int total, char cr
     FILE *fp = fopen(nomeArquivo, "w");
     if (fp == NULL)
     {
-        printf("\nNao foi possivel criar o arquivo CSV.\n");
+        ui_text_line("Nao foi possivel criar o arquivo CSV.");
         return;
     }
 
@@ -1483,7 +1715,10 @@ static void exportarAlunosCsv(const struct aluno_view *lista, int total, char cr
     }
 
     fclose(fp);
-    printf("\nArquivo '%s' gerado com sucesso.\n", nomeArquivo);
+    char nomeCurto[64];
+    ui_clip_utf8(nomeArquivo, 40, nomeCurto, sizeof(nomeCurto));
+    ui_text_line("Arquivo gerado com sucesso:");
+    ui_text_line(nomeCurto);
 }
 
 static void extrairRegiao(const char *endereco, char *dest, size_t tamanho)

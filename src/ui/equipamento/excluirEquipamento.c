@@ -3,85 +3,133 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
-#include "arquivoEquipamento.h" // <-- persistência
+#include "arquivoEquipamento.h"
+#include "ui/utils/consoleLayout.h"
+
+#define EQ_COL_ID 8
+#define EQ_COL_NOME 22
+#define EQ_COL_CATEG 14
+#define EQ_COL_DATA 10
+#define EQ_COL_STATUS 6
+
+static void cabecalho_excluir(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static bool ler_linha(char *dest, size_t size)
+{
+    if (fgets(dest, size, stdin) == NULL)
+    {
+        dest[0] = '\0';
+        return false;
+    }
+    dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
+
+static void tabela_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", EQ_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", EQ_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Categoria", EQ_COL_CATEG);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Ult. Manut", EQ_COL_DATA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", EQ_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_row(const struct equipamento *eq)
+{
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, eq->id, EQ_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->nome, EQ_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->categoria, EQ_COL_CATEG);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->ultima_manutencao, EQ_COL_DATA);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, eq->ativo ? "Ativo" : "Inativo", EQ_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
 
 void telaExcluirEquipamento(void)
 {
     if (total_equipamentos == 0)
     {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
-        printf("=========================================================================\n");
-        printf("===                 NENHUM EQUIPAMENTO CADASTRADO                       ===\n");
-        printf("=========================================================================\n");
+        cabecalho_excluir("Excluir equipamento");
+        ui_center_text("Nenhum equipamento cadastrado.");
+        ui_section_title("Pressione <ENTER> para voltar");
         getchar();
         limparTela();
         return;
     }
 
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
-    printf("=========================================================================\n");
+    cabecalho_excluir("Excluir equipamento");
+    ui_text_line("Selecione o equipamento ativo para excluir.");
+    tabela_header();
 
-    // Listar apenas equipamentos ativos
     int algum_ativo = 0;
     for (int i = 0; i < total_equipamentos; i++)
     {
         if (lista_equipamentos[i].ativo)
         {
-            printf("[%s] %s (%s)\n", lista_equipamentos[i].id,
-                   lista_equipamentos[i].nome,
-                   lista_equipamentos[i].categoria);
+            tabela_row(&lista_equipamentos[i]);
             algum_ativo = 1;
         }
     }
 
     if (!algum_ativo)
     {
-        printf("=========================================================================\n");
-        printf("===                 NENHUM EQUIPAMENTO ATIVO                             ===\n");
-        printf("=========================================================================\n");
+        ui_section_title("Nenhum equipamento ativo");
         getchar();
         limparTela();
         return;
     }
 
-    printf("\n>>> Digite o ID do equipamento que deseja excluir: ");
+    ui_line('-');
+    ui_text_line("Digite o ID do equipamento que deseja excluir.");
+    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_line('=');
     char id_busca[12];
-    fgets(id_busca, sizeof(id_busca), stdin);
-    id_busca[strcspn(id_busca, "\n")] = '\0';
+    if (!ler_linha(id_busca, sizeof(id_busca)))
+    {
+        limparTela();
+        return;
+    }
 
-    int encontrado = 0;
     for (int i = 0; i < total_equipamentos; i++)
     {
         if (strcmp(lista_equipamentos[i].id, id_busca) == 0 && lista_equipamentos[i].ativo)
         {
-            lista_equipamentos[i].ativo = false; // desativa o equipamento
-
-            // **Persistência automática**
+            lista_equipamentos[i].ativo = false;
             excluirEquipamento(id_busca);
+
+            cabecalho_excluir("Excluir equipamento");
+            ui_center_text("Equipamento excluido com sucesso.");
+            ui_section_title("Pressione <ENTER> para voltar");
+            getchar();
             limparTela();
-            printf("=========================================================================\n");
-            printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
-            printf("=========================================================================\n");
-            printf("===                 EQUIPAMENTO EXCLUIDO COM SUCESSO                   ===\n");
-            printf("=========================================================================\n");
-            encontrado = 1;
-            break;
+            return;
         }
     }
 
-    if (!encontrado)
-    {
-        printf("=========================================================================\n");
-        printf("===                   EXCLUIR EQUIPAMENTO                               ===\n");
-        printf("=========================================================================\n");
-        printf("===                 EQUIPAMENTO NÃO ENCONTRADO                           ===\n");
-        printf("=========================================================================\n");
-    }
-
+    cabecalho_excluir("Excluir equipamento");
+    ui_center_text("Equipamento nao encontrado.");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }
