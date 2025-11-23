@@ -40,7 +40,7 @@ static void rodape_prompt(const char *msg)
 {
     ui_line('-');
     ui_text_line(msg);
-    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_text_line(">>> Digite abaixo e pressione ENTER (0 para cancelar).");
     ui_line('=');
 }
 
@@ -52,6 +52,69 @@ static bool ler_linha(char *dest, size_t size)
         return false;
     }
     dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
+
+static bool deseja_cancelar(const char *entrada)
+{
+    return strcmp(entrada, "0") == 0;
+}
+
+static void mostrar_cancelamento(void)
+{
+    cabecalho_equip("Cadastro cancelado");
+    ui_center_text("Operacao interrompida pelo usuario.");
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+// Valida formato DD/MM/AAAA e evita datas futuras
+static bool validarData(const char *data)
+{
+    if (data == NULL || strlen(data) != 10)
+    {
+        return false;
+    }
+    if (data[2] != '/' || data[5] != '/')
+    {
+        return false;
+    }
+
+    int dia, mes, ano;
+    if (sscanf(data, "%2d/%2d/%4d", &dia, &mes, &ano) != 3)
+    {
+        return false;
+    }
+
+    if (ano < 1900 || mes < 1 || mes > 12)
+    {
+        return false;
+    }
+
+    int dias_no_mes[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if ((ano % 4 == 0 && ano % 100 != 0) || (ano % 400 == 0))
+    {
+        dias_no_mes[2] = 29;
+    }
+    if (dia < 1 || dia > dias_no_mes[mes])
+    {
+        return false;
+    }
+
+    time_t agora = time(NULL);
+    struct tm *hoje = localtime(&agora);
+    int ano_atual = hoje->tm_year + 1900;
+    int mes_atual = hoje->tm_mon + 1;
+    int dia_atual = hoje->tm_mday;
+
+    if (ano > ano_atual ||
+        (ano == ano_atual && mes > mes_atual) ||
+        (ano == ano_atual && mes == mes_atual && dia > dia_atual))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -75,12 +138,39 @@ void telaCadastrarEquipamento(void)
     rodape_prompt("Nome:");
     if (!ler_linha(novo.nome, sizeof(novo.nome)))
         return;
+    if (deseja_cancelar(novo.nome))
+    {
+        mostrar_cancelamento();
+        return;
+    }
 
     cabecalho_equip("Cadastrar equipamento");
     ui_text_line("Data da ultima manutencao (dd/mm/aaaa).");
     rodape_prompt("Data da ultima manutencao:");
-    if (!ler_linha(novo.ultima_manutencao, sizeof(novo.ultima_manutencao)))
-        return;
+    while (true)
+    {
+        if (!ler_linha(novo.ultima_manutencao, sizeof(novo.ultima_manutencao)))
+            return;
+
+        if (deseja_cancelar(novo.ultima_manutencao))
+        {
+            mostrar_cancelamento();
+            return;
+        }
+
+        if (validarData(novo.ultima_manutencao))
+        {
+            break;
+        }
+
+        cabecalho_equip("Cadastrar equipamento");
+        ui_text_line("Data invalida. Use DD/MM/AAAA e nao use uma data futura.");
+        ui_section_title("Pressione <ENTER> para tentar novamente");
+        getchar();
+        cabecalho_equip("Cadastrar equipamento");
+        ui_text_line("Data da ultima manutencao (dd/mm/aaaa).");
+        rodape_prompt("Data da ultima manutencao:");
+    }
 
     calcularProximaManutencao(novo.ultima_manutencao, novo.proxima_manutencao);
 
@@ -89,6 +179,11 @@ void telaCadastrarEquipamento(void)
     rodape_prompt("Categoria:");
     if (!ler_linha(novo.categoria, sizeof(novo.categoria)))
         return;
+    if (deseja_cancelar(novo.categoria))
+    {
+        mostrar_cancelamento();
+        return;
+    }
 
     novo.ativo = true;
     lista_equipamentos[total_equipamentos++] = novo;

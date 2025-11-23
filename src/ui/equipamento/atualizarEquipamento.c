@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "limparTela.h"
 #include "cadastrarEquipamento.h"
 #include "arquivoEquipamento.h"
@@ -29,6 +30,55 @@ static bool ler_linha(char *dest, size_t size)
         return false;
     }
     dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
+
+// Valida formato DD/MM/AAAA e evita datas futuras
+static bool validarData(const char *data)
+{
+    if (data == NULL || strlen(data) != 10)
+    {
+        return false;
+    }
+    if (data[2] != '/' || data[5] != '/')
+    {
+        return false;
+    }
+
+    int dia, mes, ano;
+    if (sscanf(data, "%2d/%2d/%4d", &dia, &mes, &ano) != 3)
+    {
+        return false;
+    }
+
+    if (ano < 1900 || mes < 1 || mes > 12)
+    {
+        return false;
+    }
+
+    int dias_no_mes[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if ((ano % 4 == 0 && ano % 100 != 0) || (ano % 400 == 0))
+    {
+        dias_no_mes[2] = 29;
+    }
+    if (dia < 1 || dia > dias_no_mes[mes])
+    {
+        return false;
+    }
+
+    time_t agora = time(NULL);
+    struct tm *hoje = localtime(&agora);
+    int ano_atual = hoje->tm_year + 1900;
+    int mes_atual = hoje->tm_mon + 1;
+    int dia_atual = hoje->tm_mday;
+
+    if (ano > ano_atual ||
+        (ano == ano_atual && mes > mes_atual) ||
+        (ano == ano_atual && mes == mes_atual && dia > dia_atual))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -169,12 +219,28 @@ void telaAtualizarEquipamento(void)
             cabecalho_atualizar("Atualizar equipamento");
             ui_text_line("Nova data da ultima manutencao (dd/mm/aaaa):");
             ui_line('=');
-            if (!ler_linha(buffer, sizeof(buffer)))
-                break;
-            strcpy(equip_sel->ultima_manutencao, buffer);
-            calcularProximaManutencao(equip_sel->ultima_manutencao, equip_sel->proxima_manutencao);
-            atualizarEquipamentoNoArquivo(*equip_sel);
-            mensagem("Atualizar equipamento", "Manutencao atualizada com sucesso.");
+            while (true)
+            {
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
+
+                if (validarData(buffer))
+                {
+                    strcpy(equip_sel->ultima_manutencao, buffer);
+                    calcularProximaManutencao(equip_sel->ultima_manutencao, equip_sel->proxima_manutencao);
+                    atualizarEquipamentoNoArquivo(*equip_sel);
+                    mensagem("Atualizar equipamento", "Manutencao atualizada com sucesso.");
+                    break;
+                }
+
+                cabecalho_atualizar("Atualizar equipamento");
+                ui_text_line("Data invalida. Use DD/MM/AAAA e nao use uma data futura.");
+                ui_section_title("Pressione <ENTER> para tentar novamente");
+                getchar();
+                cabecalho_atualizar("Atualizar equipamento");
+                ui_text_line("Nova data da ultima manutencao (dd/mm/aaaa):");
+                ui_line('=');
+            }
             break;
 
         case '3':
