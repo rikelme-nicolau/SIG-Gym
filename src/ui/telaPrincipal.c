@@ -1,28 +1,29 @@
 #include <stdio.h>
 #include "limparTela.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
 char telaPrincipal(void)
 {
 
     char op;
 
-    printf("\n");
-
-    printf("=========================================================================\n");
-    printf("===                              SIG-GYM                              ===\n");
-    printf("=========================================================================\n");
-    printf("===                                                                   ===\n");
-    printf("===  [1]  ALUNOS                                                      ===\n");
-    printf("===  [2]  PLANOS                                                      ===\n");
-    printf("===  [3]  EQUIPAMENTOS                                                ===\n");
-    printf("===  [4]  FUNCIONARIOS                                                ===\n");
-    printf("===  [5]  RELATORIOS                                                  ===\n");
-    printf("===  [6]  SOBRE                                                       ===\n");
-    printf("===  [0]  SAIR                                                        ===\n");
-    printf("===                                                                   ===\n");
-    printf("=========================================================================\n");
-    printf("=========================================================================\n");
+    limparTela();
+    ui_header("SIG-GYM", "Menu principal");
+    ui_empty_line();
+    ui_menu_option('1', "Alunos");
+    ui_menu_option('2', "Planos");
+    ui_menu_option('3', "Equipamentos");
+    ui_menu_option('4', "Funcionarios");
+    ui_menu_option('5', "Relatorios");
+    ui_menu_option('6', "Sobre");
+    ui_empty_line();
+    ui_menu_option('0', "Sair");
+    ui_section_title("Escolha uma opcao");
+    ui_text_line("Use as teclas indicadas para navegar.");
+    ui_line('=');
+    printf(">>> ");
+    fflush(stdout);
 
     op = lerTecla();
 
