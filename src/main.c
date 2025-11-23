@@ -40,13 +40,6 @@ int main(void)
 
     logFimGeracao();
 
-    printf("\n=== DADOS CARREGADOS ===\n");
-    printf("Alunos: %d\n", total_alunos);
-    printf("Planos: %d\n", total_planos);
-    printf("Funcionarios: %d\n", total_funcionarios);
-    printf("Equipamentos: %d\n", total_equipamentos);
-    printf("======================\n\n");
-
     do
     {
         op = telaPrincipal();

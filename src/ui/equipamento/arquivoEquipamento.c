@@ -181,7 +181,6 @@ int carregarEquipamentos(struct equipamento lista_equipamentos[])
     FILE *fp = fopen(EQUIPAMENTOS_FILE, "rb");
     if (!fp)
     {
-        printf("Arquivo de equipamentos nao encontrado. Gerando dados ficticios...\n");
         return gerarEquipamentosPadrao(lista_equipamentos);
     }
 
@@ -195,7 +194,6 @@ int carregarEquipamentos(struct equipamento lista_equipamentos[])
     if (file_size == 0)
     {
         fclose(fp);
-        printf("Arquivo de equipamentos vazio. Gerando dados ficticios...\n");
         return gerarEquipamentosPadrao(lista_equipamentos);
     }
 
@@ -210,7 +208,6 @@ int carregarEquipamentos(struct equipamento lista_equipamentos[])
 
     if (total == 0)
     {
-        printf("Nenhum equipamento valido encontrado. Gerando dados ficticios...\n");
         return gerarEquipamentosPadrao(lista_equipamentos);
     }
 

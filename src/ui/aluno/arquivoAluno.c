@@ -166,7 +166,6 @@ int carregarAlunos(struct aluno lista_alunos[])
     FILE *fp = fopen(ALUNOS_FILE, "rb");
     if (!fp)
     {
-        printf("Arquivo de alunos nao encontrado. Gerando dados ficticios...\n");
         return gerarAlunosPadrao(lista_alunos);
     }
 
@@ -180,7 +179,6 @@ int carregarAlunos(struct aluno lista_alunos[])
     if (file_size == 0)
     {
         fclose(fp);
-        printf("Arquivo de alunos vazio. Gerando dados ficticios...\n");
         return gerarAlunosPadrao(lista_alunos);
     }
 
@@ -195,7 +193,6 @@ int carregarAlunos(struct aluno lista_alunos[])
 
     if (total == 0)
     {
-        printf("Nenhum aluno valido encontrado. Gerando dados ficticios...\n");
         return gerarAlunosPadrao(lista_alunos);
     }
 

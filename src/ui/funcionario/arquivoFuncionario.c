@@ -190,7 +190,6 @@ int carregarFuncionarios(struct funcionario lista_funcionarios[])
     FILE *fp = fopen(FUNCIONARIOS_FILE, "rb");
     if (!fp)
     {
-        printf("Arquivo de funcionarios nao encontrado. Gerando dados ficticios...\n");
         return gerarFuncionariosPadrao(lista_funcionarios);
     }
 
@@ -204,7 +203,6 @@ int carregarFuncionarios(struct funcionario lista_funcionarios[])
     if (file_size == 0)
     {
         fclose(fp);
-        printf("Arquivo de funcionarios vazio. Gerando dados ficticios...\n");
         return gerarFuncionariosPadrao(lista_funcionarios);
     }
 
@@ -219,7 +217,6 @@ int carregarFuncionarios(struct funcionario lista_funcionarios[])
 
     if (total == 0)
     {
-        printf("Nenhum funcionario valido encontrado. Gerando dados ficticios...\n");
         return gerarFuncionariosPadrao(lista_funcionarios);
     }
 

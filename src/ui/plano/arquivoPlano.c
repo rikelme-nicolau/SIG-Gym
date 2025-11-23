@@ -270,7 +270,6 @@ int carregarPlanos(struct plano lista_planos[])
     if (!fp)
     {
         // CORREÇÃO: Gera dados fictícios se o arquivo não existe
-        printf("Arquivo de planos nao encontrado. Gerando dados ficticios...\n");
         return gerarPlanosPadrao(lista_planos);
     }
 
@@ -284,7 +283,6 @@ int carregarPlanos(struct plano lista_planos[])
     if (file_size == 0)
     {
         fclose(fp);
-        printf("Arquivo de planos vazio. Gerando dados ficticios...\n");
         return gerarPlanosPadrao(lista_planos);
     }
 
@@ -299,7 +297,6 @@ int carregarPlanos(struct plano lista_planos[])
         fclose(fp);
         if (total == 0)
         {
-            printf("Nenhum plano valido encontrado. Gerando dados ficticios...\n");
             return gerarPlanosPadrao(lista_planos);
         }
         return total;
@@ -320,7 +317,6 @@ int carregarPlanos(struct plano lista_planos[])
         fclose(fp);
         if (total == 0)
         {
-            printf("Nenhum plano valido encontrado. Gerando dados ficticios...\n");
             return gerarPlanosPadrao(lista_planos);
         }
         salvarPlanos(lista_planos, total);
