@@ -2,71 +2,165 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 #include "cadastrarFuncionario.h"
 #include "arquivoFuncionario.h"
+#include "../utils/geradorNomes.h"
+#include "../utils/geradorDados.h"
+#include "../utils/validarNascimento.h"
+#include "../aluno/cadastrarAluno.h"
+#include "../utils/logGeracao.h"
 
-// Agora usamos .dat pra indicar arquivo binário
 #define FUNCIONARIOS_FILE "funcionarios.dat"
 #define TMP_FILE_FUNC "funcionarios.tmp"
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
+#define TOTAL_FUNCIONARIOS_FICTICIOS 20
+
+static void preencherCargos(char cargos[][20])
+{
+    int idx = 0;
+
+    for (int i = 0; i < 8 && idx < TOTAL_FUNCIONARIOS_FICTICIOS; i++)
+    {
+        strncpy(cargos[idx++], "Instrutor", 19);
+    }
+    for (int i = 0; i < 5 && idx < TOTAL_FUNCIONARIOS_FICTICIOS; i++)
+    {
+        strncpy(cargos[idx++], "Personal Trainer", 19);
+    }
+    for (int i = 0; i < 3 && idx < TOTAL_FUNCIONARIOS_FICTICIOS; i++)
+    {
+        strncpy(cargos[idx++], "Nutricionista", 19);
+    }
+    for (int i = 0; i < 2 && idx < TOTAL_FUNCIONARIOS_FICTICIOS; i++)
+    {
+        strncpy(cargos[idx++], "Recepcionista", 19);
+    }
+    if (idx < TOTAL_FUNCIONARIOS_FICTICIOS)
+    {
+        strncpy(cargos[idx++], "Gerente", 19);
+    }
+    if (idx < TOTAL_FUNCIONARIOS_FICTICIOS)
+    {
+        strncpy(cargos[idx++], "Limpeza", 19);
+    }
+
+    for (int i = 0; i < idx; i++)
+    {
+        cargos[i][19] = '\0';
+    }
+
+    for (int i = idx - 1; i > 0; i--)
+    {
+        int j = rand() % (i + 1);
+        char tmp[20];
+        memcpy(tmp, cargos[i], sizeof(tmp));
+        memcpy(cargos[i], cargos[j], sizeof(cargos[i]));
+        memcpy(cargos[j], tmp, sizeof(tmp));
+    }
+}
+
+static void gerarNascimentoPorCargo(const char *cargo, char *destino)
+{
+    if (strcmp(cargo, "Gerente") == 0)
+    {
+        gerarDataNascimentoAleatoria(destino, 35, 60);
+        return;
+    }
+    if (strcmp(cargo, "Personal Trainer") == 0 || strcmp(cargo, "Nutricionista") == 0)
+    {
+        gerarDataNascimentoAleatoria(destino, 25, 45);
+        return;
+    }
+    if (strcmp(cargo, "Instrutor") == 0)
+    {
+        gerarDataNascimentoAleatoria(destino, 20, 40);
+        return;
+    }
+    if (strcmp(cargo, "Recepcionista") == 0 || strcmp(cargo, "Limpeza") == 0)
+    {
+        gerarDataNascimentoAleatoria(destino, 20, 50);
+        return;
+    }
+
+    gerarDataNascimentoAleatoria(destino, 20, 60);
+}
 
 static int preencherFuncionariosFicticios(struct funcionario lista_funcionarios[])
 {
-    static const struct funcionario funcionarios_iniciais[] = {
-        {
-            .id = "FUNC-001",
-            .nome = "Ana Martins",
-            .nascimento = "15/03/1990",
-            .idade = 34,
-            .cpf = "111.222.333-44",
-            .telefone = "(11) 90001-2233",
-            .endereco = "Rua das Acácias, 15 - Centro",
-            .email = "ana.martins@example.com",
-            .cargo = "Instrutora",
-            .ativo = true,
-        },
-        {
-            .id = "FUNC-002",
-            .nome = "Bruno Carvalho",
-            .nascimento = "08/09/1985",
-            .idade = 39,
-            .cpf = "555.666.777-88",
-            .telefone = "(11) 91122-3344",
-            .endereco = "Av. Paulista, 900 - Bela Vista",
-            .email = "bruno.carvalho@example.com",
-            .cargo = "Personal",
-            .ativo = true,
-        },
-        {
-            .id = "FUNC-003",
-            .nome = "Clara Nogueira",
-            .nascimento = "22/11/1995",
-            .idade = 28,
-            .cpf = "999.888.777-66",
-            .telefone = "(11) 98888-7766",
-            .endereco = "Rua das Flores, 300 - Vila Mariana",
-            .email = "clara.nogueira@example.com",
-            .cargo = "Nutricionista",
-            .ativo = true,
-        },
-    };
+    char cargos[TOTAL_FUNCIONARIOS_FICTICIOS][20] = {{0}};
+    preencherCargos(cargos);
 
-    int total = sizeof(funcionarios_iniciais) / sizeof(funcionarios_iniciais[0]);
-
-    for (int i = 0; i < total; i++)
+    int total = 0;
+    for (int i = 0; i < TOTAL_FUNCIONARIOS_FICTICIOS && total < MAX_FUNCIONARIOS; i++)
     {
-        lista_funcionarios[i] = funcionarios_iniciais[i];
+        struct funcionario novo;
+        memset(&novo, 0, sizeof(novo));
+
+        snprintf(novo.id, sizeof(novo.id), "FUNC-%03d", i + 1);
+        gerarNomeCompletoAleatorio(novo.nome, sizeof(novo.nome));
+
+        int tentativas_cpf = 0;
+        do
+        {
+            gerarCPFAleatorio(novo.cpf);
+            tentativas_cpf++;
+            if (tentativas_cpf > 100)
+            {
+                printf("ERRO: Nao conseguiu gerar CPF unico para funcionario.\n");
+                break;
+            }
+        } while (!verificarCPFUnico(novo.cpf, lista_alunos, total_alunos, lista_funcionarios, total));
+
+        gerarTelefoneAleatorio(novo.telefone);
+        gerarEnderecoAleatorio(novo.endereco, sizeof(novo.endereco));
+        int tentativas_email = 0;
+        do
+        {
+            gerarEmailAleatorio(novo.nome, novo.email);
+            tentativas_email++;
+            if (tentativas_email > 100)
+            {
+                printf("ERRO: Nao conseguiu gerar email unico para funcionario.\n");
+                break;
+            }
+        } while (!verificarEmailUnico(novo.email, lista_alunos, total_alunos, lista_funcionarios, total));
+
+        strncpy(novo.cargo, cargos[i], sizeof(novo.cargo) - 1);
+        novo.cargo[sizeof(novo.cargo) - 1] = '\0';
+
+        gerarNascimentoPorCargo(novo.cargo, novo.nascimento);
+        novo.idade = calcularIdade(novo.nascimento);
+
+        novo.ativo = true;
+
+        lista_funcionarios[total++] = novo;
     }
+
+    int qtd_inativos = 2 + (rand() % 2); // 2 a 3
+    int marcados = 0;
+    while (marcados < qtd_inativos && marcados < total)
+    {
+        int idx = rand() % total;
+        if (lista_funcionarios[idx].ativo)
+        {
+            lista_funcionarios[idx].ativo = false;
+            marcados++;
+        }
+    }
+
+    logEtapaGeracao("FUNCIONARIOS", total);
 
     return total;
 }
 
-// Salva todos os funcionários ativos no arquivo binário
+// Salva todos os funcionarios ativos no arquivo binario
 void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funcionarios)
 {
     FILE *fp = fopen(TMP_FILE_FUNC, "wb");
     if (!fp)
     {
-        perror("Erro ao criar arquivo temporário");
+        perror("Erro ao criar arquivo temporario");
         return;
     }
 
@@ -74,7 +168,6 @@ void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funci
     {
         if (lista_funcionarios[i].ativo)
         {
-            // Escreve a struct completa em binário
             fwrite(&lista_funcionarios[i], sizeof(struct funcionario), 1, fp);
         }
     }
@@ -84,15 +177,20 @@ void salvarFuncionarios(struct funcionario lista_funcionarios[], int total_funci
     rename(TMP_FILE_FUNC, FUNCIONARIOS_FILE);
 }
 
-// Carrega todos os funcionários do arquivo binário
+// Carrega todos os funcionarios do arquivo binario
 int carregarFuncionarios(struct funcionario lista_funcionarios[])
 {
     FILE *fp = fopen(FUNCIONARIOS_FILE, "rb");
     if (!fp)
     {
-        int total = preencherFuncionariosFicticios(lista_funcionarios);
-        salvarFuncionarios(lista_funcionarios, total);
-        return total;
+        int lista_vazia = (lista_funcionarios == NULL || lista_funcionarios[0].id[0] == '\0');
+        if (lista_vazia)
+        {
+            int total = preencherFuncionariosFicticios(lista_funcionarios);
+            salvarFuncionarios(lista_funcionarios, total);
+            return total;
+        }
+        return 0;
     }
 
     int total = 0;
@@ -106,7 +204,7 @@ int carregarFuncionarios(struct funcionario lista_funcionarios[])
     return total;
 }
 
-// Atualiza um funcionário específico no arquivo
+// Atualiza um funcionario especifico no arquivo
 void atualizarFuncionarioNoArquivo(struct funcionario func)
 {
     struct funcionario funcionarios[MAX_FUNCIONARIOS];
@@ -124,7 +222,7 @@ void atualizarFuncionarioNoArquivo(struct funcionario func)
     salvarFuncionarios(funcionarios, total);
 }
 
-// Marca um funcionário como excluído (exclusão lógica)
+// Marca um funcionario como excluido (exclusao logica)
 void excluirFuncionario(char *id)
 {
     struct funcionario funcionarios[MAX_FUNCIONARIOS];

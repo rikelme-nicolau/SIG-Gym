@@ -23,3 +23,6 @@ Na raiz do projeto, execute:
 ```bash
 make run          # Linux/Mac
 mingw32-make run  # Windows (PowerShell ou CMD)
+
+### Atalho oculto para dados de teste
+Na tela principal, pressionar `R` (maiusculo) pergunta se deseja apagar e regerar todos os dados ficticios (apenas para testes rapidos).

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "animacao.h"
 #include "telaPrincipal.h"
@@ -12,6 +13,8 @@
 #include "telaFinalizacao.h"
 #include "opInvalida.h"
 #include "limparTela.h"
+#include "src/ui/utils/logGeracao.h"
+#include "src/ui/utils/resetarDados.h"
 
 // Persistência
 #include "src/ui/aluno/arquivoAluno.h"             // lista_alunos[], total_alunos
@@ -24,6 +27,8 @@ int main(void)
 
     char op;
 
+    srand((unsigned int)time(NULL));
+
     // animação inicial
     animacao();
 
@@ -32,6 +37,15 @@ int main(void)
     total_planos = carregarPlanos(lista_planos);
     total_funcionarios = carregarFuncionarios(lista_funcionarios);
     total_equipamentos = carregarEquipamentos(lista_equipamentos);
+
+    logFimGeracao();
+
+    printf("\n=== DADOS CARREGADOS ===\n");
+    printf("Alunos: %d\n", total_alunos);
+    printf("Planos: %d\n", total_planos);
+    printf("Funcionarios: %d\n", total_funcionarios);
+    printf("Equipamentos: %d\n", total_equipamentos);
+    printf("======================\n\n");
 
     do
     {
@@ -68,6 +82,30 @@ int main(void)
             telaSobre();
             limparTela();
             break;
+
+        case 'R':
+        case 'r':
+        {
+            printf("ATENCAO: Isso apagara TODOS os dados! Confirma? (S/N): ");
+            int resp = getchar();
+            int flush;
+            while ((flush = getchar()) != '\n' && flush != EOF)
+                ;
+
+            if (resp == 'S' || resp == 's')
+            {
+                limparTela();
+                regerarDadosFicticios();
+            }
+            else
+            {
+                printf("Operacao cancelada.\n");
+            }
+            printf("Pressione <ENTER> para continuar...");
+            getchar();
+            limparTela();
+            break;
+        }
 
         case '0':
             telaFinalizacao();

@@ -1,76 +1,149 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h> // Incluído para usar o tipo 'bool'
+#include <stdbool.h>
+
 #include "cadastrarAluno.h"
 #include "arquivoAluno.h"
+#include "../utils/geradorNomes.h"
+#include "../utils/geradorDados.h"
+#include "../funcionario/cadastrarFuncionario.h"
+#include "../utils/logGeracao.h"
 
-// ALTERAÇÃO: Mudamos a extensão para .dat para indicar que é um arquivo de dados binários.
 #define ALUNOS_FILE "alunos.dat"
-#define TMP_FILE    "alunos.tmp"
+#define TMP_FILE "alunos.tmp"
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
+#define TOTAL_ALUNOS_FICTICIOS 80
+
+static void preencherPlanosSorteados(char destinos[][12], int total_destinos)
+{
+    const struct
+    {
+        const char *id;
+        int quantidade;
+    } distribuicao_planos[] = {
+        // Planos mais baratos (10 cada)
+        {"PLAN-012", 10},
+        {"PLAN-008", 10},
+        {"PLAN-004", 10},
+        {"PLAN-010", 10},
+        // Planos intermediarios (5-10 cada)
+        {"PLAN-007", 6},
+        {"PLAN-002", 6},
+        {"PLAN-001", 5},
+        {"PLAN-005", 6},
+        {"PLAN-006", 6},
+        // Planos caros (2-5 cada)
+        {"PLAN-003", 2},
+        {"PLAN-009", 2},
+        {"PLAN-011", 2},
+        // Sem plano
+        {"0", 5},
+    };
+
+    int pos = 0;
+    for (size_t i = 0; i < ARRAY_LENGTH(distribuicao_planos) && pos < total_destinos; i++)
+    {
+        for (int j = 0; j < distribuicao_planos[i].quantidade && pos < total_destinos; j++)
+        {
+            strncpy(destinos[pos], distribuicao_planos[i].id, sizeof(destinos[pos]) - 1);
+            destinos[pos][sizeof(destinos[pos]) - 1] = '\0';
+            pos++;
+        }
+    }
+
+    // Embaralha para distribuir aleatoriamente
+    for (int i = pos - 1; i > 0; i--)
+    {
+        int j = rand() % (i + 1);
+        char tmp[12];
+        memcpy(tmp, destinos[i], sizeof(tmp));
+        memcpy(destinos[i], destinos[j], sizeof(destinos[i]));
+        memcpy(destinos[j], tmp, sizeof(tmp));
+    }
+}
 
 static int preencherAlunosFicticios(struct aluno lista_alunos[])
 {
-    static const struct aluno alunos_iniciais[] = {
-        {
-            .id = "ALU-0001",
-            .nome = "João Silva",
-            .idade = "29",
-            .cpf = "123.456.789-00",
-            .telefone = "(11) 99876-5432",
-            .endereco = "Rua das Palmeiras, 120 - Centro",
-            .email = "joao.silva@example.com",
-            .ativo = true,
-            .plano_id = "PLAN-001",
-        },
-        {
-            .id = "ALU-0002",
-            .nome = "Maria Souza",
-            .idade = "34",
-            .cpf = "987.654.321-00",
-            .telefone = "(11) 91234-5678",
-            .endereco = "Av. Brasil, 45 - Jardim Europa",
-            .email = "maria.souza@example.com",
-            .ativo = true,
-            .plano_id = "PLAN-002",
-        },
-        {
-            .id = "ALU-0003",
-            .nome = "Carlos Pereira",
-            .idade = "41",
-            .cpf = "321.654.987-00",
-            .telefone = "(11) 97777-1122",
-            .endereco = "Rua do Sol, 88 - Vila Nova",
-            .email = "carlos.pereira@example.com",
-            .ativo = true,
-            .plano_id = "PLAN-003",
-        },
-    };
+    char planos_sorteio[TOTAL_ALUNOS_FICTICIOS][12];
+    preencherPlanosSorteados(planos_sorteio, TOTAL_ALUNOS_FICTICIOS);
 
-    int total = sizeof(alunos_iniciais) / sizeof(alunos_iniciais[0]);
-
-    for (int i = 0; i < total; i++)
+    int total = 0;
+    for (int i = 0; i < TOTAL_ALUNOS_FICTICIOS && total < MAX_ALUNOS; i++)
     {
-        lista_alunos[i] = alunos_iniciais[i];
+        struct aluno novo;
+        memset(&novo, 0, sizeof(novo));
+
+        snprintf(novo.id, sizeof(novo.id), "ALU-%04d", i + 1);
+
+        gerarNomeAleatorio(novo.nome, sizeof(novo.nome));
+
+        int tentativas_cpf = 0;
+        do
+        {
+            gerarCPFAleatorio(novo.cpf);
+            tentativas_cpf++;
+            if (tentativas_cpf > 100)
+            {
+                printf("ERRO: Nao conseguiu gerar CPF unico para aluno.\n");
+                break;
+            }
+        } while (!verificarCPFUnico(novo.cpf, lista_alunos, total, lista_funcionarios, total_funcionarios));
+
+        gerarTelefoneAleatorio(novo.telefone);
+        gerarEnderecoAleatorio(novo.endereco, sizeof(novo.endereco));
+        int tentativas_email = 0;
+        do
+        {
+            gerarEmailAleatorio(novo.nome, novo.email);
+            tentativas_email++;
+            if (tentativas_email > 100)
+            {
+                printf("ERRO: Nao conseguiu gerar email unico para aluno.\n");
+                break;
+            }
+        } while (!verificarEmailUnico(novo.email, lista_alunos, total, lista_funcionarios, total_funcionarios));
+        gerarDataNascimentoAleatoria(novo.idade, 16, 70);
+
+        strncpy(novo.plano_id, planos_sorteio[i], sizeof(novo.plano_id) - 1);
+        novo.plano_id[sizeof(novo.plano_id) - 1] = '\0';
+
+        novo.ativo = true;
+
+        lista_alunos[total++] = novo;
     }
+
+    int qtd_inativos = 5 + (rand() % 4); // 5 a 8
+    int marcados = 0;
+    while (marcados < qtd_inativos && marcados < total)
+    {
+        int idx = rand() % total;
+        if (lista_alunos[idx].ativo)
+        {
+            lista_alunos[idx].ativo = false;
+            marcados++;
+        }
+    }
+
+    logEtapaGeracao("ALUNOS", total);
 
     return total;
 }
 
-// Salva todos os alunos ativos no arquivo binário
-void salvarAlunos(struct aluno lista_alunos[], int total_alunos) {
-    // ALTERAÇÃO: Abrimos o arquivo em modo "wb" (write binary)
+// Salva todos os alunos ativos no arquivo binario
+void salvarAlunos(struct aluno lista_alunos[], int total_alunos)
+{
     FILE *fp = fopen(TMP_FILE, "wb");
-    if (!fp) {
-        perror("Erro ao criar arquivo temporário");
+    if (!fp)
+    {
+        perror("Erro ao criar arquivo temporario");
         return;
     }
 
-    for (int i = 0; i < total_alunos; i++) {
-        // Salva apenas os alunos que estão marcados como ativos
-        if (lista_alunos[i].ativo) {
-            // ALTERAÇÃO: Usamos fwrite para escrever a struct inteira de uma vez.
-            // Parâmetros: ponteiro para os dados, tamanho de cada item, quantidade de itens, ponteiro do arquivo.
+    for (int i = 0; i < total_alunos; i++)
+    {
+        if (lista_alunos[i].ativo)
+        {
             fwrite(&lista_alunos[i], sizeof(struct aluno), 1, fp);
         }
     }
@@ -80,21 +153,26 @@ void salvarAlunos(struct aluno lista_alunos[], int total_alunos) {
     rename(TMP_FILE, ALUNOS_FILE);
 }
 
-// Carrega todos os alunos do arquivo binário
-int carregarAlunos(struct aluno lista_alunos[]) {
-    // ALTERAÇÃO: Abrimos o arquivo em modo "rb" (read binary)
+// Carrega todos os alunos do arquivo binario
+int carregarAlunos(struct aluno lista_alunos[])
+{
     FILE *fp = fopen(ALUNOS_FILE, "rb");
-    if (!fp) {
-        int total = preencherAlunosFicticios(lista_alunos);
-        salvarAlunos(lista_alunos, total);
-        return total;
+    if (!fp)
+    {
+        int lista_vazia = (lista_alunos == NULL || lista_alunos[0].id[0] == '\0');
+        if (lista_vazia)
+        {
+            int total = preencherAlunosFicticios(lista_alunos);
+            salvarAlunos(lista_alunos, total);
+            return total;
+        }
+        return 0;
     }
 
     int total = 0;
 
-    // ALTERAÇÃO: Usamos fread para ler uma struct inteira do arquivo por vez.
-    // O loop continua enquanto fread conseguir ler 1 item completo (sizeof(struct aluno)).
-    while (total < MAX_ALUNOS && fread(&lista_alunos[total], sizeof(struct aluno), 1, fp) == 1) {
+    while (total < MAX_ALUNOS && fread(&lista_alunos[total], sizeof(struct aluno), 1, fp) == 1)
+    {
         total++;
     }
 
@@ -102,15 +180,16 @@ int carregarAlunos(struct aluno lista_alunos[]) {
     return total;
 }
 
-// Atualiza um aluno específico no arquivo (lógica de alto nível inalterada)
-// Esta função agora funcionará com o formato binário porque chama as
-// funções carregarAlunos e salvarAlunos que foram refatoradas.
-void atualizarAlunoNoArquivo(struct aluno aluno) {
+// Atualiza um aluno especifico no arquivo
+void atualizarAlunoNoArquivo(struct aluno aluno)
+{
     struct aluno alunos[MAX_ALUNOS];
     int total = carregarAlunos(alunos);
 
-    for (int i = 0; i < total; i++) {
-        if (strcmp(alunos[i].id, aluno.id) == 0) {
+    for (int i = 0; i < total; i++)
+    {
+        if (strcmp(alunos[i].id, aluno.id) == 0)
+        {
             alunos[i] = aluno;
             break;
         }
@@ -119,15 +198,17 @@ void atualizarAlunoNoArquivo(struct aluno aluno) {
     salvarAlunos(alunos, total);
 }
 
-// Marca um aluno como excluído (lógica de alto nível inalterada)
-// Esta função também funcionará com o formato binário pelas mesmas razões da anterior.
-void excluirAluno(char *id) {
+// Marca um aluno como excluido (exclusao logica)
+void excluirAluno(char *id)
+{
     struct aluno alunos[MAX_ALUNOS];
     int total = carregarAlunos(alunos);
 
-    for (int i = 0; i < total; i++) {
-        if (strcmp(alunos[i].id, id) == 0) {
-            alunos[i].ativo = false; // Usa o tipo bool padrão
+    for (int i = 0; i < total; i++)
+    {
+        if (strcmp(alunos[i].id, id) == 0)
+        {
+            alunos[i].ativo = false;
             break;
         }
     }

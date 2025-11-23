@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "cadastrarPlano.h"
 #include "arquivoPlano.h"
+#include "../utils/logGeracao.h"
 
 #define PLANOS_FILE "planos.dat"
 #define TMP_FILE "planos.tmp"
@@ -45,7 +46,7 @@ static int preencherPlanosFicticios(struct plano lista_planos[])
             .horario_fim = "10:00",
             .valor = 159.90,
             .atividades = {
-                "Musculação",
+                "Musculacao",
                 "Funcional",
                 "Cardio HIIT",
             },
@@ -75,9 +76,135 @@ static int preencherPlanosFicticios(struct plano lista_planos[])
             .atividades = {
                 "Cross Training",
                 "Spinning",
-                "Natação",
+                "Natacao",
             },
             .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-004",
+            .nome = "Plano Matinal",
+            .horario_inicio = "05:00",
+            .horario_fim = "09:00",
+            .valor = 89.90,
+            .atividades = {
+                "Corrida",
+                "Funcional",
+                "Yoga",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-005",
+            .nome = "Plano Executivo",
+            .horario_inicio = "11:00",
+            .horario_fim = "15:00",
+            .valor = 179.90,
+            .atividades = {
+                "Musculacao",
+                "Spinning",
+                "Pilates",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-006",
+            .nome = "Plano Noturno Plus",
+            .horario_inicio = "19:00",
+            .horario_fim = "23:00",
+            .valor = 199.90,
+            .atividades = {
+                "Cross Training",
+                "Natacao",
+                "HIIT",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-007",
+            .nome = "Plano Fim de Semana",
+            .horario_inicio = "08:00",
+            .horario_fim = "18:00",
+            .valor = 119.90,
+            .atividades = {
+                "Musculacao",
+                "Funcional",
+                "Cardio",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-008",
+            .nome = "Plano Estudante",
+            .horario_inicio = "14:00",
+            .horario_fim = "18:00",
+            .valor = 79.90,
+            .atividades = {
+                "Musculacao",
+                "Cardio",
+            },
+            .total_atividades = 2,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-009",
+            .nome = "Plano Familia",
+            .horario_inicio = "09:00",
+            .horario_fim = "17:00",
+            .valor = 249.90,
+            .atividades = {
+                "Natacao",
+                "Hidroginastica",
+                "Funcional",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-010",
+            .nome = "Plano Senior",
+            .horario_inicio = "08:00",
+            .horario_fim = "12:00",
+            .valor = 99.90,
+            .atividades = {
+                "Hidroginastica",
+                "Alongamento",
+                "Pilates",
+            },
+            .total_atividades = 3,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-011",
+            .nome = "Plano Atleta",
+            .horario_inicio = "06:00",
+            .horario_fim = "22:00",
+            .valor = 299.90,
+            .atividades = {
+                "Cross Training",
+                "Musculacao",
+                "HIIT",
+                "Natacao",
+                "Spinning",
+            },
+            .total_atividades = 5,
+            .ativo = true,
+        },
+        {
+            .id = "PLAN-012",
+            .nome = "Plano Light",
+            .horario_inicio = "10:00",
+            .horario_fim = "14:00",
+            .valor = 69.90,
+            .atividades = {
+                "Caminhada",
+                "Alongamento",
+            },
+            .total_atividades = 2,
             .ativo = true,
         },
     };
@@ -89,16 +216,30 @@ static int preencherPlanosFicticios(struct plano lista_planos[])
         lista_planos[i] = planos_iniciais[i];
     }
 
+    int qtd_inativos = 1 + (rand() % 2); // 1 a 2
+    int marcados = 0;
+    while (marcados < qtd_inativos && marcados < total)
+    {
+        int idx = rand() % total;
+        if (lista_planos[idx].ativo)
+        {
+            lista_planos[idx].ativo = false;
+            marcados++;
+        }
+    }
+
+    logEtapaGeracao("PLANOS", total);
+
     return total;
 }
 
-// Salva todos os planos ativos no arquivo binário
+// Salva todos os planos ativos no arquivo binario
 void salvarPlanos(struct plano lista_planos[], int total_planos)
 {
     FILE *fp = fopen(TMP_FILE, "wb");
     if (!fp)
     {
-        perror("Erro ao criar arquivo temporário");
+        perror("Erro ao criar arquivo temporario");
         return;
     }
 
@@ -106,7 +247,6 @@ void salvarPlanos(struct plano lista_planos[], int total_planos)
     {
         if (lista_planos[i].ativo)
         {
-            // Escreve a struct inteira de uma vez
             fwrite(&lista_planos[i], sizeof(struct plano), 1, fp);
         }
     }
@@ -116,15 +256,20 @@ void salvarPlanos(struct plano lista_planos[], int total_planos)
     rename(TMP_FILE, PLANOS_FILE);
 }
 
-// Carrega todos os planos do arquivo binário
+// Carrega todos os planos do arquivo binario
 int carregarPlanos(struct plano lista_planos[])
 {
     FILE *fp = fopen(PLANOS_FILE, "rb");
     if (!fp)
     {
-        int total = preencherPlanosFicticios(lista_planos);
-        salvarPlanos(lista_planos, total);
-        return total;
+        int lista_vazia = (lista_planos == NULL || lista_planos[0].id[0] == '\0');
+        if (lista_vazia)
+        {
+            int total = preencherPlanosFicticios(lista_planos);
+            salvarPlanos(lista_planos, total);
+            return total;
+        }
+        return 0;
     }
 
     long file_size = 0;
@@ -169,7 +314,7 @@ int carregarPlanos(struct plano lista_planos[])
     return total_padrao;
 }
 
-// Atualiza um plano específico no arquivo
+// Atualiza um plano especifico no arquivo
 void atualizarPlanoNoArquivo(struct plano plano)
 {
     struct plano planos[MAX_PLANOS];
@@ -187,7 +332,7 @@ void atualizarPlanoNoArquivo(struct plano plano)
     salvarPlanos(planos, total);
 }
 
-// Marca um plano como excluído (exclusão lógica)
+// Marca um plano como excluido (exclusao logica)
 void excluirPlano(char *id)
 {
     struct plano planos[MAX_PLANOS];
