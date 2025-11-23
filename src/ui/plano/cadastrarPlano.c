@@ -6,103 +6,105 @@
 
 #include "cadastrarPlano.h"
 #include "arquivoPlano.h" // persistência
-
-#define MAX_PLANOS 50
-#define MAX_BUFFER 1024
-#define MAX_ATIVIDADES 5
+#include "ui/utils/consoleLayout.h"
 
 struct plano lista_planos[MAX_PLANOS];
 int total_planos = 0;
+
+static void cabecalho_plano(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void rodape_prompt(const char *msg)
+{
+    ui_line('-');
+    ui_text_line(msg);
+    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_line('=');
+}
+
+static bool ler_linha(char *dest, size_t size)
+{
+    if (fgets(dest, size, stdin) == NULL)
+    {
+        dest[0] = '\0';
+        return false;
+    }
+    dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
 
 void telaCadastrarPlano(void)
 {
     if (total_planos >= MAX_PLANOS)
     {
-        printf("Limite de planos atingido!\n");
+        cabecalho_plano("Cadastrar plano");
+        ui_center_text("Limite de planos atingido.");
+        ui_section_title("Pressione <ENTER> para voltar");
         getchar();
+        limparTela();
         return;
     }
 
-    struct plano novo_plano;
+    struct plano novo_plano = {0};
     char buffer[MAX_BUFFER];
 
-    // Nome
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR PLANO                            ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Digite o nome do plano: ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
+    cabecalho_plano("Cadastrar plano");
+    ui_text_line("Informe o nome do plano.");
+    rodape_prompt("Nome do plano:");
+    if (!ler_linha(buffer, sizeof(buffer)))
+        return;
     strcpy(novo_plano.nome, buffer);
 
-    // Horário início
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR PLANO                            ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Digite o horário de INÍCIO (ex: 10:00): ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
+    cabecalho_plano("Cadastrar plano");
+    ui_text_line("Horario de inicio (ex: 08:00).");
+    rodape_prompt("Horario de inicio:");
+    if (!ler_linha(buffer, sizeof(buffer)))
+        return;
     strcpy(novo_plano.horario_inicio, buffer);
 
-    // Horário fim
-
-    // Horário inicial
-
-    limparTela();
-
-    // Horário final
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR PLANO                            ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Digite o horário de FIM (ex: 20:00): ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
+    cabecalho_plano("Cadastrar plano");
+    ui_text_line("Horario de fim (ex: 20:00).");
+    rodape_prompt("Horario de fim:");
+    if (!ler_linha(buffer, sizeof(buffer)))
+        return;
     strcpy(novo_plano.horario_fim, buffer);
 
-    // Atividades
     novo_plano.total_atividades = 0;
     for (int i = 0; i < MAX_ATIVIDADES; i++)
     {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR PLANO                            ===\n");
-        printf("=========================================================================\n");
-        printf(">>> Digite a atividade #%d (ou <ENTER> para finalizar): ", i + 1);
-        fgets(buffer, sizeof(buffer), stdin);
-        buffer[strcspn(buffer, "\n")] = '\0';
+        cabecalho_plano("Cadastrar plano");
+        char titulo[UI_INNER + 1];
+        snprintf(titulo, sizeof(titulo), "Atividade #%d (ENTER para finalizar):", i + 1);
+        ui_text_line(titulo);
+        rodape_prompt("Digite a atividade:");
+        if (!ler_linha(buffer, sizeof(buffer)))
+            return;
         if (strlen(buffer) == 0)
             break;
-        strcpy(novo_plano.atividades[i], buffer);
+        strcpy(novo_plano.atividades[novo_plano.total_atividades], buffer);
         novo_plano.total_atividades++;
     }
 
-    // Valor mensalidade
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR PLANO                            ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Digite o valor da mensalidade (ex: 149.90): ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0';
+    cabecalho_plano("Cadastrar plano");
+    ui_text_line("Valor da mensalidade (ex: 149.90).");
+    rodape_prompt("Valor:");
+    if (!ler_linha(buffer, sizeof(buffer)))
+        return;
     novo_plano.valor = strtod(buffer, NULL);
 
-    // ID e ativação
     snprintf(novo_plano.id, sizeof(novo_plano.id), "%d", total_planos + 1);
     novo_plano.ativo = true;
 
     lista_planos[total_planos++] = novo_plano;
-
-    // Persistência automática
     salvarPlanos(lista_planos, total_planos);
 
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR PLANO                            ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Plano cadastrado com sucesso! <ENTER>\n");
+    cabecalho_plano("Cadastrar plano");
+    ui_center_text("Plano cadastrado com sucesso.");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }

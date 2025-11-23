@@ -13,44 +13,136 @@
 #include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
 #include "arquivoAluno.h" // <-- persistência
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
-void limparBufferEntrada(void) {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
+static void cabecalho_atualizar(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static bool ler_linha(char *dest, size_t tamanho)
+{
+    if (fgets(dest, tamanho, stdin) == NULL)
+    {
+        dest[0] = '\0';
+        return false;
+    }
+    return true;
+}
+
+static void tabela_alunos_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", 12);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", 26);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", 17);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", 8);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_alunos_row(const char *id, const char *nome, const char *plano, const char *status)
+{
+    char status_clip[16];
+    ui_clip_utf8(status, 8, status_clip, sizeof(status_clip));
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, id, 12);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, nome, 26);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, plano, 17);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, status_clip, 8);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void mensagem_comum(const char *subtitulo, const char *linha1, const char *linha2)
+{
+    cabecalho_atualizar(subtitulo);
+    if (linha1 != NULL)
+    {
+        ui_text_line(linha1);
+    }
+    if (linha2 != NULL)
+    {
+        ui_text_line(linha2);
+    }
+    ui_section_title("Pressione <ENTER> para continuar");
+    getchar();
+    limparTela();
+}
+
+static void preencher_nome_plano(const struct aluno *aluno, char *dest, size_t size)
+{
+    strncpy(dest, "Sem plano", size - 1);
+    dest[size - 1] = '\0';
+
+    if (strcmp(aluno->plano_id, "0") != 0)
+    {
+        for (int j = 0; j < total_planos; j++)
+        {
+            if (lista_planos[j].ativo && strcmp(lista_planos[j].id, aluno->plano_id) == 0)
+            {
+                strncpy(dest, lista_planos[j].nome, size - 1);
+                dest[size - 1] = '\0';
+                break;
+            }
+        }
+    }
 }
 
 void telaAtualizarAluno(void)
 {
     if (total_alunos == 0)
     {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        ATUALIZAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("===                       NENHUM ALUNO CADASTRADO                     ===\n");
-        printf("=========================================================================\n");
+        mensagem_comum("Atualizar aluno", "Nenhum aluno cadastrado.", NULL);
+        return;
+    }
+
+    cabecalho_atualizar("Atualizar aluno");
+    ui_text_line("Selecione o aluno ativo pelo ID.");
+    tabela_alunos_header();
+
+    int algum_ativo = 0;
+    for (int i = 0; i < total_alunos; i++)
+    {
+        if (lista_alunos[i].ativo)
+        {
+            char nome_plano[MAX_BUFFER];
+            preencher_nome_plano(&lista_alunos[i], nome_plano, sizeof(nome_plano));
+            tabela_alunos_row(lista_alunos[i].id, lista_alunos[i].nome, nome_plano, "Ativo");
+            algum_ativo = 1;
+        }
+    }
+
+    if (!algum_ativo)
+    {
+        ui_section_title("Nenhum aluno ativo");
         getchar();
         limparTela();
         return;
     }
 
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        ATUALIZAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-
-    for (int i = 0; i < total_alunos; i++)
-    {
-        if (lista_alunos[i].ativo)
-        {
-            printf("[%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
-        }
-    }
-
-    printf("===                          DIGITE O ID:                             ===\n");
-    printf("=========================================================================\n");
+    ui_line('-');
+    ui_text_line("Digite o ID do aluno que deseja atualizar.");
+    ui_line('=');
+    printf(">>> ");
     char id_busca[1024];
-    fgets(id_busca, sizeof(id_busca), stdin);
+    if (!ler_linha(id_busca, sizeof(id_busca)))
+    {
+        limparTela();
+        return;
+    }
     id_busca[strcspn(id_busca, "\n")] = '\0';
 
     int encontrado = -1;
@@ -65,13 +157,7 @@ void telaAtualizarAluno(void)
 
     if (encontrado == -1)
     {
-        printf("=========================================================================\n");
-        printf("===                        ATUALIZAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("===                       ID  NAO  ENCONTRADO                         ===\n");
-        printf("=========================================================================\n");
-        getchar();
-        limparTela();
+        mensagem_comum("Atualizar aluno", "ID nao encontrado ou inativo.", NULL);
         return;
     }
 
@@ -81,40 +167,41 @@ void telaAtualizarAluno(void)
 
     do
     {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        ATUALIZAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("Aluno selecionado: %s (%s)\n", aluno_sel->nome, aluno_sel->id);
-        printf("Escolha o campo para atualizar:\n");
-        printf("[1] Nome\n");
-        printf("[2] Data de nascimento\n");
-        printf("[3] CPF\n");
-        printf("[4] Telefone\n");
-        printf("[5] Endereco\n");
-        printf("[6] Email\n");
-        printf("[7] Plano\n");
-        printf("[0] Voltar\n");
-        printf("=========================================================================\n");
-        printf("=========================================================================\n");
+        cabecalho_atualizar("Atualizar aluno");
+        char linha[UI_INNER + 1];
+        snprintf(linha, sizeof(linha), "Aluno: %s (%s)", aluno_sel->nome, aluno_sel->id);
+        ui_text_line(linha);
+        ui_empty_line();
+        ui_menu_option('1', "Nome");
+        ui_menu_option('2', "Data de nascimento");
+        ui_menu_option('3', "CPF");
+        ui_menu_option('4', "Telefone");
+        ui_menu_option('5', "Endereco");
+        ui_menu_option('6', "E-mail");
+        ui_menu_option('7', "Plano (em breve)");
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha um campo");
+        printf(">>> ");
+        fflush(stdout);
         opcao = lerTecla();
         switch (opcao)
         {
         case '1': // Validação do Nome
         {
-            // ... (código existente de validação de nome) ...
             bool nomeValido = false;
             do
             {
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR ALUNO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Nome atual: %-51s ===\n", aluno_sel->nome);
-                printf("=== Digite o novo nome:                                               ===\n");
-                printf("=========================================================================\n");
+                cabecalho_atualizar("Atualizar aluno");
+                snprintf(linha, sizeof(linha), "Nome atual: %s", aluno_sel->nome);
+                ui_text_line(linha);
+                ui_text_line("Digite o novo nome (somente letras e espacos).");
+                ui_line('=');
                 printf(">>> ");
-                fgets(buffer, sizeof(buffer), stdin);
+                if (!ler_linha(buffer, sizeof(buffer)))
+                {
+                    mensagem_comum("Atualizar aluno", "Entrada invalida. Retornando ao menu.", NULL);
+                    break;
+                }
                 buffer[strcspn(buffer, "\n")] = '\0';
                 if (validarNome(buffer))
                 {
@@ -123,14 +210,7 @@ void telaAtualizarAluno(void)
                 }
                 else
                 {
-                    limparTela();
-                    printf("=========================================================================\n");
-                    printf("===                        NOME INVÁLIDO                              ===\n");
-                    printf("=========================================================================\n");
-                    printf("=== O nome deve conter apenas letras e espaços.                     ===\n");
-                    printf("=========================================================================\n");
-                    printf(">>> Pressione <ENTER> para tentar novamente...");
-                    getchar();
+                    mensagem_comum("Nome invalido", "Use apenas letras e espacos.", NULL);
                 }
             } while (!nomeValido);
             atualizarAlunoNoArquivo(*aluno_sel);
@@ -139,19 +219,20 @@ void telaAtualizarAluno(void)
         
         case '2': // Validação da Data de Nascimento
         {
-            // ... (código existente de validação de data) ...
-             bool dataValida = false;
+            bool dataValida = false;
             do
             {
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR ALUNO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Data atual: %-51s ===\n", aluno_sel->idade);
-                printf("=== Digite a nova data de nascimento (DD/MM/AAAA):                    ===\n");
-                printf("=========================================================================\n");
+                cabecalho_atualizar("Atualizar aluno");
+                snprintf(linha, sizeof(linha), "Data atual: %s", aluno_sel->idade);
+                ui_text_line(linha);
+                ui_text_line("Digite a nova data (DD/MM/AAAA).");
+                ui_line('=');
                 printf(">>> ");
-                fgets(buffer, sizeof(buffer), stdin);
+                if (!ler_linha(buffer, sizeof(buffer)))
+                {
+                    mensagem_comum("Atualizar aluno", "Entrada invalida. Retornando ao menu.", NULL);
+                    break;
+                }
                 buffer[strcspn(buffer, "\n")] = '\0';
 
                 if (validarNascimento(buffer))
@@ -161,14 +242,7 @@ void telaAtualizarAluno(void)
                 }
                 else
                 {
-                    limparTela();
-                    printf("=========================================================================\n");
-                    printf("===                   DATA DE NASCIMENTO INVÁLIDA                     ===\n");
-                    printf("=========================================================================\n");
-                    printf("=== Formato DD/MM/AAAA. A data não pode ser futura.               ===\n");
-                    printf("=========================================================================\n");
-                    printf(">>> Pressione <ENTER> para tentar novamente...");
-                    getchar();
+                    mensagem_comum("Data invalida", "Formato DD/MM/AAAA e data nao pode ser futura.", NULL);
                 }
             } while (!dataValida);
             atualizarAlunoNoArquivo(*aluno_sel);
@@ -177,19 +251,20 @@ void telaAtualizarAluno(void)
 
         case '3': // Validação do CPF
         {
-            // ... (código existente de validação de CPF) ...
             bool cpfValido = false;
             do
             {
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR ALUNO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== CPF atual: %-54s ===\n", aluno_sel->cpf);
-                printf("=== Digite o novo CPF:                                                ===\n");
-                printf("=========================================================================\n");
+                cabecalho_atualizar("Atualizar aluno");
+                snprintf(linha, sizeof(linha), "CPF atual: %s", aluno_sel->cpf);
+                ui_text_line(linha);
+                ui_text_line("Digite o novo CPF.");
+                ui_line('=');
                 printf(">>> ");
-                fgets(buffer, sizeof(buffer), stdin);
+                if (!ler_linha(buffer, sizeof(buffer)))
+                {
+                    mensagem_comum("Atualizar aluno", "Entrada invalida. Retornando ao menu.", NULL);
+                    break;
+                }
                 buffer[strcspn(buffer, "\n")] = '\0';
                 if (validarCPF(buffer))
                 {
@@ -198,14 +273,7 @@ void telaAtualizarAluno(void)
                 }
                 else
                 {
-                    limparTela();
-                    printf("=========================================================================\n");
-                    printf("===                        CPF INVÁLIDO                               ===\n");
-                    printf("=========================================================================\n");
-                    printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
-                    printf("=========================================================================\n");
-                    printf(">>> Pressione <ENTER> para tentar novamente...");
-                    getchar();
+                    mensagem_comum("CPF invalido", "O numero nao corresponde a um CPF valido.", NULL);
                 }
             } while (!cpfValido);
             atualizarAlunoNoArquivo(*aluno_sel);
@@ -214,19 +282,20 @@ void telaAtualizarAluno(void)
         
         case '4': // Validação do Telefone
         {
-            // ... (código existente de validação de telefone) ...
             bool telefoneValido = false;
             do
             {
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR ALUNO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Telefone atual: %-49s ===\n", aluno_sel->telefone);
-                printf("=== Digite o novo telefone (Ex: (DD) 9XXXX-XXXX):                     ===\n");
-                printf("=========================================================================\n");
+                cabecalho_atualizar("Atualizar aluno");
+                snprintf(linha, sizeof(linha), "Telefone atual: %s", aluno_sel->telefone);
+                ui_text_line(linha);
+                ui_text_line("Digite o novo telefone (DD) 9XXXX-XXXX.");
+                ui_line('=');
                 printf(">>> ");
-                fgets(buffer, sizeof(buffer), stdin);
+                if (!ler_linha(buffer, sizeof(buffer)))
+                {
+                    mensagem_comum("Atualizar aluno", "Entrada invalida. Retornando ao menu.", NULL);
+                    break;
+                }
                 buffer[strcspn(buffer, "\n")] = '\0';
 
                 if (validarTelefone(buffer))
@@ -236,14 +305,7 @@ void telaAtualizarAluno(void)
                 }
                 else
                 {
-                    limparTela();
-                    printf("=========================================================================\n");
-                    printf("===                      NÚMERO DE TELEFONE INVÁLIDO                  ===\n");
-                    printf("=========================================================================\n");
-                    printf("=== O número deve ser um telefone fixo (10) ou celular (11 dígitos).===\n");
-                    printf("=========================================================================\n");
-                    printf(">>> Pressione <ENTER> para tentar novamente...");
-                    getchar();
+                    mensagem_comum("Telefone invalido", "Use um fixo (10 digitos) ou celular (11 digitos).", NULL);
                 }
             } while (!telefoneValido);
             atualizarAlunoNoArquivo(*aluno_sel);
@@ -252,19 +314,20 @@ void telaAtualizarAluno(void)
         
         case '5': // Validação do Endereço
         {
-            // ... (código existente de validação de endereço) ...
             bool enderecoValido = false;
             do
             {
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR ALUNO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Endereço atual: %-50s ===\n", aluno_sel->endereco);
-                printf("=== Digite o novo endereço (Ex: Rua Exemplo, 123 - Centro):           ===\n");
-                printf("=========================================================================\n");
+                cabecalho_atualizar("Atualizar aluno");
+                snprintf(linha, sizeof(linha), "Endereco atual: %s", aluno_sel->endereco);
+                ui_text_line(linha);
+                ui_text_line("Digite o novo endereco.");
+                ui_line('=');
                 printf(">>> ");
-                fgets(buffer, sizeof(buffer), stdin);
+                if (!ler_linha(buffer, sizeof(buffer)))
+                {
+                    mensagem_comum("Atualizar aluno", "Entrada invalida. Retornando ao menu.", NULL);
+                    break;
+                }
                 buffer[strcspn(buffer, "\n")] = '\0';
 
                 if (validarEndereco(buffer))
@@ -274,35 +337,29 @@ void telaAtualizarAluno(void)
                 }
                 else
                 {
-                    limparTela();
-                    printf("=========================================================================\n");
-                    printf("===                        ENDEREÇO INVÁLIDO                          ===\n");
-                    printf("=========================================================================\n");
-                    printf("=== O endereço é muito curto ou contém caracteres inválidos.          ===\n");
-                    printf("=========================================================================\n");
-                    printf(">>> Pressione <ENTER> para tentar novamente...");
-                    getchar();
+                    mensagem_comum("Endereco invalido", "O texto esta curto ou com caracteres invalidos.", NULL);
                 }
             } while (!enderecoValido);
             atualizarAlunoNoArquivo(*aluno_sel);
             break;
         }
 
-        // ======================= AGREGAÇÃO DA VALIDAÇÃO DE E-MAIL =======================
         case '6':
         {
             bool emailValido = false;
             do
             {
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR ALUNO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== E-mail atual: %-51s ===\n", aluno_sel->email);
-                printf("=== Digite o novo e-mail (Ex: nome@dominio.com):                      ===\n");
-                printf("=========================================================================\n");
+                cabecalho_atualizar("Atualizar aluno");
+                snprintf(linha, sizeof(linha), "E-mail atual: %s", aluno_sel->email);
+                ui_text_line(linha);
+                ui_text_line("Digite o novo e-mail (nome@dominio.com).");
+                ui_line('=');
                 printf(">>> ");
-                fgets(buffer, sizeof(buffer), stdin);
+                if (!ler_linha(buffer, sizeof(buffer)))
+                {
+                    mensagem_comum("Atualizar aluno", "Entrada invalida. Retornando ao menu.", NULL);
+                    break;
+                }
                 buffer[strcspn(buffer, "\n")] = '\0';
 
                 // Chama a função de validação de e-mail
@@ -313,47 +370,28 @@ void telaAtualizarAluno(void)
                 }
                 else
                 {
-                    // Exibe mensagem de erro se o e-mail for inválido
-                    limparTela();
-                    printf("=========================================================================\n");
-                    printf("===                        ENDEREÇO DE E-MAIL INVÁLIDO                ===\n");
-                    printf("=========================================================================\n");
-                    printf("=== O formato do e-mail parece incorreto.                           ===\n");
-                    printf("=== Certifique-se de que ele contém um '@' e um domínio válido.       ===\n");
-                    printf("=========================================================================\n");
-                    printf(">>> Pressione <ENTER> para tentar novamente...");
-                    getchar();
+                    mensagem_comum("E-mail invalido", "Confirme o formato nome@provedor.extensao.", NULL);
                 }
             } while (!emailValido);
 
             atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
             break;
         }
-        // ======================= FIM DA AGREGAÇÃO =======================
         
-        // ... (Aqui entraria a lógica para o Plano) ...
+        case '7':
+            mensagem_comum("Atualizar aluno", "Edicao de plano ainda nao disponivel neste menu.", NULL);
+            break;
         
         case '0':
             break;
         default:
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        ATUALIZAR ALUNO                            ===\n");
-            printf("=========================================================================\n");
-            printf("===                        OPCAO  INVALIDA                            ===\n");
-            printf("=========================================================================\n");
+            mensagem_comum("Atualizar aluno", "Opcao invalida. Use apenas o menu.", NULL);
             break;
         }
 
-        if (opcao > '0' && opcao < '8')
+        if (opcao >= '1' && opcao <= '6')
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        ATUALIZAR ALUNO                            ===\n");
-            printf("=========================================================================\n");
-            printf("=== Campo atualizado com sucesso! <ENTER>                             ===\n");
-            printf("=========================================================================\n");
-            getchar();
+            mensagem_comum("Atualizar aluno", "Campo atualizado com sucesso!", NULL);
         }
 
     } while (opcao != '0');

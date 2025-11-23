@@ -12,12 +12,38 @@
 #include "src/ui/utils/validarEndereco.h"
 #include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
 #include "arquivoAluno.h"
+#include "ui/utils/consoleLayout.h"
 
 #define MAX_BUFFER 1024
 #define MAX_ALUNOS 1024
 
 struct aluno lista_alunos[MAX_ALUNOS];
 int total_alunos = 0;
+
+static void cabecalho_cadastro(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void rodape_cancelamento(void)
+{
+    ui_line('-');
+    ui_text_line("Digite o valor e pressione ENTER (0 para cancelar).");
+    ui_text_line(">>> Digite abaixo:");
+    ui_line('=');
+}
+
+static bool lerEntrada(char *destino, size_t tamanho)
+{
+    if (fgets(destino, tamanho, stdin) == NULL)
+    {
+        destino[0] = '\0';
+        return false;
+    }
+    return true;
+}
 
 static bool desejaCancelar(const char *entrada)
 {
@@ -31,11 +57,9 @@ static bool exibirMensagemCancelamento(const char *entrada)
         return false;
     }
 
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                     CADASTRO CANCELADO                            ===\n");
-    printf("=========================================================================\n");
-    printf(">>> Pressione <ENTER> para voltar ao menu...");
+    cabecalho_cadastro("Cadastro cancelado");
+    ui_center_text("Operacao interrompida pelo usuario.");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
     return true;
@@ -45,27 +69,29 @@ void telaCadastrarAluno(void)
 {
     if (total_alunos >= MAX_ALUNOS)
     {
-        printf("Limite de alunos atingido!\n");
+        cabecalho_cadastro("Cadastrar aluno");
+        ui_center_text("Limite de alunos atingido.");
+        ui_section_title("Pressione <ENTER> para voltar");
         getchar();
+        limparTela();
         return;
     }
 
-    struct aluno novo_aluno;
+    struct aluno novo_aluno = {0};
     char buffer[MAX_BUFFER];
+    strcpy(novo_aluno.plano_id, "0");
 
-    // --- Validação do Nome (já está correto) ---
     bool nomeValido = false;
     do
     {
-        // ... (código existente de validação de nome) ...
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("=== Por favor, digite o nome ou 0 para cancelar:                      ===\n");
-        printf("=========================================================================\n");
-        printf(">>> ");
-        fgets(buffer, sizeof(buffer), stdin);
+        cabecalho_cadastro("Cadastrar aluno");
+        ui_text_line("Informe o nome completo do aluno.");
+        ui_text_line("Use apenas letras e espacos.");
+        rodape_cancelamento();
+        if (!lerEntrada(buffer, sizeof(buffer)))
+        {
+            return;
+        }
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (exibirMensagemCancelamento(buffer))
@@ -80,33 +106,27 @@ void telaCadastrarAluno(void)
         }
         else
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        NOME INVÁLIDO                              ===\n");
-            printf("=========================================================================\n");
-            printf("=== O nome deve conter apenas letras e espaços, sem caracteres      ===\n");
-            printf("=== especiais ou números. Verifique também o tamanho.               ===\n");
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para tentar novamente...");
+            cabecalho_cadastro("Nome invalido");
+            ui_text_line("O nome deve conter apenas letras e espacos.");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
             getchar();
         }
     } while (!nomeValido);
 
-    // --- Validação da Data de Nascimento (já está correto) ---
     bool dataValida = false;
     do
     {
-        // ... (código existente de validação de data) ...
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("=== Nome: %-55s ===\n", novo_aluno.nome);
-        printf("=== Por favor, digite a data de nascimento (DD/MM/AAAA) ou 0 para    ===\n");
-        printf("=== cancelar:                                                         ===\n");
-        printf("=========================================================================\n");
-        printf(">>> ");
-        fgets(buffer, sizeof(buffer), stdin);
+        cabecalho_cadastro("Cadastrar aluno");
+        char contexto[UI_INNER + 1];
+        snprintf(contexto, sizeof(contexto), "Nome: %-.*s", UI_INNER - 6, novo_aluno.nome);
+        ui_text_line(contexto);
+        ui_empty_line();
+        ui_text_line("Digite a data de nascimento (DD/MM/AAAA).");
+        rodape_cancelamento();
+        if (!lerEntrada(buffer, sizeof(buffer)))
+        {
+            return;
+        }
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (exibirMensagemCancelamento(buffer))
@@ -121,32 +141,27 @@ void telaCadastrarAluno(void)
         }
         else
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                   DATA DE NASCIMENTO INVÁLIDA                     ===\n");
-            printf("=========================================================================\n");
-            printf("=== A data deve estar no formato DD/MM/AAAA, não pode ser futura      ===\n");
-            printf("=== e deve ser uma data válida no calendário. Tente novamente.        ===\n");
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para tentar novamente...");
+            cabecalho_cadastro("Data invalida");
+            ui_text_line("Formato esperado: DD/MM/AAAA e data nao pode ser futura.");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
             getchar();
         }
     } while (!dataValida);
     
-    // --- Validação do CPF (já está correto) ---
     bool cpfValido = false;
     do
     {
-        // ... (código existente de validação de CPF) ...
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("=== Nome: %-55s ===\n", novo_aluno.nome);
-        printf("=== Por favor, digite o CPF ou 0 para cancelar:                       ===\n");
-        printf("=========================================================================\n");
-        printf(">>> ");
-        fgets(buffer, sizeof(buffer), stdin);
+        cabecalho_cadastro("Cadastrar aluno");
+        char contexto[UI_INNER + 1];
+        snprintf(contexto, sizeof(contexto), "Nome: %-.*s", UI_INNER - 6, novo_aluno.nome);
+        ui_text_line(contexto);
+        ui_empty_line();
+        ui_text_line("Digite o CPF.");
+        rodape_cancelamento();
+        if (!lerEntrada(buffer, sizeof(buffer)))
+        {
+            return;
+        }
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (exibirMensagemCancelamento(buffer))
@@ -161,32 +176,23 @@ void telaCadastrarAluno(void)
         }
         else
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        CPF INVÁLIDO                               ===\n");
-            printf("=========================================================================\n");
-            printf("=== O número digitado não corresponde a um CPF válido.              ===\n");
-            printf("=== Verifique os dígitos e tente novamente.                         ===\n");
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para tentar novamente...");
+            cabecalho_cadastro("CPF invalido");
+            ui_text_line("O numero digitado nao corresponde a um CPF valido.");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
             getchar();
         }
     } while (!cpfValido);
 
-    // --- Validação do Telefone (já está correto) ---
     bool telefoneValido = false;
     do
     {
-        // ... (código existente de validação de telefone) ...
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("=== Por favor, digite o telefone (Ex: (DD) 9XXXX-XXXX) ou 0 para     ===\n");
-        printf("=== cancelar:                                                         ===\n");
-        printf("=========================================================================\n");
-        printf(">>> ");
-        fgets(buffer, sizeof(buffer), stdin);
+        cabecalho_cadastro("Cadastrar aluno");
+        ui_text_line("Telefone no formato (DD) 9XXXX-XXXX.");
+        rodape_cancelamento();
+        if (!lerEntrada(buffer, sizeof(buffer)))
+        {
+            return;
+        }
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (exibirMensagemCancelamento(buffer))
@@ -201,32 +207,23 @@ void telaCadastrarAluno(void)
         }
         else
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                      NÚMERO DE TELEFONE INVÁLIDO                  ===\n");
-            printf("=========================================================================\n");
-            printf("=== O número deve ser um telefone fixo (10 dígitos) ou celular      ===\n");
-            printf("=== (11 dígitos, começando com 9). Ex: (11) 98765-4321.             ===\n");
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para tentar novamente...");
+            cabecalho_cadastro("Telefone invalido");
+            ui_text_line("Use um numero fixo (10 digitos) ou celular (11 digitos).");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
             getchar();
         }
     } while (!telefoneValido);
 
-    // --- Validação do Endereço (já está correto) ---
     bool enderecoValido = false;
     do
     {
-        // ... (código existente de validação de endereço) ...
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("=== Por favor, digite o endereço (Ex: Rua Exemplo, 123 - Centro) ou  ===\n");
-        printf("=== 0 para cancelar:                                                  ===\n");
-        printf("=========================================================================\n");
-        printf(">>> ");
-        fgets(buffer, sizeof(buffer), stdin);
+        cabecalho_cadastro("Cadastrar aluno");
+        ui_text_line("Digite o endereco completo (Rua, numero - Bairro).");
+        rodape_cancelamento();
+        if (!lerEntrada(buffer, sizeof(buffer)))
+        {
+            return;
+        }
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (exibirMensagemCancelamento(buffer))
@@ -241,31 +238,23 @@ void telaCadastrarAluno(void)
         }
         else
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        ENDEREÇO INVÁLIDO                          ===\n");
-            printf("=========================================================================\n");
-            printf("=== O endereço é muito curto ou contém caracteres inválidos.          ===\n");
-            printf("=== Verifique o texto e tente novamente.                              ===\n");
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para tentar novamente...");
+            cabecalho_cadastro("Endereco invalido");
+            ui_text_line("O endereco esta curto ou com caracteres invalidos.");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
             getchar();
         }
     } while (!enderecoValido);
 
-    // ======================= MODIFICAÇÃO PARA VALIDAR E-MAIL =======================
     bool emailValido = false;
     do
     {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        CADASTRAR ALUNO                            ===\n");
-        printf("=========================================================================\n");
-        printf("=== Por favor, digite o email (Ex: nome@dominio.com) ou 0 para        ===\n");
-        printf("=== cancelar:                                                         ===\n");
-        printf("=========================================================================\n");
-        printf(">>> ");
-        fgets(buffer, sizeof(buffer), stdin);
+        cabecalho_cadastro("Cadastrar aluno");
+        ui_text_line("Digite o e-mail (ex: nome@dominio.com).");
+        rodape_cancelamento();
+        if (!lerEntrada(buffer, sizeof(buffer)))
+        {
+            return;
+        }
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (exibirMensagemCancelamento(buffer))
@@ -280,35 +269,28 @@ void telaCadastrarAluno(void)
         }
         else
         {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        ENDEREÇO DE E-MAIL INVÁLIDO                ===\n");
-            printf("=========================================================================\n");
-            printf("=== O formato do e-mail parece incorreto.                           ===\n");
-            printf("=== Certifique-se de que ele contém um '@' e um domínio válido.       ===\n");
-            printf("=========================================================================\n");
-            printf(">>> Pressione <ENTER> para tentar novamente...");
-            getchar(); // Pausa para o usuário ler a mensagem
+            cabecalho_cadastro("E-mail invalido");
+            ui_text_line("Verifique o formato: texto@provedor.dominio.");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
+            getchar();
         }
     } while (!emailValido);
-    // ======================= FIM DA MODIFICAÇÃO =======================
 
-    // ... (O restante do seu código para Plano, salvar, etc. continua o mesmo) ...
-
-    // Gera ID e define ativo
     strcpy(novo_aluno.id, gerarMatricula("002"));
     novo_aluno.ativo = true;
+    if (novo_aluno.plano_id[0] == '\0')
+    {
+        strcpy(novo_aluno.plano_id, "0");
+    }
     lista_alunos[total_alunos++] = novo_aluno;
     salvarAlunos(lista_alunos, total_alunos);
 
-    // Mensagem de sucesso
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        CADASTRAR ALUNO                            ===\n");
-    printf("=========================================================================\n");
-    printf("===                     ALUNO CADASTRADO COM SUCESSO                  ===\n");
-    printf("=========================================================================\n");
-    printf(">>>press <ENTER>");
+    cabecalho_cadastro("Cadastrar aluno");
+    ui_center_text("Aluno cadastrado com sucesso.");
+    char id_line[UI_INNER + 1];
+    snprintf(id_line, sizeof(id_line), "ID gerado: %-.*s", UI_INNER - 11, novo_aluno.id);
+    ui_center_text(id_line);
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }

@@ -5,6 +5,8 @@
 #include "limparTela.h"
 #include "cadastrarAluno.h"
 #include "arquivoAluno.h"
+#include "src/ui/plano/cadastrarPlano.h"
+#include "ui/utils/consoleLayout.h"
 
 // reutilize as mesmas helpers do módulo de funcionários
 static void limparString(char *str) {
@@ -13,50 +15,116 @@ static void limparString(char *str) {
         str[i] = '\0';
 }
 
-static void lerString(char *dest, int tamanho) {
-    fgets(dest, tamanho, stdin);
+static bool lerString(char *dest, int tamanho) {
+    if (fgets(dest, tamanho, stdin) == NULL) {
+        dest[0] = '\0';
+        return false;
+    }
     limparString(dest);
+    return true;
+}
+
+static void cabecalho_excluir(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static void tabela_alunos_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", 12);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", 26);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Plano", 17);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", 8);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_alunos_row(const char *id, const char *nome, const char *plano, const char *status)
+{
+    char status_clip[16];
+    ui_clip_utf8(status, 8, status_clip, sizeof(status_clip));
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, id, 12);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, nome, 26);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, plano, 17);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, status_clip, 8);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+static void preencher_nome_plano(const struct aluno *aluno, char *dest, size_t size)
+{
+    strncpy(dest, "Sem plano", size - 1);
+    dest[size - 1] = '\0';
+
+    if (strcmp(aluno->plano_id, "0") != 0)
+    {
+        for (int j = 0; j < total_planos; j++)
+        {
+            if (lista_planos[j].ativo && strcmp(lista_planos[j].id, aluno->plano_id) == 0)
+            {
+                strncpy(dest, lista_planos[j].nome, size - 1);
+                dest[size - 1] = '\0';
+                break;
+            }
+        }
+    }
 }
 
 void telaExcluirAluno(void)
 {
     if (total_alunos == 0) {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        EXCLUIR ALUNO                              ===\n");
-        printf("=========================================================================\n");
-        printf("===                      NENHUM ALUNO CADASTRADO                      ===\n");
-        printf("=========================================================================\n");
+        cabecalho_excluir("Excluir aluno");
+        ui_center_text("Nenhum aluno cadastrado.");
+        ui_section_title("Pressione <ENTER> para voltar");
         getchar();
         limparTela();
         return;
     }
 
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        EXCLUIR ALUNO                              ===\n");
-    printf("=========================================================================\n");
+    cabecalho_excluir("Excluir aluno");
+    ui_text_line("Selecione o aluno ativo para excluir.");
+    tabela_alunos_header();
 
     int algum_ativo = 0;
     for (int i = 0; i < total_alunos; i++) {
         if (lista_alunos[i].ativo) {
-            printf("[%s] %s\n", lista_alunos[i].id, lista_alunos[i].nome);
+            char nome_plano[MAX_BUFFER];
+            preencher_nome_plano(&lista_alunos[i], nome_plano, sizeof(nome_plano));
+            tabela_alunos_row(lista_alunos[i].id, lista_alunos[i].nome, nome_plano, "Ativo");
             algum_ativo = 1;
         }
     }
 
     if (!algum_ativo) {
-        printf("=========================================================================\n");
-        printf("===                      NENHUM ALUNO ATIVO                           ===\n");
-        printf("=========================================================================\n");
+        ui_section_title("Nenhum aluno ativo");
         getchar();
         limparTela();
         return;
     }
 
-    printf("\n>>> Digite o ID do aluno que deseja excluir: ");
+    ui_line('-');
+    ui_text_line("Digite o ID do aluno que deseja excluir.");
+    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_line('=');
     char id_busca[32];                 // <-- aumente para evitar truncamento
-    lerString(id_busca, sizeof(id_busca));
+    if (!lerString(id_busca, sizeof(id_busca))) {
+        limparTela();
+        return;
+    }
 
     for (int i = 0; i < total_alunos; i++) {
         // limpe o ID salvo antes de comparar
@@ -74,23 +142,18 @@ void telaExcluirAluno(void)
             // OPÇÃO B (alternativa, mais simétrica ao módulo de funcionários):
             // salvarAlunos(lista_alunos, total_alunos);
 
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        EXCLUIR ALUNO                              ===\n");
-            printf("=========================================================================\n");
-            printf("===                     ALUNO EXCLUÍDO COM SUCESSO                    ===\n");
-            printf("=========================================================================\n");
+            cabecalho_excluir("Excluir aluno");
+            ui_center_text("Aluno excluido com sucesso.");
+            ui_section_title("Pressione <ENTER> para voltar");
             getchar();
             limparTela();
             return;
         }
     }
 
-    printf("=========================================================================\n");
-    printf("===                        EXCLUIR ALUNO                              ===\n");
-    printf("=========================================================================\n");
-    printf("===                       ALUNO NÃO ENCONTRADO                        ===\n");
-    printf("=========================================================================\n");
+    cabecalho_excluir("Excluir aluno");
+    ui_center_text("Aluno nao encontrado.");
+    ui_section_title("Pressione <ENTER> para voltar");
     getchar();
     limparTela();
 }

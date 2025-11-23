@@ -3,65 +3,135 @@
 #include <string.h>
 #include "limparTela.h"
 #include "cadastrarPlano.h"
-#include "arquivoPlano.h"  // <-- persistência
+#include "arquivoPlano.h"
 #include "ui/utils/lerTecla.h"
+#include "ui/utils/consoleLayout.h"
 
-void telaAtualizarPlano(void) {
-    if(total_planos == 0) {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        ATUALIZAR PLANO                            ===\n");
-        printf("=========================================================================\n");
-        printf("===                      NENHUM PLANO CADASTRADO                       ===\n");
-        printf("=========================================================================\n");
-        getchar();
-        limparTela();
+#define P_COL_ID 8
+#define P_COL_NOME 24
+#define P_COL_HORARIO 10
+#define P_COL_VALOR 10
+#define P_COL_STATUS 8
+
+static void cabecalho_atualizar(const char *subtitulo)
+{
+    limparTela();
+    ui_header("SIG-GYM", subtitulo);
+    ui_empty_line();
+}
+
+static bool ler_linha(char *dest, size_t size)
+{
+    if (fgets(dest, size, stdin) == NULL)
+    {
+        dest[0] = '\0';
+        return false;
+    }
+    dest[strcspn(dest, "\n")] = '\0';
+    return true;
+}
+
+static void mensagem(const char *sub, const char *linha1)
+{
+    cabecalho_atualizar(sub);
+    ui_text_line(linha1);
+    ui_section_title("Pressione <ENTER> para voltar");
+    getchar();
+    limparTela();
+}
+
+static void tabela_header(void)
+{
+    ui_line('-');
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, "ID", P_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Nome", P_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Horario", P_COL_HORARIO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Valor", P_COL_VALOR);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, "Status", P_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+    ui_line('-');
+}
+
+static void tabela_row(const struct plano *pl)
+{
+    char horario[32];
+    snprintf(horario, sizeof(horario), "%s-%s", pl->horario_inicio, pl->horario_fim);
+    char valor[32];
+    snprintf(valor, sizeof(valor), "R$ %.2f", pl->valor);
+    char linha[UI_INNER + 1];
+    int pos = 0;
+    ui_append_col(linha, sizeof(linha), &pos, pl->id, P_COL_ID);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pl->nome, P_COL_NOME);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, horario, P_COL_HORARIO);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, valor, P_COL_VALOR);
+    ui_append_sep(linha, sizeof(linha), &pos);
+    ui_append_col(linha, sizeof(linha), &pos, pl->ativo ? "Ativo" : "Inativo", P_COL_STATUS);
+    linha[pos] = '\0';
+    ui_text_line(linha);
+}
+
+void telaAtualizarPlano(void)
+{
+    if (total_planos == 0)
+    {
+        mensagem("Atualizar plano", "Nenhum plano cadastrado.");
         return;
     }
 
-    limparTela();
-    printf("=========================================================================\n");
-    printf("===                        ATUALIZAR PLANO                            ===\n");
-    printf("=========================================================================\n");
+    cabecalho_atualizar("Atualizar plano");
+    ui_text_line("Selecione o plano ativo pelo ID.");
+    tabela_header();
 
     int algum_ativo = 0;
-    for(int i = 0; i < total_planos; i++) {
-        if(lista_planos[i].ativo) {
-            printf("[%s] %s\n", lista_planos[i].id, lista_planos[i].nome);
+    for (int i = 0; i < total_planos; i++)
+    {
+        if (lista_planos[i].ativo)
+        {
+            tabela_row(&lista_planos[i]);
             algum_ativo = 1;
         }
     }
 
-    if(!algum_ativo) {
-        printf("=========================================================================\n");
-        printf("===                      NENHUM PLANO ATIVO                           ===\n");
-        printf("=========================================================================\n");
-        getchar();
+    if (!algum_ativo)
+    {
+        mensagem("Atualizar plano", "Nenhum plano ativo.");
+        return;
+    }
+
+    ui_line('-');
+    ui_text_line("Digite o ID do plano que deseja atualizar.");
+    ui_text_line(">>> Digite abaixo e pressione ENTER.");
+    ui_line('=');
+    char id_busca[12];
+    if (!ler_linha(id_busca, sizeof(id_busca)))
+    {
         limparTela();
         return;
     }
 
-    printf("\n>>> Digite o ID do plano que deseja atualizar: ");
-    char id_busca[12];
-    fgets(id_busca, sizeof(id_busca), stdin);
-    id_busca[strcspn(id_busca, "\n")] = '\0';
-
     int encontrado = -1;
-    for(int i = 0; i < total_planos; i++) {
-        if(strcmp(lista_planos[i].id, id_busca) == 0 && lista_planos[i].ativo) {
+    for (int i = 0; i < total_planos; i++)
+    {
+        if (strcmp(lista_planos[i].id, id_busca) == 0 && lista_planos[i].ativo)
+        {
             encontrado = i;
             break;
         }
     }
 
-    if(encontrado == -1) {
-        printf("=========================================================================\n");
-        printf("===                        ATUALIZAR PLANO                            ===\n");
-        printf("=========================================================================\n");
-        printf("===                     PLANO NAO ENCONTRADO                          ===\n");
-        printf("=========================================================================\n");
-        getchar();
-        limparTela();
+    if (encontrado == -1)
+    {
+        mensagem("Atualizar plano", "Plano nao encontrado ou inativo.");
         return;
     }
 
@@ -69,114 +139,97 @@ void telaAtualizarPlano(void) {
     char buffer[MAX_BUFFER];
     char opcao;
 
-    do {
-        limparTela();
-        printf("=========================================================================\n");
-        printf("===                        ATUALIZAR PLANO                            ===\n");
-        printf("=========================================================================\n");
-        printf("Plano selecionado: %s (%s)\n", plano_sel->nome, plano_sel->id);
-        printf("Escolha o campo para atualizar:\n");
-        printf("[1] Nome\n");
-        printf("[2] Horário de funcionamento\n");
-        printf("[3] Atividades\n");
-        printf("[4] Valor da mensalidade\n");
-        printf("[0] Voltar\n");
-        printf("=========================================================================\n");
+    do
+    {
+        cabecalho_atualizar("Atualizar plano");
+        char linha_sel[UI_INNER + 1];
+        snprintf(linha_sel, sizeof(linha_sel), "Plano: %s (%s)", plano_sel->nome, plano_sel->id);
+        ui_text_line(linha_sel);
+        ui_empty_line();
+        ui_menu_option('1', "Nome");
+        ui_menu_option('2', "Horario");
+        ui_menu_option('3', "Atividades");
+        ui_menu_option('4', "Valor");
+        ui_menu_option('0', "Voltar");
+        ui_section_title("Escolha uma opcao");
+        printf(">>> ");
+        fflush(stdout);
         opcao = lerTecla();
 
-        switch(opcao) {
-            case '1':
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR PLANO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Novo nome:                                                        ===\n");
-                printf("=========================================================================\n");
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
-                strcpy(plano_sel->nome, buffer);
-                atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
+        switch (opcao)
+        {
+        case '1':
+            cabecalho_atualizar("Atualizar plano");
+            ui_text_line("Digite o novo nome:");
+            ui_line('=');
+            if (!ler_linha(buffer, sizeof(buffer)))
                 break;
+            strcpy(plano_sel->nome, buffer);
+            atualizarPlanoNoArquivo(*plano_sel);
+            mensagem("Atualizar plano", "Nome atualizado com sucesso.");
+            break;
 
-            case '2':
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR PLANO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Novo horário de início:                                           ===\n");
-                printf("=========================================================================\n");
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
-                strcpy(plano_sel->horario_inicio, buffer);
-
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR PLANO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Novo horário de fim:                                              ===\n");
-                printf("=========================================================================\n");
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
-                strcpy(plano_sel->horario_fim, buffer);
-
-                atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
-
+        case '2':
+            cabecalho_atualizar("Atualizar plano");
+            ui_text_line("Novo horario de inicio (ex: 08:00):");
+            ui_line('=');
+            if (!ler_linha(buffer, sizeof(buffer)))
                 break;
+            strcpy(plano_sel->horario_inicio, buffer);
 
-            case '3':
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR PLANO                            ===\n");
-                printf("=========================================================================\n");
-                plano_sel->total_atividades = 0;
-                for(int i = 0; i < MAX_ATIVIDADES; i++) {
-                    printf(">>> Digite a atividade #%d (ou ENTER para finalizar): ", i+1);
-                    fgets(buffer, sizeof(buffer), stdin);
-                    buffer[strcspn(buffer, "\n")] = '\0';
-                    if(strlen(buffer) == 0) break;
-                    strcpy(plano_sel->atividades[i], buffer);
-                    plano_sel->total_atividades++;
-                }
-                atualizarPlanoNoArquivo(*plano_sel); // <-- salva alteração
+            cabecalho_atualizar("Atualizar plano");
+            ui_text_line("Novo horario de fim (ex: 20:00):");
+            ui_line('=');
+            if (!ler_linha(buffer, sizeof(buffer)))
                 break;
+            strcpy(plano_sel->horario_fim, buffer);
 
-            case '4':
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR PLANO                            ===\n");
-                printf("=========================================================================\n");
-                printf("=== Novo valor da mensalidade:                                       ===\n");
-                printf("=========================================================================\n");
-                fgets(buffer, sizeof(buffer), stdin);
-                buffer[strcspn(buffer, "\n")] = '\0';
-                plano_sel->valor = strtod(buffer, NULL);
-                atualizarPlanoNoArquivo(*plano_sel);
-                break;
+            atualizarPlanoNoArquivo(*plano_sel);
+            mensagem("Atualizar plano", "Horario atualizado com sucesso.");
+            break;
 
-            case '0':
-                break;
+        case '3':
+            cabecalho_atualizar("Atualizar plano");
+            ui_text_line("Informe as atividades (ENTER para finalizar).");
+            ui_line('-');
+            plano_sel->total_atividades = 0;
+            for (int i = 0; i < MAX_ATIVIDADES; i++)
+            {
+                char titulo[UI_INNER + 1];
+                snprintf(titulo, sizeof(titulo), "Atividade #%d:", i + 1);
+                ui_text_line(titulo);
+                ui_line('=');
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
+                if (strlen(buffer) == 0)
+                    break;
+                strcpy(plano_sel->atividades[plano_sel->total_atividades], buffer);
+                plano_sel->total_atividades++;
+            }
+            atualizarPlanoNoArquivo(*plano_sel);
+            mensagem("Atualizar plano", "Atividades atualizadas com sucesso.");
+            break;
 
-            default:
-                limparTela();
-                printf("=========================================================================\n");
-                printf("===                        ATUALIZAR PLANO                            ===\n");
-                printf("=========================================================================\n");
-                printf("===                        OPCAO INVALIDA                             ===\n");
-                printf("=========================================================================\n");
+        case '4':
+            cabecalho_atualizar("Atualizar plano");
+            ui_text_line("Digite o novo valor da mensalidade:");
+            ui_line('=');
+            if (!ler_linha(buffer, sizeof(buffer)))
                 break;
+            plano_sel->valor = strtod(buffer, NULL);
+            atualizarPlanoNoArquivo(*plano_sel);
+            mensagem("Atualizar plano", "Valor atualizado com sucesso.");
+            break;
+
+        case '0':
+            break;
+
+        default:
+            mensagem("Atualizar plano", "Opcao invalida. Use apenas o menu.");
+            break;
         }
 
-        if(opcao != '0') {
-            limparTela();
-            printf("=========================================================================\n");
-            printf("===                        ATUALIZAR PLANO                            ===\n");
-            printf("=========================================================================\n");
-            printf("=== Atualizado com sucesso! <ENTER>                                   ===\n");
-            printf("=========================================================================\n");
-            getchar();
-        }
-
-    } while(opcao != '0');
+    } while (opcao != '0');
 
     limparTela();
 }
