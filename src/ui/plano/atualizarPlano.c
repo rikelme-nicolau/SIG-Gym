@@ -214,11 +214,30 @@ void telaAtualizarPlano(void)
             cabecalho_atualizar("Atualizar plano");
             ui_text_line("Digite o novo valor da mensalidade:");
             ui_line('=');
-            if (!ler_linha(buffer, sizeof(buffer)))
+            while (true)
+            {
+                if (!ler_linha(buffer, sizeof(buffer)))
+                    break;
+
+                char *endptr = NULL;
+                double valor = strtod(buffer, &endptr);
+                if (endptr == buffer || *endptr != '\0' || valor <= 0)
+                {
+                    cabecalho_atualizar("Atualizar plano");
+                    ui_text_line("Valor invalido. Use numero maior que zero (ex: 149.90).");
+                    ui_section_title("Pressione <ENTER> para tentar novamente");
+                    getchar();
+                    cabecalho_atualizar("Atualizar plano");
+                    ui_text_line("Digite o novo valor da mensalidade:");
+                    ui_line('=');
+                    continue;
+                }
+
+                plano_sel->valor = valor;
+                atualizarPlanoNoArquivo(*plano_sel);
+                mensagem("Atualizar plano", "Valor atualizado com sucesso.");
                 break;
-            plano_sel->valor = strtod(buffer, NULL);
-            atualizarPlanoNoArquivo(*plano_sel);
-            mensagem("Atualizar plano", "Valor atualizado com sucesso.");
+            }
             break;
 
         case '0':

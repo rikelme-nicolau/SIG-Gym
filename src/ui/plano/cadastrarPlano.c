@@ -92,9 +92,28 @@ void telaCadastrarPlano(void)
     cabecalho_plano("Cadastrar plano");
     ui_text_line("Valor da mensalidade (ex: 149.90).");
     rodape_prompt("Valor:");
-    if (!ler_linha(buffer, sizeof(buffer)))
-        return;
-    novo_plano.valor = strtod(buffer, NULL);
+    while (true)
+    {
+        if (!ler_linha(buffer, sizeof(buffer)))
+            return;
+
+        char *endptr = NULL;
+        double valor = strtod(buffer, &endptr);
+        if (endptr == buffer || *endptr != '\0' || valor <= 0)
+        {
+            cabecalho_plano("Cadastrar plano");
+            ui_text_line("Valor invalido. Use numero maior que zero (ex: 149.90).");
+            ui_section_title("Pressione <ENTER> para tentar novamente");
+            getchar();
+            cabecalho_plano("Cadastrar plano");
+            ui_text_line("Valor da mensalidade (ex: 149.90).");
+            rodape_prompt("Valor:");
+            continue;
+        }
+
+        novo_plano.valor = valor;
+        break;
+    }
 
     snprintf(novo_plano.id, sizeof(novo_plano.id), "%d", total_planos + 1);
     novo_plano.ativo = true;
