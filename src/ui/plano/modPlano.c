@@ -10,6 +10,8 @@
 
 #include "limparTela.h"
 
+/* Controla o fluxo do modulo de planos:
+   abre o menu, chama cada tela de CRUD e so sai quando o usuario escolhe voltar. */
 char moduloPlano(void) {
 
     char opPlano;

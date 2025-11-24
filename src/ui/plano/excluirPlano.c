@@ -6,6 +6,8 @@
 #include "arquivoPlano.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Tela de exclusao logica: lista planos ativos, pede um ID e marca como inativo. */
+
 #define P_COL_ID 8
 #define P_COL_NOME 24
 #define P_COL_HORARIO 10
@@ -19,6 +21,7 @@ static void cabecalho_excluir(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Entrada de linha basica para nao deixar lixo no buffer. */
 static bool ler_linha(char *dest, size_t size)
 {
     if (fgets(dest, size, stdin) == NULL)
@@ -30,6 +33,7 @@ static bool ler_linha(char *dest, size_t size)
     return true;
 }
 
+/* Cabecalho da tabela de listagem usado nesta tela. */
 static void tabela_header(void)
 {
     ui_line('-');
@@ -49,6 +53,7 @@ static void tabela_header(void)
     ui_line('-');
 }
 
+/* Linha com informacoes resumidas do plano. */
 static void tabela_row(const struct plano *pl)
 {
     char horario[32];
@@ -70,6 +75,7 @@ static void tabela_row(const struct plano *pl)
     ui_text_line(linha);
 }
 
+/* Fluxo principal: confirma ID e marca o plano como inativo no arquivo. */
 void telaExcluirPlano(void)
 {
     if (total_planos == 0)

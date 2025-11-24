@@ -15,6 +15,12 @@
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 #define TOTAL_ALUNOS_FICTICIOS 80
 
+/* Camada de persistencia do modulo de alunos.
+   Salva, carrega e tambem gera dados ficticios para popular o sistema
+   quando ainda nao existe arquivo. */
+
+/* Sorteia IDs de plano em quantidades pre-definidas para distribuir
+   melhor os alunos gerados automaticamente. */
 static void preencherPlanosSorteados(char destinos[][12], int total_destinos)
 {
     const struct
@@ -63,6 +69,8 @@ static void preencherPlanosSorteados(char destinos[][12], int total_destinos)
     }
 }
 
+/* Gera uma lista de alunos falsos, garantindo unicidade de CPF/e-mail
+   e atribuindo alguns como inativos para testes realistas. */
 static int preencherAlunosFicticios(struct aluno lista_alunos[])
 {
     char planos_sorteio[TOTAL_ALUNOS_FICTICIOS][12];
@@ -130,6 +138,7 @@ static int preencherAlunosFicticios(struct aluno lista_alunos[])
     return total;
 }
 
+/* Entrada principal para geracao: preenche e salva no disco. */
 static int gerarAlunosPadrao(struct aluno lista_alunos[])
 {
     int total = preencherAlunosFicticios(lista_alunos);
@@ -137,7 +146,8 @@ static int gerarAlunosPadrao(struct aluno lista_alunos[])
     return total;
 }
 
-// Salva todos os alunos ativos no arquivo binario
+/* Grava todos os alunos ativos no arquivo binario usando escrita em
+   arquivo temporario + rename para evitar corromper o original. */
 void salvarAlunos(struct aluno lista_alunos[], int total_alunos)
 {
     FILE *fp = fopen(TMP_FILE, "wb");
@@ -179,7 +189,8 @@ void salvarAlunos(struct aluno lista_alunos[], int total_alunos)
     }
 }
 
-// Carrega todos os alunos do arquivo binario
+/* Carrega os registros do arquivo. Se o arquivo nao existir ou estiver
+   vazio/corrompido, cria uma base padrao com dados ficticios. */
 int carregarAlunos(struct aluno lista_alunos[])
 {
     FILE *fp = fopen(ALUNOS_FILE, "rb");
@@ -232,7 +243,8 @@ int carregarAlunos(struct aluno lista_alunos[])
     return total;
 }
 
-// Atualiza um aluno especifico no arquivo
+/* Recarrega o arquivo, substitui o aluno correspondente pelo novo valor
+   e salva novamente. */
 void atualizarAlunoNoArquivo(struct aluno aluno)
 {
     struct aluno alunos[MAX_ALUNOS];
@@ -250,7 +262,7 @@ void atualizarAlunoNoArquivo(struct aluno aluno)
     salvarAlunos(alunos, total);
 }
 
-// Marca um aluno como excluido (exclusao logica)
+/* Marca o aluno como inativo (nao remove fisicamente) e regrava o arquivo. */
 void excluirAluno(char *id)
 {
     struct aluno alunos[MAX_ALUNOS];

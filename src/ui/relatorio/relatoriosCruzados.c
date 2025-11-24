@@ -18,6 +18,9 @@
 #include "mergeListas.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Relatorios cruzados: combinam informacoes entre alunos, planos,
+   equipamentos e funcionarios para gerar comparativos e vistas agregadas. */
+
 #define PESS_COL_TIPO 4
 #define PESS_COL_ID 8
 #define PESS_COL_NOME 20

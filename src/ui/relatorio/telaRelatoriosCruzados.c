@@ -6,6 +6,7 @@
 
 #include "telaRelatoriosCruzados.h"
 
+/* Menu compactado para escolher qual relatorio cruzado deseja abrir. */
 char telaRelatoriosCruzados(void)
 {
     char op;

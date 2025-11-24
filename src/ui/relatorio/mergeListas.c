@@ -10,6 +10,7 @@
  * Retorna um array alocado dinamicamente com o resultado e escreve em outTotal o tamanho final.
  * O chamador é responsável por liberar o array retornado via free().
  */
+/* Lista ordenada dinamica (PessoaView) resultante do merge de alunos + funcionarios. */
 struct PessoaView *mergeListasOrdenadas(const struct aluno *alunos, int totalAlunos,
                                         const struct funcionario *funcs, int totalFuncs,
                                         int *outTotal)

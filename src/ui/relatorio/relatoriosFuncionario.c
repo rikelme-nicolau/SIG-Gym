@@ -11,6 +11,9 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Relatorios de funcionarios: listagens, agrupamentos por cargo,
+   distribuicao etaria e analises simples da equipe. */
+
 #define LIST_COL_ID 7
 #define LIST_COL_NOME 18
 #define LIST_COL_CARGO 15

@@ -3,6 +3,7 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Menu principal do modulo de planos; retorna a opcao pressionada. */
 char telaPlano(void)
 {
     char op;
@@ -22,6 +23,7 @@ char telaPlano(void)
     printf(">>> ");
     fflush(stdout);
 
+    /* Usa leitura de tecla unica para evitar lixo no buffer. */
     op = lerTecla();
 
     limparTela();

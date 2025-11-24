@@ -9,6 +9,9 @@
 #define PLANOS_FILE "planos.dat"
 #define TMP_FILE "planos.tmp"
 
+/* Camada de persistencia dos planos: grava/ler arquivo binario e
+   gera dados ficticios quando necessario. */
+
 struct plano_legacy
 {
     char id[12];
@@ -20,6 +23,7 @@ struct plano_legacy
     bool ativo;
 };
 
+/* Converte formato antigo (sem campo valor) para o formato atual. */
 static void converterPlanoLegacy(struct plano *dest, const struct plano_legacy *src)
 {
     memset(dest, 0, sizeof(*dest));
@@ -36,6 +40,7 @@ static void converterPlanoLegacy(struct plano *dest, const struct plano_legacy *
     dest->ativo = src->ativo;
 }
 
+/* Cria um conjunto de planos default para popular o sistema. */
 static int preencherPlanosFicticios(struct plano lista_planos[])
 {
     static const struct plano planos_iniciais[] = {
@@ -233,6 +238,7 @@ static int preencherPlanosFicticios(struct plano lista_planos[])
     return total;
 }
 
+/* Entrada principal de geracao: preenche a lista e salva no disco. */
 static int gerarPlanosPadrao(struct plano lista_planos[])
 {
     int total_padrao = preencherPlanosFicticios(lista_planos);
@@ -240,7 +246,7 @@ static int gerarPlanosPadrao(struct plano lista_planos[])
     return total_padrao;
 }
 
-// Salva todos os planos ativos no arquivo binario
+/* Salva todos os planos ativos em arquivo temporario e renomeia para evitar corrupcao. */
 void salvarPlanos(struct plano lista_planos[], int total_planos)
 {
     FILE *fp = fopen(TMP_FILE, "wb");
@@ -263,13 +269,14 @@ void salvarPlanos(struct plano lista_planos[], int total_planos)
     rename(TMP_FILE, PLANOS_FILE);
 }
 
-// Carrega todos os planos do arquivo binario
+/* Carrega planos do arquivo; se nao existir ou estiver vazio/ilegivel,
+   gera a base padrao. Suporta formato legado. */
 int carregarPlanos(struct plano lista_planos[])
 {
     FILE *fp = fopen(PLANOS_FILE, "rb");
     if (!fp)
     {
-        // CORREÇÃO: Gera dados fictícios se o arquivo não existe
+        // Correcao: gera dados ficticios se o arquivo nao existe
         return gerarPlanosPadrao(lista_planos);
     }
 
@@ -353,7 +360,7 @@ int carregarPlanos(struct plano lista_planos[])
     return gerarPlanosPadrao(lista_planos);
 }
 
-// Atualiza um plano especifico no arquivo
+/* Recarrega, substitui o registro alterado e grava novamente. */
 void atualizarPlanoNoArquivo(struct plano plano)
 {
     struct plano planos[MAX_PLANOS];
@@ -371,7 +378,7 @@ void atualizarPlanoNoArquivo(struct plano plano)
     salvarPlanos(planos, total);
 }
 
-// Marca um plano como excluido (exclusao logica)
+/* Marca o plano como inativo (exclusao logica) e regrava o arquivo. */
 void excluirPlano(char *id)
 {
     struct plano planos[MAX_PLANOS];

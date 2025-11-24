@@ -8,6 +8,8 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Permite atualizar dados basicos do equipamento e recalcula proxima manutencao quando necessario. */
+
 #define EQ_COL_ID 8
 #define EQ_COL_NOME 22
 #define EQ_COL_CATEG 14
@@ -22,6 +24,7 @@ static void cabecalho_atualizar(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Leitura de linha simples (evita scanf). */
 static bool ler_linha(char *dest, size_t size)
 {
     if (fgets(dest, size, stdin) == NULL)
@@ -101,6 +104,7 @@ static void tabela_header(void)
     ui_line('-');
 }
 
+/* Linha de listagem usada na selecao de equipamentos. */
 static void tabela_row(const struct equipamento *eq)
 {
     char linha[UI_INNER + 1];
@@ -118,6 +122,7 @@ static void tabela_row(const struct equipamento *eq)
     ui_text_line(linha);
 }
 
+/* Mensagem curta reutilizada em retornos e erros. */
 static void mensagem(const char *sub, const char *texto)
 {
     cabecalho_atualizar(sub);
@@ -127,6 +132,7 @@ static void mensagem(const char *sub, const char *texto)
     limparTela();
 }
 
+/* Fluxo principal: escolhe equipamento ativo e permite alterar nome, manutencao ou categoria. */
 void telaAtualizarEquipamento(void)
 {
     if (total_equipamentos == 0)

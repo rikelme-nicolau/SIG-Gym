@@ -22,6 +22,10 @@
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 #include "src/ui/equipamento/cadastrarEquipamento.h"
 
+/* Relatorios gerenciais: dashboards, analises financeiras, desempenho,
+   KPIs, comparativos de planos e rankings Top 10. Usa listas globais
+   de alunos/planos/funcionarios/equipamentos carregadas na aplicacao. */
+
 void relatorioTop10Alunos(void);
 
 struct PlanoComparativo

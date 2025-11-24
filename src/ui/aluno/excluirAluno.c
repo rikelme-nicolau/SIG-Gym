@@ -8,13 +8,17 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "ui/utils/consoleLayout.h"
 
-// reutilize as mesmas helpers do módulo de funcionários
+/* Tela de exclusao logica: lista alunos ativos, pede um ID e marca como inativo
+   tanto no vetor em memoria quanto no arquivo binario. */
+
+// reutilize as mesmas helpers do modulo de funcionarios
 static void limparString(char *str) {
     str[strcspn(str, "\r\n")] = '\0';
     for (int i = (int)strlen(str) - 1; i >= 0 && str[i] == ' '; i--)
         str[i] = '\0';
 }
 
+/* Entrada segura em string curta, removendo \n e espacos finais. */
 static bool lerString(char *dest, int tamanho) {
     if (fgets(dest, tamanho, stdin) == NULL) {
         dest[0] = '\0';
@@ -31,6 +35,7 @@ static void cabecalho_excluir(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Cabecalho/linha da tabela para reaproveitar a mesma diagramacao. */
 static void tabela_alunos_header(void)
 {
     ui_line('-');
@@ -48,6 +53,7 @@ static void tabela_alunos_header(void)
     ui_line('-');
 }
 
+/* Linha com dados do aluno a ser exibida na listagem. */
 static void tabela_alunos_row(const char *id, const char *nome, const char *plano, const char *status)
 {
     char status_clip[16];
@@ -65,6 +71,7 @@ static void tabela_alunos_row(const char *id, const char *nome, const char *plan
     ui_text_line(linha);
 }
 
+/* Descobre o nome do plano para mostrar na tabela. */
 static void preencher_nome_plano(const struct aluno *aluno, char *dest, size_t size)
 {
     strncpy(dest, "Sem plano", size - 1);
@@ -84,6 +91,7 @@ static void preencher_nome_plano(const struct aluno *aluno, char *dest, size_t s
     }
 }
 
+/* Fluxo principal: mostra alunos ativos, le ID e marca como inativo. */
 void telaExcluirAluno(void)
 {
     if (total_alunos == 0) {
@@ -136,10 +144,10 @@ void telaExcluirAluno(void)
         if (strcmp(id_aluno, id_busca) == 0 && lista_alunos[i].ativo) {
             lista_alunos[i].ativo = false;
 
-            // OPÇÃO A: manter sua função (se ela regrava o arquivo corretamente)
+            // OPCAO A: manter sua funcao (se ela regrava o arquivo corretamente)
             excluirAluno(id_busca);
 
-            // OPÇÃO B (alternativa, mais simétrica ao módulo de funcionários):
+            // OPCAO B (alternativa, mais simetrica ao modulo de funcionarios):
             // salvarAlunos(lista_alunos, total_alunos);
 
             cabecalho_excluir("Excluir aluno");

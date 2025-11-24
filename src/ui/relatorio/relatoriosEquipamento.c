@@ -14,6 +14,9 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Relatorios do modulo de equipamentos: listagem, categorias, cronogramas e filtros
+   de manutencao. Usa os vetores globais de equipamentos carregados pelo app. */
+
 #define LIST_COL_ID 8
 #define LIST_COL_NOME 18
 #define LIST_COL_CATEG 14
@@ -67,6 +70,7 @@ static void cabecalho_relatorio(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Pausa padrao para leitura antes de voltar ao menu. */
 static void aguardar_voltar(void)
 {
     ui_section_title("Pressione <ENTER> para voltar");
@@ -74,6 +78,7 @@ static void aguardar_voltar(void)
     limparTela();
 }
 
+/* Cabecalho/linha da listagem principal (ID, nome, categoria, proxima manutencao). */
 static void tabela_listagem_header(void)
 {
     ui_line('-');
@@ -375,6 +380,7 @@ static void relatorioListagemEquipamentos(void)
     aguardar_voltar();
 }
 
+/* Distribui equipamentos por categoria (case-insensitive) e lista cada grupo. */
 static void relatorioEquipamentosPorCategoria(void)
 {
     cabecalho_relatorio("Relatorio - Equipamentos por categoria");
@@ -809,6 +815,7 @@ static void relatorioHistoricoManutencoes(void)
     aguardar_voltar();
 }
 
+/* Filtros e ordenacao usados em varios relatorios. */
 static char selecionarFiltroCategoria(void)
 {
     cabecalho_relatorio("Filtro - Categoria");
@@ -875,6 +882,7 @@ static int compararEquipamentosPorNome(const void *a, const void *b)
     return strcmp(ea->equip->nome, eb->equip->nome);
 }
 
+/* Ordenacao secundaria: primeiro categoria, depois nome. */
 static int compararEquipamentosPorCategoria(const void *a, const void *b)
 {
     const struct EquipamentoView *ea = (const struct EquipamentoView *)a;

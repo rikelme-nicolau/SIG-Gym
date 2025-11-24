@@ -14,6 +14,9 @@
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 #define SEGUNDOS_DIA 86400
 
+/* Persistencia dos equipamentos: salva/recupera do arquivo e gera dados ficticios. */
+
+/* Converte string DD/MM/AAAA para time_t para facilitar comparacoes. */
 static time_t converterData(const char *data)
 {
     int d, m, a;
@@ -31,6 +34,7 @@ static time_t converterData(const char *data)
     return mktime(&tm_data);
 }
 
+/* Garante que a data da proxima manutencao fique apos a ultima. */
 static void garantirOrdemDatas(char *ultima, char *proxima)
 {
     time_t t_ultima = converterData(ultima);
@@ -49,6 +53,7 @@ static void garantirOrdemDatas(char *ultima, char *proxima)
     }
 }
 
+/* Preenche uma lista inicial de equipamentos com datas de manutencao variadas. */
 static int preencherEquipamentosFicticios(struct equipamento lista_equipamentos[])
 {
     static const struct
@@ -145,6 +150,7 @@ static int preencherEquipamentosFicticios(struct equipamento lista_equipamentos[
     return total;
 }
 
+/* Entrada principal de geracao: preenche e salva no disco. */
 static int gerarEquipamentosPadrao(struct equipamento lista_equipamentos[])
 {
     int total = preencherEquipamentosFicticios(lista_equipamentos);
@@ -152,7 +158,7 @@ static int gerarEquipamentosPadrao(struct equipamento lista_equipamentos[])
     return total;
 }
 
-// Salva todos os equipamentos ativos no arquivo binario
+/* Salva todos os equipamentos ativos no arquivo binario usando arquivo temporario. */
 void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equipamentos)
 {
     FILE *fp = fopen(TMP_FILE_EQUIP, "wb");
@@ -175,7 +181,7 @@ void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equip
     rename(TMP_FILE_EQUIP, EQUIPAMENTOS_FILE);
 }
 
-// Carrega todos os equipamentos do arquivo binario
+/* Carrega equipamentos do arquivo; se nao existir ou estiver vazio, gera base padrao. */
 int carregarEquipamentos(struct equipamento lista_equipamentos[])
 {
     FILE *fp = fopen(EQUIPAMENTOS_FILE, "rb");
@@ -214,7 +220,7 @@ int carregarEquipamentos(struct equipamento lista_equipamentos[])
     return total;
 }
 
-// Atualiza um equipamento especifico no arquivo
+/* Recarrega, substitui o registro alterado e grava novamente. */
 void atualizarEquipamentoNoArquivo(struct equipamento equip)
 {
     struct equipamento equipamentos[MAX_EQUIPAMENTOS];
@@ -232,7 +238,7 @@ void atualizarEquipamentoNoArquivo(struct equipamento equip)
     salvarEquipamentos(equipamentos, total);
 }
 
-// Marca um equipamento como excluido (exclusao logica)
+/* Marca um equipamento como inativo (exclusao logica) e regrava o arquivo. */
 void excluirEquipamento(char *id)
 {
     struct equipamento equipamentos[MAX_EQUIPAMENTOS];

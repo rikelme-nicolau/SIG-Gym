@@ -8,6 +8,8 @@
 
 #include "opInvalida.h"
 
+/* Controla o fluxo do modulo de equipamentos: exibe o menu, chama cada tela
+   de cadastro, listagem, edicao e exclusao ate o usuario optar por voltar. */
 char moduloEquipamento(void)
 {
     char opEquip;

@@ -4,6 +4,7 @@
 #include "src/ui/aluno/cadastrarAluno.h"
 #include "src/ui/plano/cadastrarPlano.h"
 
+/* Views e funcoes utilitarias para ordenar listas de alunos em relatorios. */
 struct aluno_view
 {
     const struct aluno *aluno;

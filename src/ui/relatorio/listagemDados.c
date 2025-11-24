@@ -12,6 +12,9 @@
 
 #define BUFFER_FILTRO 1024
 
+/* Relatorios de listagem simples com filtro por status e termo,
+   usados como versoes anteriores/demonstrativas. */
+
 static void toLowerString(const char *src, char *dest, size_t dest_size)
 {
     if (dest_size == 0)

@@ -4,6 +4,8 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Monta o menu de navegacao do modulo de alunos e retorna a opcao escolhida.
+   Toda formatacao de layout e delegada para os helpers de console. */
 char telaAluno(void)
 {
     char op;
@@ -23,6 +25,7 @@ char telaAluno(void)
     printf(">>> ");
     fflush(stdout);
 
+    /* Usa leitura de tecla unica para evitar problemas com lixo de buffer. */
     op = lerTecla();
 
     limparTela();

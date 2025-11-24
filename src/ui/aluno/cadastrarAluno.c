@@ -10,7 +10,7 @@
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarTelefone.h"
 #include "src/ui/utils/validarEndereco.h"
-#include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
+#include "src/ui/utils/validarEmail.h" // Adicionado para a validacao do e-mail
 #include "arquivoAluno.h"
 #include "ui/utils/consoleLayout.h"
 #include "../utils/geradorDados.h"
@@ -19,9 +19,13 @@
 #define MAX_BUFFER 1024
 #define MAX_ALUNOS 1024
 
+/* Tela de cadastro de alunos.
+   Conduz o usuario por cada campo, valida as entradas e grava no arquivo
+   binario atraves das rotinas de persistencia. */
 struct aluno lista_alunos[MAX_ALUNOS];
 int total_alunos = 0;
 
+/* Cabecalhos e rodapes centralizam a formatacao para nao repetir layout. */
 static void cabecalho_cadastro(const char *subtitulo)
 {
     limparTela();
@@ -37,6 +41,7 @@ static void rodape_cancelamento(void)
     ui_line('=');
 }
 
+/* Le uma linha crua de stdin e garante string terminada em '\0'. */
 static bool lerEntrada(char *destino, size_t tamanho)
 {
     if (fgets(destino, tamanho, stdin) == NULL)
@@ -52,6 +57,7 @@ static bool desejaCancelar(const char *entrada)
     return strcmp(entrada, "0") == 0;
 }
 
+/* Mensagem padrao caso o usuario digite 0 em qualquer etapa. */
 static bool exibirMensagemCancelamento(const char *entrada)
 {
     if (!desejaCancelar(entrada))
@@ -67,6 +73,8 @@ static bool exibirMensagemCancelamento(const char *entrada)
     return true;
 }
 
+/* Fluxo principal: pergunta campo a campo, valida cada entrada e
+   so avanca quando o dado estiver correto ou o usuario cancelar. */
 void telaCadastrarAluno(void)
 {
     if (total_alunos >= MAX_ALUNOS)
@@ -83,6 +91,7 @@ void telaCadastrarAluno(void)
     char buffer[MAX_BUFFER];
     strcpy(novo_aluno.plano_id, "0");
 
+    /* Validacao do nome (somente letras e espacos). */
     bool nomeValido = false;
     do
     {
@@ -115,6 +124,7 @@ void telaCadastrarAluno(void)
         }
     } while (!nomeValido);
 
+    /* Data de nascimento no formato DD/MM/AAAA e nao futura. */
     bool dataValida = false;
     do
     {
@@ -150,6 +160,7 @@ void telaCadastrarAluno(void)
         }
     } while (!dataValida);
     
+    /* CPF precisa ser valido e unico no universo de alunos + funcionarios. */
     bool cpfValido = false;
     do
     {
@@ -195,6 +206,7 @@ void telaCadastrarAluno(void)
         }
     } while (!cpfValido);
 
+    /* Telefone: aceita fixo ou celular com mascara simples. */
     bool telefoneValido = false;
     do
     {
@@ -226,6 +238,7 @@ void telaCadastrarAluno(void)
         }
     } while (!telefoneValido);
 
+    /* Endereco: texto basico sem caracteres invalidos. */
     bool enderecoValido = false;
     do
     {
@@ -257,6 +270,7 @@ void telaCadastrarAluno(void)
         }
     } while (!enderecoValido);
 
+    /* E-mail: valida formato e garante unicidade. */
     bool emailValido = false;
     do
     {
@@ -298,6 +312,8 @@ void telaCadastrarAluno(void)
         }
     } while (!emailValido);
 
+    /* Chegando aqui, todos os campos estao OK. Gera ID, marca ativo
+       e persiste no arquivo. */
     strcpy(novo_aluno.id, gerarMatricula("002"));
     novo_aluno.ativo = true;
     if (novo_aluno.plano_id[0] == '\0')

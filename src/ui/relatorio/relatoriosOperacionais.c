@@ -22,6 +22,9 @@
 #include "src/ui/utils/validarTelefone.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Relatorios operacionais: manutencoes de equipamentos, ocupacao por faixa
+   de horario e varredura de inconsistencias/alertas nos cadastros. */
+
 static void listarManutencoesPorFiltro(char filtro);
 static double obterDiasRestantes(const char *data, time_t agora, int *valida);
 static const char *descricaoFiltroManutencao(char filtro);

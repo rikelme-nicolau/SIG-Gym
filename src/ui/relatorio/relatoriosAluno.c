@@ -16,6 +16,9 @@
 #include "src/ui/utils/validarNascimento.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Relatorios focados nos alunos: listagens, estatisticas e exportacao.
+   Usa o mesmo vetor global de alunos/planos carregado no modulo principal. */
+
 #define LIST_COL_ID 8
 #define LIST_COL_NOME 18
 #define LIST_COL_PLANO 14
@@ -50,6 +53,8 @@ void relatorioAlunosAtivosVsInativos(void);
 void relatorioAlunosSemPlano(void);
 void relatorioAlunosFiltroAvancado(void);
 
+/* Estrutura que guarda filtros escolhidos pelo usuario na tela de
+   filtro avancado, permitindo combinar varias condicoes. */
 struct FiltrosAluno
 {
     bool filtrarStatus;
@@ -84,6 +89,8 @@ static int aplicarFiltrosAluno(const struct FiltrosAluno *filtros, struct aluno_
 static char criterioComparacaoAtual = '1';
 static int comparadorAlunoView(const void *a, const void *b);
 
+/* Cache simples para reaproveitar ultima ordenacao/pesquisa e acelerar
+   listagens quando o usuario repete os mesmos filtros. */
 static struct aluno_view cacheResultadosOrdenados[MAX_ALUNOS];
 static int cacheTotalOrdenados = 0;
 static char cacheCriterioOrdenacao = '\0';
@@ -103,6 +110,7 @@ static void tabela_sem_plano_row(const struct aluno *aluno);
 static void tabela_status_header(const char *titulo);
 static void tabela_status_row(const struct aluno *aluno);
 
+/* Layout padrao para os relatorios deste modulo. */
 static void cabecalho_relatorio(const char *subtitulo)
 {
     limparTela();
@@ -117,6 +125,7 @@ static void aguardar_voltar(void)
     limparTela();
 }
 
+/* Cabecalho/linha de listagem reaproveitados por varios relatorios. */
 static void tabela_listagem_header(void)
 {
     ui_line('-');
@@ -136,6 +145,7 @@ static void tabela_listagem_header(void)
     ui_line('-');
 }
 
+/* Linha padrao usada em listagens completas (ID, nome, plano, status, regiao). */
 static void tabela_listagem_row(const struct aluno *aluno, const struct plano *plano)
 {
     char linha[UI_INNER + 1];
@@ -165,6 +175,7 @@ static void tabela_listagem_row(const struct aluno *aluno, const struct plano *p
     ui_text_line(linha);
 }
 
+/* Mostra quais filtros estao ativos antes de paginar o resultado. */
 static void mostrar_filtros_ativos(const struct FiltrosAluno *filtros)
 {
     ui_section_title("Filtros ativos");
@@ -209,6 +220,7 @@ static void mostrar_filtros_ativos(const struct FiltrosAluno *filtros)
     ui_line('-');
 }
 
+/* Faz a paginacao em blocos de 10 linhas para nao inundar o console. */
 static void exibir_listagem_paginada(const struct aluno_view *lista, int total)
 {
     const int porPagina = 10;
@@ -243,6 +255,7 @@ static void exibir_listagem_paginada(const struct aluno_view *lista, int total)
     }
 }
 
+/* Tabelas dedicadas a relatorios de alunos sem plano e status. */
 static void tabela_sem_plano_header(void)
 {
     ui_line('-');
@@ -299,6 +312,7 @@ static void tabela_status_header(const char *titulo)
     ui_line('-');
 }
 
+/* Linha compacta para relatorios de status (ativa/inativa). */
 static void tabela_status_row(const struct aluno *aluno)
 {
     char linha[UI_INNER + 1];
@@ -324,6 +338,7 @@ static void tabela_status_row(const struct aluno *aluno)
     ui_text_line(linha);
 }
 
+/* Menu inicial do modulo de relatorios de alunos. */
 void moduloRelatoriosAluno(void)
 {
     char op;
@@ -392,6 +407,7 @@ void moduloRelatoriosAluno(void)
     } while (op != '0');
 }
 
+/* Listagem geral com filtro simples (status + termo) e opcao de exportar CSV. */
 void relatorioListagemCompleta(void)
 {
     cabecalho_relatorio("Relatorio - Listagem completa de alunos");
@@ -582,6 +598,7 @@ void relatorioListagemCompleta(void)
     aguardar_voltar();
 }
 
+/* Tela que permite combinar varios filtros (status, plano, idade, regiao). */
 void relatorioAlunosFiltroAvancado(void)
 {
     struct FiltrosAluno filtros;
@@ -750,6 +767,7 @@ void relatorioAlunosFiltroAvancado(void)
     }
 }
 
+/* Resumo de alunos por plano com estatistica de receita estimada. */
 void relatorioAlunosPorPlano(void)
 {
     cabecalho_relatorio("Relatorio - Alunos por plano");
@@ -884,6 +902,7 @@ void relatorioAlunosPorPlano(void)
     aguardar_voltar();
 }
 
+/* Agrupa alunos por faixa etaria e, opcionalmente, lista nomes em cada grupo. */
 void relatorioAlunosPorFaixaEtaria(void)
 {
     cabecalho_relatorio("Relatorio - Alunos por faixa etaria");
@@ -1031,6 +1050,7 @@ void relatorioAlunosPorFaixaEtaria(void)
     aguardar_voltar();
 }
 
+/* Consolida quantidade de alunos por regiao com ordenacao decrescente. */
 void relatorioAlunosPorRegiao(void)
 {
     cabecalho_relatorio("Relatorio - Alunos por regiao");
@@ -1147,6 +1167,7 @@ void relatorioAlunosPorRegiao(void)
     aguardar_voltar();
 }
 
+/* Separa e mostra alunos ativos e inativos, calculando taxas de retencao. */
 void relatorioAlunosAtivosVsInativos(void)
 {
     cabecalho_relatorio("Relatorio - Alunos ativos vs inativos");
@@ -1208,6 +1229,7 @@ void relatorioAlunosAtivosVsInativos(void)
     aguardar_voltar();
 }
 
+/* Lista somente quem nao tem plano vinculado e sugere revisao. */
 void relatorioAlunosSemPlano(void)
 {
     cabecalho_relatorio("Relatorio - Alunos sem plano definido");
@@ -1246,6 +1268,7 @@ void relatorioAlunosSemPlano(void)
     aguardar_voltar();
 }
 
+/* Menus auxiliares usados na listagem completa e no filtro avancado. */
 static char selecionarFiltroStatus(void)
 {
     while (1)
@@ -1312,6 +1335,7 @@ static char selecionarOrdenacao(void)
     }
 }
 
+/* Testa se o aluno bate com os filtros simples de status + termo. */
 static bool alunoCorrespondeFiltros(const struct aluno *aluno, const struct plano *plano, char filtroStatus, const char *termo)
 {
     if (!statusCorresponde(aluno->ativo, filtroStatus))
@@ -1387,6 +1411,7 @@ static bool textoContemInsensitive(const char *texto, const char *busca)
     return false;
 }
 
+/* Inicializa filtros avancados com valores neutros. */
 static void inicializarFiltrosAluno(struct FiltrosAluno *filtros)
 {
     if (filtros == NULL)
@@ -1406,6 +1431,7 @@ static void inicializarFiltrosAluno(struct FiltrosAluno *filtros)
     filtros->regiao[0] = '\0';
 }
 
+/* Aplica os filtros compostos sobre o vetor global de alunos. */
 static bool alunoAtendeFiltros(const struct aluno *aluno, const struct plano *plano, const struct FiltrosAluno *filtros)
 {
     if (aluno == NULL || filtros == NULL)
@@ -1478,6 +1504,8 @@ static bool alunoAtendeFiltros(const struct aluno *aluno, const struct plano *pl
     return true;
 }
 
+/* Copia os alunos que passaram nos filtros para um vetor temporario,
+   limitado pelo tamanho informado. */
 static int aplicarFiltrosAluno(const struct FiltrosAluno *filtros, struct aluno_view *destino, int maxResultados)
 {
     if (filtros == NULL || destino == NULL || maxResultados <= 0)
@@ -1500,10 +1528,11 @@ static int aplicarFiltrosAluno(const struct FiltrosAluno *filtros, struct aluno_
     return total;
 }
 
+/* Lista ordenada em memoria (aluno_view) com criterio configuravel; usa heuristica de sort. */
 static void ordenarResultados(struct aluno_view *lista, int total, char criterio)
 {
     criterioComparacaoAtual = criterio;
-    // Heurística: usa insertion sort para listas pequenas, qsort para listas maiores.
+    // Heuristica: usa insertion sort para listas pequenas, qsort para listas maiores.
     ordenarAlunosOtimizado(lista, total, comparadorAlunoView);
 }
 
@@ -1584,6 +1613,7 @@ static int compararStringsCaseInsensitive(const char *a, const char *b)
     return tolower((unsigned char)a[i]) - tolower((unsigned char)b[i]);
 }
 
+/* Busca um plano pelo ID usando somente os dados em memoria. */
 static const struct plano *buscarPlanoPorIdLocal(const char *id)
 {
     if (id == NULL || id[0] == '\0')
@@ -1656,6 +1686,7 @@ static const char *slugOrdenacao(char criterio)
     }
 }
 
+/* Exporta a listagem atual para CSV, anotando filtros e data no cabecalho. */
 static void exportarAlunosCsv(const struct aluno_view *lista, int total, char criterio, char filtroStatus, const char *termo)
 {
     time_t agora = time(NULL);
@@ -1721,6 +1752,8 @@ static void exportarAlunosCsv(const struct aluno_view *lista, int total, char cr
     ui_text_line(nomeCurto);
 }
 
+/* Extrai a regiao de um endereco no formato "Rua, numero - Bairro - REGIAO".
+   Se nada for encontrado, retorna "NAO INFORMADO". */
 static void extrairRegiao(const char *endereco, char *dest, size_t tamanho)
 {
     if (dest == NULL || tamanho == 0)

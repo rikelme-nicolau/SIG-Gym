@@ -3,11 +3,15 @@
 #ifndef CADASTRAR_ALUNO_H
 #define CADASTRAR_ALUNO_H
 
+/* Tela de cadastro de alunos. Tambem expoe o vetor global de alunos
+   usado pelos demais arquivos do modulo. */
 void telaCadastrarAluno(void);
 
 #define MAX_BUFFER 1024
 #define MAX_ALUNOS 1024
 
+/* Estrutura persistida para cada aluno. Os tamanhos generosos evitam
+   estouro de buffer em operacoes de leitura de texto. */
 struct aluno
 {
     char id[MAX_BUFFER];

@@ -1,34 +1,21 @@
 #ifndef ARQUIVO_ALUNO_H
 #define ARQUIVO_ALUNO_H
 
-#include "cadastrarAluno.h" // contém struct aluno, lista_alunos[], total_alunos, MAX_ALUNOS
+#include "cadastrarAluno.h" // contem struct aluno, lista_alunos[], total_alunos, MAX_ALUNOS
 
-// Funções de persistência do módulo aluno
+/* Rotinas de leitura/escrita dos alunos em arquivo binario.
+   Mantem a assinatura simples para ser reaproveitada pelos outros fluxos. */
 
-/**
- * @brief Salva todos os alunos ativos no arquivo
- * @param lista_alunos Vetor de alunos
- * @param total_alunos Quantidade total de alunos no vetor
- */
+/* Percorre o vetor e grava apenas os alunos ativos no arquivo binario. */
 void salvarAlunos(struct aluno lista_alunos[], int total_alunos);
 
-/**
- * @brief Carrega todos os alunos do arquivo
- * @param lista_alunos Vetor que receberá os dados
- * @return Total de alunos carregados
- */
+/* Le o arquivo binario para o vetor informado e devolve o total carregado. */
 int carregarAlunos(struct aluno lista_alunos[]);
 
-/**
- * @brief Atualiza os dados de um aluno específico no arquivo
- * @param aluno Estrutura do aluno com os dados atualizados
- */
+/* Atualiza um aluno especifico no arquivo, mantendo os demais registros. */
 void atualizarAlunoNoArquivo(struct aluno aluno);
 
-/**
- * @brief Marca um aluno como excluído (exclusão lógica) e atualiza o arquivo
- * @param id ID do aluno a ser excluído
- */
+/* Marca um aluno como inativo (exclusao logica) e regrava o arquivo. */
 void excluirAluno(char *id);
 
 #endif // ARQUIVO_ALUNO_H

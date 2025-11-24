@@ -6,6 +6,8 @@
 #include "arquivoEquipamento.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Tela de exclusao logica: lista equipamentos ativos, solicita um ID e marca como inativo. */
+
 #define EQ_COL_ID 8
 #define EQ_COL_NOME 22
 #define EQ_COL_CATEG 14
@@ -19,6 +21,7 @@ static void cabecalho_excluir(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Leitura de linha simples para evitar lixo no buffer. */
 static bool ler_linha(char *dest, size_t size)
 {
     if (fgets(dest, size, stdin) == NULL)
@@ -30,6 +33,7 @@ static bool ler_linha(char *dest, size_t size)
     return true;
 }
 
+/* Cabecalho da tabela de selecao. */
 static void tabela_header(void)
 {
     ui_line('-');
@@ -49,6 +53,7 @@ static void tabela_header(void)
     ui_line('-');
 }
 
+/* Linha resumida do equipamento na listagem de exclusao. */
 static void tabela_row(const struct equipamento *eq)
 {
     char linha[UI_INNER + 1];
@@ -66,6 +71,7 @@ static void tabela_row(const struct equipamento *eq)
     ui_text_line(linha);
 }
 
+/* Fluxo principal: confirma ID informado e grava exclusao logica no arquivo. */
 void telaExcluirEquipamento(void)
 {
     if (total_equipamentos == 0)

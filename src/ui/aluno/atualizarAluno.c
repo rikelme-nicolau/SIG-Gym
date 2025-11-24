@@ -11,12 +11,16 @@
 #include "src/ui/utils/validarNascimento.h"
 #include "src/ui/utils/validarTelefone.h"
 #include "src/ui/utils/validarEndereco.h"
-#include "src/ui/utils/validarEmail.h" // Adicionado para a validação do e-mail
+#include "src/ui/utils/validarEmail.h" // Adicionado para a validacao do e-mail
 #include "src/ui/utils/geradorDados.h"
-#include "arquivoAluno.h" // <-- persistência
+#include "arquivoAluno.h" // <-- persistencia
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Permite editar um aluno existente campo a campo, reaproveitando
+   as validacoes usadas no cadastro e refletindo as mudancas no arquivo. */
+
+/* Helpers de layout para manter as telas consistentes. */
 static void cabecalho_atualizar(const char *subtitulo)
 {
     limparTela();
@@ -24,6 +28,7 @@ static void cabecalho_atualizar(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Leitura simples de linha; evita usar scanf para nao deixar lixo no buffer. */
 static bool ler_linha(char *dest, size_t tamanho)
 {
     if (fgets(dest, tamanho, stdin) == NULL)
@@ -34,6 +39,7 @@ static bool ler_linha(char *dest, size_t tamanho)
     return true;
 }
 
+/* Tabelas com cabecalho/linha reaproveitadas em listar e confirmar selecao. */
 static void tabela_alunos_header(void)
 {
     ui_line('-');
@@ -51,6 +57,7 @@ static void tabela_alunos_header(void)
     ui_line('-');
 }
 
+/* Monta a linha formatada para exibir um aluno na tabela. */
 static void tabela_alunos_row(const char *id, const char *nome, const char *plano, const char *status)
 {
     char status_clip[16];
@@ -68,6 +75,7 @@ static void tabela_alunos_row(const char *id, const char *nome, const char *plan
     ui_text_line(linha);
 }
 
+/* Mensagem generica com pausa; evita duplicar blocos de UI. */
 static void mensagem_comum(const char *subtitulo, const char *linha1, const char *linha2)
 {
     cabecalho_atualizar(subtitulo);
@@ -84,6 +92,7 @@ static void mensagem_comum(const char *subtitulo, const char *linha1, const char
     limparTela();
 }
 
+/* Busca o nome do plano associado para exibir junto do aluno. */
 static void preencher_nome_plano(const struct aluno *aluno, char *dest, size_t size)
 {
     strncpy(dest, "Sem plano", size - 1);
@@ -103,6 +112,7 @@ static void preencher_nome_plano(const struct aluno *aluno, char *dest, size_t s
     }
 }
 
+/* Menu de atualizacao: permite escolher qual campo editar e valida cada novo valor. */
 void telaAtualizarAluno(void)
 {
     if (total_alunos == 0)
@@ -188,7 +198,7 @@ void telaAtualizarAluno(void)
         opcao = lerTecla();
         switch (opcao)
         {
-        case '1': // Validação do Nome
+        case '1': // Validacao do Nome
         {
             bool nomeValido = false;
             do
@@ -219,7 +229,7 @@ void telaAtualizarAluno(void)
             break;
         }
         
-        case '2': // Validação da Data de Nascimento
+        case '2': // Validacao da Data de Nascimento
         {
             bool dataValida = false;
             do
@@ -251,7 +261,7 @@ void telaAtualizarAluno(void)
             break;
         }
 
-        case '3': // Validação do CPF
+        case '3': // Validacao do CPF
         {
             bool cpfValido = false;
             do
@@ -291,7 +301,7 @@ void telaAtualizarAluno(void)
             break;
         }
         
-        case '4': // Validação do Telefone
+        case '4': // Validacao do Telefone
         {
             bool telefoneValido = false;
             do
@@ -323,7 +333,7 @@ void telaAtualizarAluno(void)
             break;
         }
         
-        case '5': // Validação do Endereço
+        case '5': // Validacao do Endereco
         {
             bool enderecoValido = false;
             do
@@ -373,15 +383,15 @@ void telaAtualizarAluno(void)
                 }
                 buffer[strcspn(buffer, "\n")] = '\0';
 
-                // Chama a função de validação de e-mail
+                // Chama a funcao de validacao de e-mail
                 if (validarEmail(buffer))
                 {
                     bool emailDisponivel = (strcmp(buffer, aluno_sel->email) == 0) ||
                                            verificarEmailUnico(buffer, lista_alunos, total_alunos, lista_funcionarios, total_funcionarios);
                     if (emailDisponivel)
                     {
-                        strcpy(aluno_sel->email, buffer); // Copia o novo e-mail válido
-                        emailValido = true;               // Libera a saída do loop
+                        strcpy(aluno_sel->email, buffer); // Copia o novo e-mail valido
+                        emailValido = true;               // Libera a saida do loop
                     }
                     else
                     {
@@ -394,7 +404,7 @@ void telaAtualizarAluno(void)
                 }
             } while (!emailValido);
 
-            atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteração
+            atualizarAlunoNoArquivo(*aluno_sel); // <-- salva alteracao
             break;
         }
         
@@ -409,6 +419,7 @@ void telaAtualizarAluno(void)
             break;
         }
 
+        /* Somente exibe confirmacao quando algo foi alterado. */
         if (opcao >= '1' && opcao <= '6')
         {
             mensagem_comum("Atualizar aluno", "Campo atualizado com sucesso!", NULL);

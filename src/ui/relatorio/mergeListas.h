@@ -4,6 +4,8 @@
 #include "src/ui/aluno/cadastrarAluno.h"
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 
+/* Estruturas/assinatura para mesclar as listas de alunos e funcionarios
+   em uma unica ordenada por nome. */
 struct PessoaView
 {
     char tipo; // 'A' aluno, 'F' funcionario

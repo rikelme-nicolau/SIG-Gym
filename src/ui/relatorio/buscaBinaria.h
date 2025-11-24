@@ -5,6 +5,8 @@
 #include "src/ui/plano/cadastrarPlano.h"
 #include "src/ui/funcionario/cadastrarFuncionario.h"
 
+/* Views auxiliares para permitir busca binaria em listas ordenadas
+   de alunos e funcionarios. */
 struct aluno_view
 {
     const struct aluno *aluno;

@@ -1,34 +1,20 @@
 #ifndef ARQUIVO_EQUIPAMENTO_H
 #define ARQUIVO_EQUIPAMENTO_H
 
-#include "cadastrarEquipamento.h" // contém struct equipamento, lista_equipamentos[], total_equipamentos, MAX_EQUIPAMENTOS
+#include "cadastrarEquipamento.h" // contem struct equipamento, lista_equipamentos[], total_equipamentos, MAX_EQUIPAMENTOS
 
-// Funções de persistência do módulo equipamento
+/* Funcoes de persistencia do modulo de equipamentos. */
 
-/**
- * @brief Salva todos os equipamentos ativos no arquivo
- * @param lista_equipamentos Vetor de equipamentos
- * @param total_equipamentos Quantidade total de equipamentos no vetor
- */
+/* Grava os equipamentos ativos no arquivo binario. */
 void salvarEquipamentos(struct equipamento lista_equipamentos[], int total_equipamentos);
 
-/**
- * @brief Carrega todos os equipamentos do arquivo
- * @param lista_equipamentos Vetor que receberá os dados
- * @return Total de equipamentos carregados
- */
+/* Le o arquivo para o vetor informado e devolve o total carregado. */
 int carregarEquipamentos(struct equipamento lista_equipamentos[]);
 
-/**
- * @brief Atualiza os dados de um equipamento específico no arquivo
- * @param equip Estrutura do equipamento com os dados atualizados
- */
+/* Atualiza um equipamento especifico no arquivo, mantendo os demais. */
 void atualizarEquipamentoNoArquivo(struct equipamento equip);
 
-/**
- * @brief Marca um equipamento como excluído (exclusão lógica) e atualiza o arquivo
- * @param id ID do equipamento a ser excluído
- */
+/* Marca um equipamento como inativo (exclusao logica) e regrava o arquivo. */
 void excluirEquipamento(char *id);
 
 #endif // ARQUIVO_EQUIPAMENTO_H

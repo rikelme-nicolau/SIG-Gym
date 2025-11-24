@@ -7,6 +7,8 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Permite editar campos de um plano existente e salva no arquivo apos cada mudanca. */
+
 #define P_COL_ID 8
 #define P_COL_NOME 24
 #define P_COL_HORARIO 10
@@ -20,6 +22,7 @@ static void cabecalho_atualizar(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Entrada de linha simples para evitar problemas de buffer. */
 static bool ler_linha(char *dest, size_t size)
 {
     if (fgets(dest, size, stdin) == NULL)
@@ -31,6 +34,7 @@ static bool ler_linha(char *dest, size_t size)
     return true;
 }
 
+/* Mensagem curta usada em varios pontos. */
 static void mensagem(const char *sub, const char *linha1)
 {
     cabecalho_atualizar(sub);
@@ -59,6 +63,7 @@ static void tabela_header(void)
     ui_line('-');
 }
 
+/* Linha de tabela com horario, valor e status alinhados. */
 static void tabela_row(const struct plano *pl)
 {
     char horario[32];
@@ -80,6 +85,7 @@ static void tabela_row(const struct plano *pl)
     ui_text_line(linha);
 }
 
+/* Fluxo principal: escolhe plano ativo e permite alterar nome, horario, atividades e valor. */
 void telaAtualizarPlano(void)
 {
     if (total_planos == 0)

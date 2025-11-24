@@ -3,6 +3,7 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Menu principal do modulo de equipamentos; retorna a opcao escolhida. */
 char telaEquipamento(void)
 {
 
@@ -23,6 +24,7 @@ char telaEquipamento(void)
     printf(">>> ");
     fflush(stdout);
 
+    /* Le tecla unica para evitar sujeira no buffer. */
     op = lerTecla();
 
     limparTela();

@@ -1,6 +1,7 @@
 #ifndef RELATORIOS_ALUNO_H
 #define RELATORIOS_ALUNO_H
 
+/* Interface publica para os relatorios relacionados a alunos. */
 void moduloRelatoriosAluno(void);
 void relatorioListagemCompleta(void);
 void relatorioAlunosPorPlano(void);

@@ -7,6 +7,7 @@
 #define MAX_BUFFER 1024
 #define MAX_ATIVIDADES 5
 
+/* Estrutura persistida de cada plano e limites de armazenamento. */
 struct plano {
     char id[12];
     char nome[MAX_BUFFER];
@@ -21,6 +22,7 @@ struct plano {
 extern struct plano lista_planos[MAX_PLANOS];
 extern int total_planos;
 
+/* Tela de cadastro (tambem usada por outros arquivos para acessar lista_planos). */
 void telaCadastrarPlano(void);
 void telaAtualizarPlano(void);
 void telaExcluirPlano(void);

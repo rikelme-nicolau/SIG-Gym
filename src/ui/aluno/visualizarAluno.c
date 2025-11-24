@@ -6,6 +6,10 @@
 #include "src/ui/plano/cadastrarPlano.h" // Para acessar lista_planos e total_planos
 #include "ui/utils/consoleLayout.h"
 
+/* Tela de consulta: lista alunos ativos e mostra os dados completos
+   quando um ID e escolhido. */
+
+/* Helpers de layout para nao repetir codigo de formatacao. */
 static void cabecalho_visualizar(const char *subtitulo)
 {
     limparTela();
@@ -19,6 +23,7 @@ static void cabecalho_visualizar(const char *subtitulo)
 #define COL_PLANO 17
 #define COL_STATUS 8
 
+/* Cabecalho da tabela principal de listagem. */
 static void tabela_alunos_header(void)
 {
     ui_line('-');
@@ -36,6 +41,7 @@ static void tabela_alunos_header(void)
     ui_line('-');
 }
 
+/* Linha da tabela com colunas limitadas para manter alinhamento no console. */
 static void tabela_alunos_row(const char *id, const char *nome, const char *plano, const char *status)
 {
     char linha[UI_INNER + 1];
@@ -53,6 +59,7 @@ static void tabela_alunos_row(const char *id, const char *nome, const char *plan
     ui_text_line(linha);
 }
 
+/* Mostra um par label/valor respeitando o espaco interno do layout. */
 static void info_line(const char *label, const char *value)
 {
     char linha[UI_INNER + 1];
@@ -68,6 +75,7 @@ static void info_line(const char *label, const char *value)
     ui_text_line(linha);
 }
 
+/* Fluxo principal: lista alunos, solicita um ID e exibe os detalhes se encontrado. */
 void telaVisualizarAluno(void)
 {
     if (total_alunos == 0)

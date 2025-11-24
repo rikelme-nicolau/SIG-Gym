@@ -4,6 +4,7 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Tela antiga de menu de relatorios (mantida para compatibilidade). */
 char telaRelatorio(void)
 {
     char op;

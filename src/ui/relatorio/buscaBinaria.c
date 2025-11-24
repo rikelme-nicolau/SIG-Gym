@@ -5,6 +5,8 @@
 
 #include "buscaBinaria.h"
 
+/* Lista ordenada em memoria: busca binaria sobre arrays de alunos/funcionarios por ID. */
+
 static bool verificarOrdenacaoIdAluno(const struct aluno_view *lista, int total)
 {
     if (lista == NULL || total <= 1)

@@ -8,6 +8,9 @@
 
 #include "opInvalida.h"
 
+/* Controla o menu principal do modulo de alunos:
+   exibe as telas e delega para as operacoes de cadastro, listagem, edicao
+   e exclusao enquanto o usuario nao escolher voltar. */
 char moduloAluno(void)
 {
     char opAluno;

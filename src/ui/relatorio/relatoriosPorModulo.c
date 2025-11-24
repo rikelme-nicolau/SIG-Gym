@@ -11,6 +11,7 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Submenu que reune todos os relatorios separados por cada modulo funcional. */
 void moduloRelatoriosPorModulo(void)
 {
     char op;

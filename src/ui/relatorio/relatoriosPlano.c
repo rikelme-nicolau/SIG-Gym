@@ -11,6 +11,9 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Relatorios focados em planos: listagem, rankings, receita e distribuicoes.
+   Consome os vetores globais de planos e alunos carregados no app. */
+
 #define PLAN_COL_ID 8
 #define PLAN_COL_NOME 18
 #define PLAN_COL_STATUS 7
@@ -84,6 +87,7 @@ static void cabecalho_relatorio(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Pausa padrao antes de voltar para a tela anterior. */
 static void aguardar_voltar(void)
 {
     ui_section_title("Pressione <ENTER> para voltar");
@@ -91,6 +95,7 @@ static void aguardar_voltar(void)
     limparTela();
 }
 
+/* Cabecalho e linhas da listagem geral de planos. */
 static void tabela_planos_header(void)
 {
     ui_line('-');
@@ -112,6 +117,7 @@ static void tabela_planos_header(void)
     ui_line('-');
 }
 
+/* Linha da listagem principal com status, valor e receita calculada. */
 static void tabela_planos_row(const struct PlanoView *view)
 {
     if (view == NULL || view->plano == NULL)
@@ -147,6 +153,7 @@ static void tabela_planos_row(const struct PlanoView *view)
     ui_text_line(linha);
 }
 
+/* Cabecalho e linhas do ranking de popularidade. */
 static void tabela_rank_header(void)
 {
     ui_line('-');
@@ -173,7 +180,7 @@ static void tabela_rank_row(int posRank, const struct PlanoView *view, double pe
     char linha[UI_INNER + 1];
     int pos = 0;
     char rankStr[8];
-    snprintf(rankStr, sizeof(rankStr), "%dº", posRank);
+    snprintf(rankStr, sizeof(rankStr), "%do", posRank);
     char nomeClip[32];
     ui_clip_utf8(view->plano->nome, 20, nomeClip, sizeof(nomeClip));
     char alunosStr[16];
@@ -192,6 +199,7 @@ static void tabela_rank_row(int posRank, const struct PlanoView *view, double pe
     ui_text_line(linha);
 }
 
+/* Cabecalho e linhas para tabela de receita (mensal/anual). */
 static void tabela_receita_header(void)
 {
     ui_line('-');
@@ -243,6 +251,7 @@ static void tabela_receita_row(const struct PlanoView *view, double pct)
     ui_text_line(linha);
 }
 
+/* Cabecalho e linhas da distribuicao de atividades. */
 static void tabela_atividades_header(void)
 {
     ui_line('-');
@@ -284,6 +293,7 @@ static void tabela_atividades_row(const char *nome, int planos, int alunos, doub
     ui_text_line(linha);
 }
 
+/* Menu principal do modulo de relatorios de planos. */
 void moduloRelatoriosPlano(void)
 {
     char op;
@@ -428,6 +438,7 @@ static void relatorioListagemPlanos(void)
     aguardar_voltar();
 }
 
+/* Ranking de popularidade: ordena por numero de alunos vinculados. */
 static void relatorioRankingPopularidade(void)
 {
     cabecalho_relatorio("Relatorio - Ranking de popularidade");
@@ -571,6 +582,7 @@ static void relatorioReceitaPorPlano(void)
     aguardar_voltar();
 }
 
+/* Conta planos com atividades e alunos por atividade para medir distribuicao. */
 static void relatorioDistribuicaoAtividades(void)
 {
     cabecalho_relatorio("Relatorio - Distribuicao de atividades");
@@ -795,6 +807,7 @@ static void relatorioOcupacaoHorarioPlano(void)
     aguardar_voltar();
 }
 
+/* Ordena planos por receita e mostra top 5 com participacao percentual. */
 static void relatorioPlanosMaisLucrativos(void)
 {
     cabecalho_relatorio("Relatorio - Top 5 planos mais lucrativos");
@@ -1033,6 +1046,7 @@ static bool textoContemPlano(const char *texto, const char *busca)
 
 static void ordenarPlanos(struct PlanoView *lista, int total, char criterio)
 {
+    /* Ordenacao simples por comparacao (bubble-like), dada a lista pequena de planos. */
     for (int i = 0; i < total - 1; i++)
     {
         for (int j = i + 1; j < total; j++)
@@ -1082,7 +1096,7 @@ static int compararPlanosView(const struct PlanoView *a, const struct PlanoView 
 
 /*
  * Quicksort customizado para ordenar PlanoView por receita (decrescente).
- * - Escolhe o pivô no meio do segmento atual.
+ * - Escolhe o pivo no meio do segmento atual.
  * - Particiona movendo menores receitas para a direita e maiores para a esquerda.
  * - Recursa em cada sublista ate tamanho 1.
  */
@@ -1095,17 +1109,17 @@ static void quicksortPlanosPorReceita(struct PlanoView *lista, int inicio, int f
 
     int i = inicio;
     int j = fim;
-    double pivot = lista[(inicio + fim) / 2].receita; // pivô no meio
+    double pivot = lista[(inicio + fim) / 2].receita; // pivo no meio
 
     while (i <= j)
     {
         while (lista[i].receita > pivot)
         {
-            i++; // avança até encontrar elemento menor que pivô
+            i++; // avanca ate encontrar elemento menor que o pivo
         }
         while (lista[j].receita < pivot)
         {
-            j--; // recua até encontrar elemento maior que pivô
+            j--; // recua ate encontrar elemento maior que o pivo
         }
         if (i <= j)
         {
@@ -1117,7 +1131,7 @@ static void quicksortPlanosPorReceita(struct PlanoView *lista, int inicio, int f
         }
     }
 
-    // Recursão em cada partição
+    // Recursao em cada particao
     if (inicio < j)
     {
         quicksortPlanosPorReceita(lista, inicio, j);

@@ -13,7 +13,7 @@
 struct equipamento lista_equipamentos[MAX_EQUIPAMENTOS];
 int total_equipamentos = 0;
 
-// Função auxiliar para calcular data + 60 dias
+/* Funcao auxiliar para calcular data + 60 dias. */
 void calcularProximaManutencao(const char *data, char *saida)
 {
     struct tm tm_data = {0};
@@ -36,6 +36,7 @@ static void cabecalho_equip(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Rodape padrao para entradas, com dica de cancelamento. */
 static void rodape_prompt(const char *msg)
 {
     ui_line('-');
@@ -55,11 +56,13 @@ static bool ler_linha(char *dest, size_t size)
     return true;
 }
 
+/* Permite encerrar cadastro digitando 0 em qualquer passo. */
 static bool deseja_cancelar(const char *entrada)
 {
     return strcmp(entrada, "0") == 0;
 }
 
+/* Tela de aviso quando usuario opta por cancelar. */
 static void mostrar_cancelamento(void)
 {
     cabecalho_equip("Cadastro cancelado");
@@ -134,6 +137,7 @@ void telaCadastrarEquipamento(void)
     struct equipamento novo = {0};
     snprintf(novo.id, sizeof(novo.id), "%d", total_equipamentos + 1);
 
+    /* Captura do nome com opcao de cancelar. */
     ui_text_line("Nome do equipamento.");
     rodape_prompt("Nome:");
     if (!ler_linha(novo.nome, sizeof(novo.nome)))

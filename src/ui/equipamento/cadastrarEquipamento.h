@@ -6,8 +6,10 @@ void telaCadastrarEquipamento(void);
 #define MAX_BUFFER 1024
 #define MAX_EQUIPAMENTOS 1024
 
+/* Calcula data de manutencao +60 dias baseada na ultima manutencao. */
 void calcularProximaManutencao(const char*, char*);
 
+/* Estrutura persistida de cada equipamento e limites do vetor global. */
 struct equipamento
 {
     char id[12];

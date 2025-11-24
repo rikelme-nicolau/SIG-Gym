@@ -5,12 +5,14 @@
 #include "limparTela.h"
 
 #include "cadastrarPlano.h"
-#include "arquivoPlano.h" // persistência
+#include "arquivoPlano.h" // persistencia
 #include "ui/utils/consoleLayout.h"
 
 struct plano lista_planos[MAX_PLANOS];
 int total_planos = 0;
 
+/* Tela de cadastro de plano: coleta campos principais, valida valores
+   basicos e grava no arquivo binario. */
 static void cabecalho_plano(const char *subtitulo)
 {
     limparTela();
@@ -18,6 +20,7 @@ static void cabecalho_plano(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Mensagem repetida nos prompts para padronizar a entrada. */
 static void rodape_prompt(const char *msg)
 {
     ui_line('-');
@@ -26,6 +29,7 @@ static void rodape_prompt(const char *msg)
     ui_line('=');
 }
 
+/* Leitura simples de linha, garantindo string terminada em '\0'. */
 static bool ler_linha(char *dest, size_t size)
 {
     if (fgets(dest, size, stdin) == NULL)
@@ -37,6 +41,7 @@ static bool ler_linha(char *dest, size_t size)
     return true;
 }
 
+/* Fluxo principal de cadastro com passos sequenciais para cada campo. */
 void telaCadastrarPlano(void)
 {
     if (total_planos >= MAX_PLANOS)

@@ -5,6 +5,8 @@
 #include "cadastrarPlano.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Tela de consulta de planos: lista os ativos e mostra detalhes ao escolher um ID. */
+
 #define P_COL_ID 8
 #define P_COL_NOME 24
 #define P_COL_HORARIO 10
@@ -18,6 +20,7 @@ static void cabecalho_visualizar(const char *subtitulo)
     ui_empty_line();
 }
 
+/* Entrada de linha simples para nao deixar lixo no buffer. */
 static bool ler_linha(char *dest, size_t size)
 {
     if (fgets(dest, size, stdin) == NULL)
@@ -29,6 +32,7 @@ static bool ler_linha(char *dest, size_t size)
     return true;
 }
 
+/* Monta o cabecalho da tabela de listagem. */
 static void tabela_header(void)
 {
     ui_line('-');
@@ -48,6 +52,7 @@ static void tabela_header(void)
     ui_line('-');
 }
 
+/* Linha da tabela com colunas alinhadas dentro do layout. */
 static void tabela_row(const struct plano *pl)
 {
     char linha[UI_INNER + 1];
@@ -69,6 +74,7 @@ static void tabela_row(const struct plano *pl)
     ui_text_line(linha);
 }
 
+/* Mostra um par label/valor com recorte para caber no layout. */
 static void info_line(const char *label, const char *value)
 {
     char linha[UI_INNER + 1];
@@ -84,6 +90,7 @@ static void info_line(const char *label, const char *value)
     ui_text_line(linha);
 }
 
+/* Fluxo principal: lista, pede um ID e exibe os detalhes do plano escolhido. */
 void telaVisualizarPlano(void)
 {
     if (total_planos == 0)

@@ -8,6 +8,8 @@
 #include "ui/utils/lerTecla.h"
 #include "ui/utils/consoleLayout.h"
 
+/* Menu raiz do modulo de relatorios: encaminha o usuario para
+   conjuntos de relatorios (gerenciais, operacionais ou por modulo). */
 char moduloRelatorio(void)
 {
     char op;
